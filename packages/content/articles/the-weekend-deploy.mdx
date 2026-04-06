@@ -1,0 +1,68 @@
+---
+title: "The Weekend Deploy: Shipping Fast When Nobody's Watching"
+excerpt: My solo dev workflow and my team workflow look nothing alike. Each one teaches me something about the other.
+publishDate: 2026-04-06
+tags:
+  - side-projects
+  - devops
+  - engineering-management
+draft: true
+---
+
+Saturday morning. Coffee's hot. I've got an idea for a feature. Two hours later, it's in production. No PR review. No staging environment. No change advisory board. Just me, my editor, and a `git push` that triggers a Cloudflare Pages deploy.
+
+Monday morning. Same person, different context. A two-line CSS fix goes through a pull request, gets reviewed by two engineers, passes CI, gets deployed to staging, gets smoke-tested, and then — maybe — makes it to production by Tuesday.
+
+Both of these workflows are correct. But the tension between them teaches me more about software delivery than any book on DevOps.
+
+## The Solo Speed
+
+When I'm building a side project, I operate at a speed that would be irresponsible in a team context. I make decisions without consensus. I skip tests for things I can verify by eye. I deploy and watch the logs instead of writing automated monitoring. I refactor by rewriting entire files instead of making surgical edits.
+
+This isn't because I think those practices don't matter. It's because the risk profile is fundamentally different. If I break FormRecap on a Saturday, the blast radius is me and a handful of early users who signed up knowing it was a solo project. If we break a client's production application at work, the blast radius is revenue, trust, and someone's weekend.
+
+The speed isn't about cutting corners. It's about understanding which corners exist for _this_ context and which don't.
+
+## What Solo Shipping Teaches You About Teams
+
+Every time I build something alone, I'm reminded of how much team process exists to solve _coordination_ problems, not _quality_ problems.
+
+Code review isn't primarily about catching bugs — it's about shared understanding. Staging environments aren't primarily about testing — they're about giving stakeholders confidence. Sprint planning isn't primarily about estimation — it's about alignment.
+
+When you strip away the coordination layer, you see how fast an individual can actually move. That's useful context for a manager, because it helps you identify when process is solving a real coordination problem versus when it's just ritual.
+
+If a process wouldn't exist for a solo developer, it should only exist for a team because it solves a specific team-scale problem. "We've always done it this way" is not that.
+
+## What Teams Teach You About Solo Shipping
+
+The flip side: building alone exposes every bad habit that team process normally catches.
+
+I've deployed breaking changes to production on a Saturday because I didn't have a review step to catch my assumption. I've built features that nobody wanted because I didn't have a product person to push back. I've written code that I can't understand two weeks later because I didn't have a teammate who'd ask "what does this function actually do?"
+
+Solo speed is exhilarating, but it's also fragile. There's no safety net. The same absence of process that lets you ship in two hours also lets you ship the wrong thing in two hours.
+
+## The Feedback Loop
+
+The most valuable thing about maintaining both workflows is the feedback loop between them.
+
+**From solo to team:** "I built the entire feature deployment pipeline for FormRecap in an afternoon using Cloudflare Pages. Our team's deployment pipeline takes three days to modify. Some of that complexity is justified by our scale — but not all of it. Let's look at what we can simplify."
+
+**From team to solo:** "Our team's incident retrospective process caught a failure mode I never would have anticipated. I'm going to add basic health checks to my side project, because operating without observability is a choice, not a virtue."
+
+Each context makes the other better. The solo work keeps my instincts sharp about what's actually hard versus what's artificially hard. The team work keeps my instincts sharp about what's actually risky versus what feels safe because the blast radius is small.
+
+## The Manager's Edge
+
+As a manager, I think the most dangerous thing that can happen is losing your sense of what "fast" feels like. If you've spent three years in a world where every change takes a week, you start to think that's the natural speed of software. It's not. It's the speed of _your process applied to your context_.
+
+Building side projects is my way of recalibrating. When I sit in a planning meeting and someone says "that's a two-sprint effort," I can compare that estimate against my lived experience of building something similar alone. Sometimes the estimate is right — the team-scale complexity genuinely justifies the time. Sometimes it's not — and the gap tells you something about where your process has calcified.
+
+You can't have that calibration if you've never operated without the process. And you can't trust the process if you've never seen what happens without it.
+
+## The Two Deploys
+
+So I keep shipping on weekends. Not because I have to. Not because it makes me a better manager (though I think it does). Because the contrast between the two-hour deploy and the two-day deploy is where the interesting questions live.
+
+Why is this fast? Why is that slow? Which of the slowness is essential complexity and which is accumulated habit? What would it take to make the team version closer to the solo version — without losing the things that make the team version _safe_?
+
+Those questions don't have clean answers. But they're the right questions to be asking.

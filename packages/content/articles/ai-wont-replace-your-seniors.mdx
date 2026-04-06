@@ -1,0 +1,80 @@
+---
+title: "AI Won't Replace Your Seniors — It'll Expose Your Juniors"
+excerpt: AI tools are changing the skill distribution on engineering teams in ways most managers aren't ready for. The gap between "can produce code" and "can solve problems" is about to get very visible.
+publishDate: 2026-04-06
+tags:
+  - ai
+  - engineering-management
+  - leadership
+draft: true
+---
+
+Here's a pattern I'm seeing across every team I talk to.
+
+Junior engineers are shipping faster than ever. Pull requests are flowing. Code is compiling. Features are getting marked as done. Velocity metrics look _incredible_.
+
+And the senior engineers are spending more time than ever reviewing, reverting, and quietly rewriting code that technically works but fundamentally misunderstands the problem.
+
+AI didn't create this dynamic. But it's accelerating it in ways that most engineering managers aren't prepared for.
+
+## The Productivity Illusion
+
+AI coding tools are genuinely impressive at producing code that _looks right_. It compiles. It passes the obvious test cases. It follows the patterns in your codebase. For a junior engineer, this feels like a superpower — and honestly, it is. The barrier between "I don't know how to implement this" and "I have working code" has collapsed.
+
+But "working code" and "correct code" are not the same thing. Neither are "correct code" and "good code."
+
+The gap between these levels has always existed. What's changed is that AI tools have made the first level trivially accessible while leaving the other two exactly as hard as they've always been. You still need judgement to write correct code. You still need experience to write good code. AI doesn't teach you either.
+
+## What Seniors Actually Do
+
+When I watch senior engineers use AI tools, they use them _differently_. They know what to ask for because they already know what the solution should look like. They can evaluate the output because they understand the domain. They catch the subtle bugs — the race condition, the N+1 query, the security assumption — because they've been burned by those bugs before.
+
+A senior engineer with AI is a force multiplier. A junior engineer with AI is a force _misdirector_. They're moving fast in a direction that might be wrong, producing volume that creates an illusion of progress.
+
+This isn't the junior's fault. They're using the tools they've been given. The problem is that the feedback loop that used to exist — struggling with implementation, learning from the struggle, slowly building intuition — has been short-circuited.
+
+## The Learning Gap
+
+Here's what worries me most.
+
+The traditional path from junior to senior was paved with friction. You'd spend a day debugging a memory leak and come out the other side understanding how the garbage collector actually works. You'd write a database query that brought down staging and learn about query planning the hard way. You'd ship a feature that seemed simple and spend two weeks handling edge cases you didn't anticipate.
+
+That friction was the learning. Not a byproduct of it — the actual mechanism.
+
+When an AI tool generates the code that handles the edge cases for you, you ship faster. But you also skip the part where you _understand_ why those edge cases exist. The next time a similar problem appears in a different context, you don't have the instinct to recognise it. You just ask the AI again. And the time after that. And the time after that.
+
+The result is engineers who've shipped a lot of code but built very little understanding. They have a portfolio of outputs but not a foundation of knowledge. And when they encounter a problem that AI can't solve — an architecture decision, a production incident, a trade-off with no clear answer — they're stuck.
+
+## What This Means for Managers
+
+If you manage a team with mixed seniority levels, here's what I'd be paying attention to:
+
+### 1. Velocity is no longer a signal of capability
+
+A junior shipping ten PRs a week might be less capable than one shipping three. The question isn't "how much are they shipping?" but "how much do they understand about what they're shipping?" If you're measuring output without measuring comprehension, you're tracking the wrong thing.
+
+### 2. Code review just became your most important process
+
+The code review isn't just about code quality anymore. It's the primary mechanism through which your junior engineers learn _why_ something should be done differently. If your seniors are too busy to review thoroughly — or if they're approving AI-generated code on autopilot because it "looks fine" — you're losing the most valuable feedback loop your team has.
+
+### 3. You need to redefine what "junior" means
+
+The traditional junior engineer struggled with implementation and needed help writing code. The AI-era junior engineer doesn't struggle with implementation — they struggle with _judgement_. They can produce a solution to any problem. They can't tell you whether it's the _right_ solution.
+
+This is a different kind of seniority gap, and it requires different mentoring. Less "here's how to write this function" and more "here's how to evaluate whether this approach is correct for our context."
+
+### 4. Protect the struggle
+
+This might be the hardest one. When you see a junior engineer struggling with something that AI could solve in seconds, your instinct as a manager is to say "just use Copilot." Resist that instinct — at least sometimes. The struggle is where the learning happens. If you optimise away all the friction, you optimise away the growth.
+
+That doesn't mean banning AI tools. It means being intentional about _when_ to use them. Boilerplate? Use the AI. A complex architectural problem they've never encountered? Let them wrestle with it first. The judgement about when to struggle and when to automate is itself a skill that needs to be developed.
+
+## The Uncomfortable Prediction
+
+In two years, I think we'll see a clearly visible bifurcation in engineering teams. Engineers who used AI to _accelerate_ their learning — who used the time saved on implementation to go deeper on understanding — will be dramatically more capable than their peers. Engineers who used AI to _replace_ their learning — who stopped at "it works" and never asked "but why?" — will have years of experience on paper with months of actual skill development.
+
+As a manager, the question you need to ask yourself is: which kind of engineers is your team producing?
+
+The answer isn't about the tools. It's about the culture. Do your engineers have space to be slow when it matters? Do your seniors have time to teach, not just review? Does your team value understanding, or just output?
+
+AI won't replace your senior engineers. But it might prevent your junior engineers from ever becoming senior. That's the problem worth solving.
