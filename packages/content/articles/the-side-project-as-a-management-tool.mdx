@@ -1,0 +1,47 @@
+---
+title: The Side Project as a Management Tool
+excerpt: I build side projects because I genuinely enjoy it — and it happens to make me a better manager. But let's be clear, it's not a requirement.
+publishDate: 2026-04-06
+tags:
+  - engineering-management
+  - leadership
+  - side-projects
+featured: true
+draft: false
+---
+
+I want to start with a caveat, because this topic gets toxic fast.
+
+Software is the only industry where we expect professionals to practice their craft in their spare time. Nobody asks their doctor "so what surgeries have you been doing on the train for fun?" Nobody expects their accountant to be running a side spreadsheet on weekends. But somehow we've built this culture where engineers who don't have a GitHub contribution graph that looks like a rainforest are seen as less serious.
+
+That's nonsense. You don't need to build side projects to be a great engineer. Full stop.
+
+I build them because I genuinely like the work. I like playing with tech. I like the feeling of taking something from idea to deployed in a weekend. That's a personality trait, not a professional requirement — and if it's not your thing, that's completely fine.
+
+With that out of the way: for me personally, building things outside of work makes me measurably better at my day job. Here's why.
+
+## The Drift
+
+The longer you spend away from the tools, the faster your instincts decay. Not your knowledge of computer science — that's durable. I mean your instincts about what's actually hard. The difference between a task that takes an afternoon and one that takes a sprint. The difference between a clean abstraction and one that'll haunt the team for two years.
+
+Without those instincts, you start making decisions based on what _sounds_ reasonable instead of what _is_ reasonable. You lose the ability to push back on estimates with credibility. You stop noticing when an architecture proposal has a load-bearing assumption that nobody's tested.
+
+## What Actually Transfers
+
+The value isn't theoretical. This weekend I built [FormRecap](https://formrecap.com) on Cloudflare Workers, managed the infrastructure with Terraform, and set up a [zero-secrets workflow](/blog/zero-secrets-in-git) using 1Password CLI's `op://` references so no credentials ever touch disk.
+
+On Monday, I'm bringing pieces of all of that back to work. We already use Durable Objects and Queues in production, but every new workload teaches you something different about the patterns. The Terraform setup is going straight to our cloud engineering team — not for domain management, but for managing AI Gateway and other resources that don't live in Wrangler. And thanks to the axios breach, I spent a day last week rotating keys across our projects. You better believe those are getting moved into 1Password `op://` references and shared with the team tomorrow.
+
+That's the cycle. Build something on the weekend. Hit the sharp edges. Bring the polished version to work on Monday. Repeat.
+
+## Empathy You Can't Fake
+
+There's a softer benefit too. When you're building something yourself — struggling with a deployment, debugging a race condition at 11pm, trying to figure out why Shiki's syntax highlighting renders white-on-white in dark mode — you're experiencing exactly what your team experiences every day.
+
+That empathy is hard to fake and easy to lose. The manager who hasn't touched a build pipeline in two years and says "just add a feature flag" doesn't understand why that sentence makes engineers wince. The manager who set up pre-commit hooks on their own project last weekend does.
+
+## The Meta Point
+
+This very portfolio is a side project. I chose Astro because our professional services and client teams use it — and having empathy for their toolchain makes me a better collaborator even when it's not my team's stack directly. I chose Cloudflare Pages because my teams deploy to Cloudflare. I built the whole thing to WCAG 2.1 AA because that's been a non-negotiable requirement across everything I've shipped for the last five years — not an afterthought I bolt on at the end.
+
+The site is the proof of the thesis — for me, anyway. Your proof might look completely different, or it might not involve side projects at all. The only thing I'd push back on is the idea that you can lead engineering teams effectively while being completely disconnected from the engineering. How you stay connected is up to you.

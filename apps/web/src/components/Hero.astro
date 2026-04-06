@@ -6,15 +6,16 @@ interface Props {
 }
 
 const {
-  title = 'Engineering leader who',
-  highlight = 'builds things',
-  subtitle = 'I lead engineering teams by day and ship side projects by night. Currently managing 30+ engineers across AI, Search & Platform at Squiz.',
+  title = 'I lead teams, ship code, and try to leave things',
+  highlight = 'better than I found them',
+  subtitle = "Faster delivery. Higher quality. Engineers who hit the career goals they set for themselves. That's the job — and I still write code because you can't lead what you don't understand.",
 } = Astro.props;
 ---
 
 <section class="pb-16 pt-8 md:pb-24 md:pt-16">
-  <h1 class="font-sans text-4xl font-700 leading-tight md:text-5xl">
-    {title} <span class="text-[var(--color-accent)]">{highlight}</span>
+  <h1 class="font-700 font-sans text-4xl leading-tight md:text-5xl">
+    {title}
+    <span class="text-[var(--color-accent)]">{highlight}</span>
   </h1>
   <p class="mt-6 max-w-xl text-lg leading-relaxed text-[var(--color-muted)]">
     {subtitle}

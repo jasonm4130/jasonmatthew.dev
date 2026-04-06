@@ -8,13 +8,28 @@
     "typecheck": "turbo typecheck",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{js,mjs,ts,tsx,astro,md,mdx,json,css}\"",
-    "format:check": "prettier --check \"**/*.{js,mjs,ts,tsx,astro,md,mdx,json,css}\""
+    "format:check": "prettier --check \"**/*.{js,mjs,ts,tsx,astro,md,mdx,json,css}\"",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "^8.58.0",
+    "eslint": "^10.2.0",
+    "eslint-plugin-astro": "^1.6.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "playwright": "^1.59.1",
     "prettier": "^3.2.5",
     "prettier-plugin-astro": "^0.14.0",
     "prettier-plugin-tailwindcss": "^0.6.0",
     "turbo": "^2.0.0"
+  },
+  "lint-staged": {
+    "*.{js,mjs,ts,tsx,json,css,md,mdx}": "prettier --write",
+    "*.astro": [
+      "prettier --write",
+      "eslint --no-warn-ignored"
+    ]
   },
   "pnpm": {
     "onlyBuiltDependencies": [

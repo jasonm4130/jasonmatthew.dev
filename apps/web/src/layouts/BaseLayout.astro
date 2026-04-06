@@ -21,9 +21,15 @@ const { title, description, image, pageType } = Astro.props;
     <ClientRouter />
   </head>
   <body>
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-[var(--color-accent)] focus:px-4 focus:py-2 focus:font-sans focus:text-sm focus:text-white focus:no-underline"
+    >
+      Skip to content
+    </a>
     <div class="flex min-h-screen flex-col bg-[var(--color-bg)]">
       <Nav />
-      <main class="mx-auto w-full max-w-3xl grow px-4 py-12 md:px-8">
+      <main id="main-content" class="mx-auto w-full max-w-3xl grow px-4 py-12 md:px-8">
         <slot />
       </main>
       <Footer />

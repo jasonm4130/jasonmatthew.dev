@@ -1,0 +1,62 @@
+---
+title: Cloudflare Terraform
+description: Infrastructure-as-code for my entire Cloudflare account. 8 domains, DNS, Workers KV, D1, Queues, R2, Vectorize, and AI Gateway — all managed via Terraform with zero secrets on disk.
+publishDate: 2026-03-01
+technologies:
+  - Terraform
+  - Cloudflare
+  - 1Password CLI
+  - Make
+  - cf-terraforming
+featured: true
+---
+
+## Why Terraform for Personal Infrastructure
+
+I run 8 domains on Cloudflare — portfolio sites, side projects, SaaS products. Each one has DNS records, zone settings, and varying combinations of Workers KV, D1 databases, Queues, R2 buckets, and more. Managing this through the dashboard was fine when it was two domains. At eight, with shared infrastructure patterns across projects, it became the kind of problem Terraform was built for.
+
+The other motivation: I wanted my personal infrastructure to be recoverable. If Cloudflare lost my account config tomorrow, I could `make apply` and have everything back. Every resource, every DNS record, every zone setting — documented in code, version controlled, and reproducible.
+
+## What It Manages
+
+| Resource                                       | Count |
+| ---------------------------------------------- | ----- |
+| Zone settings (SSL, TLS, HSTS, Brotli, HTTP/3) | 98    |
+| DNS records (A, CNAME, MX, TXT, DKIM, DMARC)   | 31    |
+| KV namespaces                                  | 5     |
+| D1 databases                                   | 2     |
+| Worker queues                                  | 3     |
+| R2 buckets                                     | 3     |
+| Pages projects                                 | 3     |
+| Vectorize indexes                              | 1     |
+| AI Gateway                                     | 1     |
+
+Worker scripts and secrets are deliberately **not** managed here — those live in each project's `wrangler.jsonc` and deploy via Cloudflare Build. This repo handles the account-level infrastructure that sits underneath.
+
+## Zero Secrets on Disk
+
+Every credential flows through 1Password CLI. A committed `.env.op` file maps environment variables to `op://` vault references:
+
+```
+CLOUDFLARE_API_TOKEN=op://Private/Cloudflare Terraform/api_token
+AWS_ACCESS_KEY_ID=op://Private/Cloudflare Terraform/r2_access_key
+```
+
+The Makefile wraps every Terraform command with `op run --env-file=.env.op`:
+
+```
+make plan   # → op run --env-file=.env.op -- terraform plan
+make apply  # → op run --env-file=.env.op -- terraform apply
+```
+
+Secrets are injected into the process environment at runtime and never written to disk. No `.tfvars` files with real values, no environment variables exported in shell profiles, no secrets in CI. The `.env.op` file is safe to commit because it contains only vault references, not values.
+
+State lives in a Cloudflare R2 bucket (S3-compatible backend), with credentials also injected via 1Password at `make init` time.
+
+## Provider Gaps and Stopgaps
+
+The Cloudflare Terraform provider doesn't cover everything yet. AI Gateway and Vectorize don't have official resources, so I use the `magodo/restful` provider as a stopgap — it makes raw API calls to the Cloudflare REST API and manages the lifecycle through Terraform's standard plan/apply cycle. When official support lands, migrating is a `terraform state mv`.
+
+## Quality Gates
+
+Pre-commit hooks run `terraform fmt`, `terraform validate`, and `tflint` on every commit. The same tools that keep application code clean keep infrastructure code clean.

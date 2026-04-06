@@ -11,6 +11,7 @@ export async function GET(context: { site: string }) {
     title: siteConfig.title,
     description: siteConfig.description,
     site: context.site,
+    customData: '<language>en-au</language>',
     items: sorted.map((post) => ({
       title: post.data.title,
       description: post.data.excerpt,

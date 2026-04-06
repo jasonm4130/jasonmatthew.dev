@@ -4,6 +4,7 @@ import GitHub from '@icons/GitHub.astro';
 import LinkedIn from '@icons/LinkedIn.astro';
 import X from '@icons/X.astro';
 import RSS from '@icons/RSS.astro';
+import Signature from '@icons/Signature.astro';
 
 const iconMap: Record<string, any> = { github: GitHub, linkedin: LinkedIn, x: X };
 const currentYear = new Date().getFullYear();
@@ -12,20 +13,22 @@ const currentYear = new Date().getFullYear();
 <footer class="border-t border-[var(--color-border)] bg-[var(--color-bg)]">
   <div class="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-10 md:flex-row md:justify-between md:px-8">
     <div class="flex items-center gap-4">
-      {siteConfig.socialLinks.map((link) => {
-        const Icon = iconMap[link.platform];
-        return Icon ? (
-          <a
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
-            aria-label={link.platform}
-          >
-            <Icon class="h-5 w-5" />
-          </a>
-        ) : null;
-      })}
+      {
+        siteConfig.socialLinks.map((link) => {
+          const Icon = iconMap[link.platform];
+          return Icon ? (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+              aria-label={link.platform}
+            >
+              <Icon class="h-5 w-5" />
+            </a>
+          ) : null;
+        })
+      }
       <a
         href="/rss.xml"
         class="text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
@@ -35,17 +38,20 @@ const currentYear = new Date().getFullYear();
       </a>
     </div>
     <div class="flex items-center gap-6">
-      {siteConfig.footerNavLinks.map((link) => (
-        <a
-          href={link.href}
-          class="font-sans text-sm text-[var(--color-muted)] no-underline transition-colors hover:text-[var(--color-fg)]"
-        >
-          {link.text}
-        </a>
-      ))}
+      {
+        siteConfig.footerNavLinks.map((link) => (
+          <a
+            href={link.href}
+            class="font-sans text-sm text-[var(--color-muted)] no-underline transition-colors hover:text-[var(--color-fg)]"
+          >
+            {link.text}
+          </a>
+        ))
+      }
     </div>
-    <p class="font-sans text-xs text-[var(--color-muted)]">
-      &copy; {currentYear} {siteConfig.author}
-    </p>
+    <div class="flex items-center gap-3 font-sans text-xs text-[var(--color-muted)]">
+      <Signature class="h-5 w-auto text-[var(--color-muted)]" />
+      <span>&copy; {currentYear}</span>
+    </div>
   </div>
 </footer>

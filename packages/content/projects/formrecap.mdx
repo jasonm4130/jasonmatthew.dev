@@ -1,37 +1,66 @@
 ---
 title: FormRecap
-description: AI-powered form abandonment recovery. Captures partial submissions and generates intelligent follow-up sequences to recover lost conversions.
+description: Form abandonment recovery for the rest of us. Captures partial submissions in real-time and sends magic-link recovery emails that restore the user's exact form state. 100% Cloudflare-native.
 publishDate: 2026-04-01
 technologies:
   - Cloudflare Workers
+  - Durable Objects
+  - D1
   - TypeScript
   - Turborepo
-  - D1
   - React Router v7
+  - Terraform
 featured: true
-liveUrl: https://formrecap.dev
-githubUrl: https://github.com/jasonm4130/form-abandonment
+liveUrl: https://formrecap.com
 ---
 
 ## The Problem
 
-Most websites lose 70-80% of form submissions to abandonment. Users start filling out a form, get distracted or frustrated, and leave. That's revenue walking out the door.
+81% of people who start filling out a web form abandon it. Ecommerce solved this years ago with cart abandonment recovery — but if you run a lead gen form, a quote request, or a contact page, there was nothing equivalent. That partial submission just disappears.
 
 ## The Solution
 
-FormRecap captures partial form submissions in real-time via a lightweight JavaScript snippet. When a user abandons a form, the captured data is processed by an AI pipeline that generates personalised follow-up sequences.
+FormRecap captures partial form submissions via a 2.7KB JavaScript snippet (zero dependencies). When a visitor starts filling out a form and leaves, they get a magic-link email that restores their exact form state — no account required, no friction.
 
-## Technical Approach
+The snippet auto-discovers forms on the page, watches for field changes, and fires data via `navigator.sendBeacon()` on page exit. A 4-layer privacy system strips sensitive fields: input type exclusion, attribute pattern matching (passwords, credit cards, SSNs — 31+ patterns), a `data-formrecap-exclude` escape hatch, and value-level regex sanitization.
 
-The entire stack runs on Cloudflare's edge infrastructure:
+## Architecture
 
-- **Workers** for the API and webhook processing
-- **D1** for the database layer
-- **KV** for session management
-- **Queues** for async processing
+The entire stack is Cloudflare-native. No AWS, no Vercel, no external databases.
 
-The monorepo is managed with Turborepo and pnpm workspaces, with shared packages for types, validation schemas, and UI components.
+- **Workers (Hono)** — API routing, SPA serving, webhook handling
+- **Durable Objects** — one instance per user session per site, acting as the single source of truth for that session's form data
+- **D1** — all relational data (accounts, forms, submissions, events)
+- **Queues** — async email dispatch with at-least-once delivery and automatic retries
+- **Workflows** — multi-step recovery pipeline: detect abandonment → wait configurable delay → send email → track opens
+- **KV** — config caching, magic link tokens, rate limiting
+- **Analytics Engine** — high-volume event ingestion (field focus, blur, keystrokes)
+- **Cron Triggers** — cleanup jobs and weekly digest emails
+
+External services are limited to **Resend** for transactional email and **Stripe** for billing. Infrastructure is managed via Terraform in a separate repo.
+
+## Interesting Technical Decisions
+
+### Durable Objects for Abandonment Detection
+
+Each form session gets its own Durable Object. As field events arrive via beacon, the DO accumulates them and resets an alarm for N seconds after the last activity. When the alarm fires — meaning the user has stopped interacting — it persists an encrypted snapshot to D1 and enqueues the recovery email. No polling, no cron jobs, no race conditions. The alarm API turns abandonment detection into a one-liner.
+
+### The sendBeacon CORS Trick
+
+The snippet sends data using `navigator.sendBeacon()` with `text/plain` as the content type. Because `text/plain` is a CORS-safelisted type, the browser skips the preflight OPTIONS request entirely. The Worker parses the JSON body server-side regardless of the header. This eliminates a round-trip on every field event — which matters when you're firing beacons on page unload.
+
+### Per-Customer Encryption
+
+Every site gets its own AES-GCM-256 encryption key derived via HKDF from a master secret and the site ID. Compromising one site's key cannot decrypt another's. Email addresses are stored as both an encrypted blob and an HMAC-SHA256 blind index — enabling lookups for opt-out and deduplication without ever storing plaintext. All comparisons use `timingSafeEqual` to prevent timing attacks.
+
+## The Sprint
+
+I built FormRecap over an Easter weekend — from first commit to production with recovery playbooks, Terraform, 114 tests, and launch posts on Dev.to and LinkedIn. The goal wasn't to cut corners for speed. It was to prove that with the right tools and clear product thinking, you can ship something production-ready without sacrificing the things that matter: encryption, privacy, observability, and disaster recovery.
+
+Every secret is documented in a manifest. Every infrastructure resource can be recreated from scratch via a step-by-step runbook. The deployment runs through Cloudflare Build with CI validation on every push. It's the kind of project where I wanted the answer to "what happens if everything breaks?" to be boring.
 
 ## What I Learned
 
-Building a SaaS product from scratch as a side project taught me more about product thinking than any management course. Every feature decision becomes a trade-off against my limited evening hours.
+Building a SaaS from scratch as a side project taught me more about product thinking than any management course. When your time budget is measured in evenings, every feature decision is a trade-off — and you get very good at asking "does this actually matter?" before writing a line of code.
+
+It also reinforced something I already believed: Cloudflare's developer platform is genuinely underrated for full-stack applications. Workers, D1, Durable Objects, Queues, and Workflows compose into a coherent system that would take five AWS services and a PhD in IAM to replicate.

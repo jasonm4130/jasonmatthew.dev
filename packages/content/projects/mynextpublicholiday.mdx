@@ -1,0 +1,36 @@
+---
+title: My Next Public Holiday
+description: Find your next public holiday and optimise your leave for maximum time off. Supports 100+ countries with automatic location detection and a leave optimizer that maximises consecutive days off.
+publishDate: 2020-07-03
+technologies:
+  - React 19
+  - TypeScript
+  - Vite
+  - Tailwind CSS v4
+  - Cloudflare Pages
+featured: true
+liveUrl: https://mynextpublicholiday.com
+githubUrl: https://github.com/jasonm4130/public-holiday
+---
+
+## The Idea
+
+Everyone asks the same question at some point: "When's my next public holiday?" I wanted a fast, clean answer — with a twist. What if it could also tell you the optimal way to use your leave days for maximum consecutive time off?
+
+## Features
+
+- **Instant next holiday** with a live countdown timer
+- **Leave optimizer** — input your available leave days and get up to 5 ranked plans. Shows efficiency ratios like "Take 3 days off, get 9 days total at 3.0x"
+- **100+ countries** with automatic location detection via browser timezone
+- **Regional holiday support** — state and province-level holidays (AU-QLD, US-CA, DE-BY, etc.)
+- **Light and dark mode** with a tropical colour palette
+
+## The Leave Optimizer
+
+The most interesting technical challenge. The algorithm uses a greedy approach: for single-block mode, it enumerates all valid windows using exactly N leave days and picks the longest total span including adjacent weekends and holidays. For multi-block mode, it greedily selects the best block, marks those days as used, then finds the next best — generating up to 5 non-overlapping alternatives.
+
+## Technical Details
+
+Holiday data comes from the [Nager.Date API](https://date.nager.at/), an open-source public holidays API. The app fetches the current year plus next year to handle December-January transitions, filters by region when applicable, and caches results locally.
+
+Location detection uses a two-tier strategy: first mapping the browser's timezone to a country code (covers ~90 timezones), then falling back to browser geolocation with reverse geocoding for edge cases.

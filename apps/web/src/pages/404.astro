@@ -1,0 +1,30 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+
+const excuses = [
+  "I was too busy beating Will Ferrell's marathon time to maintain this URL.",
+  'This page is taking a public holiday. Check back on mynextpublicholiday.com.',
+  "The Durable Object for this page's alarm never fired.",
+  'This page was removed during a Terraform apply. It was not in the plan.',
+  'Miracle sort is still working on finding this page. Theoretically it could finish.',
+  "This page abandoned the form before submitting. We've sent it a recovery email.",
+  'The sendBeacon for this page used the wrong content type.',
+];
+
+const excuse = excuses[Math.floor(Math.random() * excuses.length)];
+---
+
+<BaseLayout title="Page Not Found">
+  <section class="flex flex-col items-center justify-center py-24 text-center">
+    <h1 class="font-700 font-sans text-8xl text-[var(--color-accent)]">404</h1>
+    <p class="mt-6 max-w-md text-lg leading-relaxed text-[var(--color-muted)]">
+      {excuse}
+    </p>
+    <a
+      href="/"
+      class="font-600 mt-10 inline-block border-2 border-[var(--color-accent)] px-6 py-2.5 font-sans text-sm text-[var(--color-accent)] no-underline transition-all hover:bg-[var(--color-accent)] hover:text-white"
+    >
+      Back to safety
+    </a>
+  </section>
+</BaseLayout>

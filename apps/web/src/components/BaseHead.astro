@@ -12,7 +12,9 @@ interface Props {
 const { title, description = siteConfig.description, image, pageType = 'website' } = Astro.props;
 const resolvedTitle = title ? `${title} | ${siteConfig.title}` : `${siteConfig.title} — ${siteConfig.subtitle}`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const resolvedImage = image?.src ? new URL(image.src, Astro.site).toString() : undefined;
+const resolvedImage = image?.src
+  ? new URL(image.src, Astro.site).toString()
+  : new URL('/og-default.jpg', Astro.site).toString();
 ---
 
 <meta charset="utf-8" />
@@ -30,13 +32,18 @@ const resolvedImage = image?.src ? new URL(image.src, Astro.site).toString() : u
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={resolvedTitle} />
 <meta property="og:description" content={description} />
-{resolvedImage && <meta property="og:image" content={resolvedImage} />}
+<meta property="og:image" content={resolvedImage} />
+<meta property="og:site_name" content={siteConfig.title} />
+<meta property="og:locale" content="en_AU" />
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@jasonm4130" />
+<meta name="twitter:creator" content="@jasonm4130" />
 <meta name="twitter:title" content={resolvedTitle} />
 <meta name="twitter:description" content={description} />
-{resolvedImage && <meta name="twitter:image" content={resolvedImage} />}
+<meta name="twitter:image" content={resolvedImage} />
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <script is:inline src="/theme-toggle.js"></script>

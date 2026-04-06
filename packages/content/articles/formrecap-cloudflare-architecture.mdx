@@ -1,0 +1,90 @@
+---
+title: Building a SaaS Entirely on Cloudflare's Developer Platform
+excerpt: 'How I built FormRecap — form abandonment recovery — using Workers, Durable Objects, D1, Queues, and Workflows. No AWS. No Vercel. No external databases.'
+publishDate: 2026-04-04
+tags:
+  - cloudflare
+  - architecture
+  - side-projects
+featured: false
+draft: false
+---
+
+81% of people who start filling out a web form abandon it before submitting. For ecommerce, cart abandonment recovery emails convert about 10% back into customers. But for lead gen forms, contact forms, quote requests — there was no equivalent.
+
+I built [FormRecap](https://formrecap.com) over an Easter long weekend to fix this. A 2.7KB JavaScript snippet that detects form abandonment and sends recovery emails with magic links that restore the visitor's exact form state.
+
+The entire product — API, database, session tracking, email dispatch, billing, and dashboard — runs on Cloudflare. Here's how.
+
+## The Architecture
+
+```
+Snippet (2.7KB)
+  ↓ sendBeacon
+Worker (Hono API)
+  ↓
+Durable Object (per-form session)
+  ↓ alarm fires after abandonment delay
+Queue → Workflow → Resend (recovery email)
+  ↓
+Visitor clicks magic link → form restored
+```
+
+| Service            | Purpose                                     |
+| ------------------ | ------------------------------------------- |
+| Workers            | API + SPA serving                           |
+| D1                 | All relational data                         |
+| Durable Objects    | Per-form session state + abandonment timing |
+| Queues + Workflows | Async recovery email pipeline               |
+| KV                 | Config cache, session tokens, rate limiting |
+| Analytics Engine   | High-volume event metrics                   |
+
+## The Snippet
+
+The client-side snippet is the most constrained part. It runs on customer websites, so it has to be tiny (2.7KB gzipped, zero dependencies), compatible (ES2015 — no optional chaining, no async/await), and privacy-first.
+
+Privacy works in four layers: input type exclusion, attribute pattern matching (passwords, credit cards, SSNs — 31+ patterns), a `data-formrecap-exclude` escape hatch, and value-level regex sanitisation.
+
+The snippet discovers forms via `querySelectorAll` with a body-level `MutationObserver` for SPAs, tracks field events, and detects abandonment through `visibilitychange`, `pagehide`, `beforeunload`, and SPA navigation hooks.
+
+## Durable Objects for Session Tracking
+
+This turned out to be the perfect fit. Each form session gets its own Durable Object instance that accumulates field events as they arrive, detects the email field in the stream, and sets an alarm for N seconds after the last activity.
+
+When the alarm fires — meaning the user has stopped interacting — it persists an encrypted snapshot to D1 and enqueues the recovery email. Abandonment detection becomes "set alarm for N seconds after last activity." No polling. No cron. No race conditions.
+
+## The sendBeacon CORS Trick
+
+The snippet sends data using `navigator.sendBeacon()` with `text/plain` as the content type. Because `text/plain` is CORS-safelisted, the browser skips the preflight OPTIONS request entirely. The Worker parses the JSON body server-side regardless of the content-type header.
+
+This eliminates a round-trip on every field event — which matters when you're firing beacons on page unload where latency kills reliability.
+
+## Per-Customer Encryption
+
+Since the snippet captures form field data, security couldn't be an afterthought. Every customer's data is encrypted with its own key:
+
+```
+customerKey = HKDF(masterSecret, salt=siteId, info="formrecap-field-enc")
+```
+
+Field data is encrypted with AES-GCM-256. Email addresses use HMAC-SHA256 blind indexes for searchable lookups (opt-out, deduplication) without storing plaintext. All comparisons use `timingSafeEqual` to prevent timing attacks.
+
+Compromising one site's key cannot decrypt another's.
+
+## What Surprised Me
+
+**Smart Placement** handles the latency trade-off automatically. API routes that hit D1 run near the database, while static assets serve from the nearest edge. I didn't have to think about region selection.
+
+**Workflows** compose well with Queues. The recovery pipeline is: receive queue message → wait configurable delay → check if the user already submitted (skip if so) → send email → record delivery event. Each step is independently retryable.
+
+**The cost.** On the Workers paid plan ($5/mo), the included limits cover roughly 1,000 free-tier customers. At early scale, total cost is about a coffee per month.
+
+## The Infrastructure Gap
+
+One thing Cloudflare doesn't give you is infrastructure-as-code parity with AWS. There's no CloudFormation equivalent. I use Terraform with the Cloudflare provider to manage KV namespaces, D1 databases, Queues, R2 buckets, DNS, and zone settings across all my domains — but Worker scripts and Durable Objects still deploy through Wrangler. It's two tools for one platform, and it works, but it's a gap worth knowing about.
+
+## Would I Use This Stack Again?
+
+Without hesitation. Workers, D1, Durable Objects, Queues, and Workflows compose into a coherent system that would take five AWS services and a PhD in IAM to replicate. The developer experience is genuinely good. The pricing is sane. And the fact that everything runs on one platform means there's one dashboard, one set of logs, and one billing relationship.
+
+For the right kind of application — stateful, event-driven, globally distributed — Cloudflare's developer platform is the most underrated option available, though I think people are starting to catch on.

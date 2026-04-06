@@ -1,6 +1,6 @@
 ---
 title: Sort Algorithms
-description: Interactive visualiser for 25+ sorting algorithms with animated bars, step-by-step pseudocode highlighting, and sound mode.
+description: Interactive visualiser for 25+ sorting algorithms with animated bars, step-by-step pseudocode highlighting, and sound mode. Built because time complexity isn't theoretical when you're processing 100k pages.
 publishDate: 2025-06-01
 technologies:
   - React 19
@@ -12,18 +12,33 @@ liveUrl: https://sortalgorithms.com
 githubUrl: https://github.com/jasonm4130/sort-algorithms
 ---
 
-## Overview
+## How It Started
 
-A visual learning tool for understanding how sorting algorithms work. Select an algorithm, adjust the array size and speed, and watch it sort in real-time with color-coded comparisons and swaps.
+I saw an Instagram post about miracle sort — the algorithm that shuffles an array randomly and checks if it's sorted, repeating until it works (or the heat death of the universe, whichever comes first). I thought it was funny and fell down a rabbit hole. Did you know Bill Gates authored a paper on the theoretical limitations of pancake sort? Sorting algorithms are one of those topics that seems simple until you look closely, and then it's endlessly deep.
 
-## Features
+## Why It Actually Matters
 
-- 25+ algorithms from bubble sort to radix sort
-- Animated bar visualisations with comparison/swap highlighting
-- Step-by-step pseudocode that highlights the current operation
-- Sound mode that maps bar heights to audio frequencies
-- Adjustable speed and array size controls
+The rabbit hole connected directly to my day job. At Squiz, we process 10,000 to 100,000+ page websites — reviewing content, calculating embeddings, querying vector databases, clustering results. At that scale, the difference between an O(n log n) algorithm and an O(n²) one isn't academic. It's the difference between a task completing in seconds and never finishing at all. You can't just dump things into a Lambda and hope for the best.
 
-## Why I Built It
+I kept seeing inefficient choices being made in this space, and I wanted a tool that made the real-world impact of algorithm selection visceral — not just a Big O table in a textbook, but something you could watch and feel.
 
-I wanted a tool that showed not just *what* sorting algorithms do, but *how* they think. Most existing visualisers show bars moving around but don't connect the visual to the logic. The pseudocode highlighting bridges that gap.
+## What It Does
+
+Select any of 25+ algorithms, adjust the array size and speed, and watch it sort in real-time. Bars are colour-coded to show comparisons and swaps as they happen, and the pseudocode panel highlights the current operation so you can follow the logic step by step.
+
+The sound mode maps bar heights to audio frequencies — you can literally hear the difference between merge sort's methodical sweeps and quicksort's recursive partitioning. This started as a novelty inspired by the same Instagram clip that kicked the whole project off, but it turned out to be genuinely useful for building intuition.
+
+## The Fun Ones
+
+Alongside the classics (merge sort, quicksort, heap sort), the collection includes some algorithms that exist more for entertainment than production use:
+
+- **Miracle sort** — checks if the array is sorted, and if not, waits and checks again. Relies on cosmic rays flipping bits in memory. Theoretical best case: O(n). Expected case: longer than you have.
+- **Sleep sort** — spawns a timer for each element proportional to its value. Small values wake up first. It technically works.
+- **Bogo sort** — shuffles randomly and checks. The drunk friend of miracle sort.
+- **Pancake sort** — the one Bill Gates wrote about. You can only flip prefixes, like flipping a stack of pancakes with a spatula.
+
+These aren't practical, but they're brilliant for understanding why the practical algorithms are designed the way they are.
+
+## Why I Built It This Way
+
+Most existing sorting visualisers show bars moving around but don't connect the animation to the underlying logic. The pseudocode highlighting bridges that gap — you can see _what_ the algorithm is doing and _why_ at the same time. It's the tool I wanted when I was explaining these concepts to engineers on my team.
