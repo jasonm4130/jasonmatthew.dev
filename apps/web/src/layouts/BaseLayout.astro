@@ -1,0 +1,32 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import BaseHead from '@components/BaseHead.astro';
+import Nav from '@components/Nav.astro';
+import Footer from '@components/Footer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: { src: string; alt?: string };
+  pageType?: 'website' | 'article';
+}
+
+const { title, description, image, pageType } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} image={image} pageType={pageType} />
+    <ClientRouter />
+  </head>
+  <body>
+    <div class="flex min-h-screen flex-col bg-[var(--color-bg)]">
+      <Nav />
+      <main class="mx-auto w-full max-w-3xl grow px-4 py-12 md:px-8">
+        <slot />
+      </main>
+      <Footer />
+    </div>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+---
+import siteConfig from '@data/site-config';
+import NavLink from './NavLink.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import Signature from '@icons/Signature.astro';
+---
+
+<nav class="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg)]/90 backdrop-blur-md">
+  <div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 md:px-8">
+    <a href="/" class="text-[var(--color-fg)] no-underline" aria-label={siteConfig.title}>
+      <Signature class="h-8 w-auto" />
+    </a>
+    <div class="flex items-center gap-6">
+      <div class="hidden items-center gap-6 sm:flex">
+        {siteConfig.headerNavLinks.map((link) => (
+          <NavLink href={link.href}>{link.text}</NavLink>
+        ))}
+      </div>
+      <ThemeToggle />
+      <button
+        id="mobile-menu-toggle"
+        type="button"
+        class="flex h-9 w-9 items-center justify-center text-[var(--color-muted)] sm:hidden"
+        aria-label="Toggle menu"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden border-t border-[var(--color-border)] px-4 pb-4 sm:hidden">
+    <div class="flex flex-col gap-3 pt-3">
+      {siteConfig.headerNavLinks.map((link) => (
+        <NavLink href={link.href}>{link.text}</NavLink>
+      ))}
+    </div>
+  </div>
+</nav>
+
+<script>
+  function setupMobileMenu() {
+    const toggle = document.getElementById('mobile-menu-toggle');
+    const menu = document.getElementById('mobile-menu');
+    if (!toggle || !menu) return;
+    toggle.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  }
+  document.addEventListener('astro:page-load', setupMobileMenu);
+</script>

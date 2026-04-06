@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { getAllTags } from '@utils/data-utils';
+
+const posts = await getCollection('blog', ({ data }) => !data.draft);
+const tags = getAllTags(posts);
+const sortedTags = [...tags.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout title="Tags">
+  <h1 class="mb-12 font-sans text-3xl font-700">Tags</h1>
+  <div class="flex flex-wrap gap-3">
+    {sortedTags.map(([tag, count]) => (
+      <a
+        href={`/tags/${tag}`}
+        class="border border-[var(--color-border)] px-4 py-2 font-sans text-sm text-[var(--color-muted)] no-underline transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+      >
+        #{tag} <span class="ml-1 text-xs">({count})</span>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

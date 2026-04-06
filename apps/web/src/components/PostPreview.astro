@@ -1,0 +1,35 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from './FormattedDate.astro';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+---
+
+<article class="border-b border-[var(--color-border)] py-6">
+  <a href={`/blog/${post.id}`} class="group block no-underline">
+    <div class="flex items-baseline justify-between gap-4">
+      <h3 class="font-sans text-lg font-600 text-[var(--color-fg)] transition-colors group-hover:text-[var(--color-accent)]">
+        {post.data.title}
+      </h3>
+      <span class="shrink-0 font-sans text-sm text-[var(--color-muted)]">
+        <FormattedDate date={post.data.publishDate} />
+      </span>
+    </div>
+    {post.data.excerpt && (
+      <p class="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+        {post.data.excerpt}
+      </p>
+    )}
+    {post.data.tags.length > 0 && (
+      <div class="mt-3 flex flex-wrap gap-2">
+        {post.data.tags.map((tag) => (
+          <span class="font-sans text-xs text-[var(--color-muted)]">#{tag}</span>
+        ))}
+      </div>
+    )}
+  </a>
+</article>

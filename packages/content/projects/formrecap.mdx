@@ -1,0 +1,37 @@
+---
+title: FormRecap
+description: AI-powered form abandonment recovery. Captures partial submissions and generates intelligent follow-up sequences to recover lost conversions.
+publishDate: 2026-04-01
+technologies:
+  - Cloudflare Workers
+  - TypeScript
+  - Turborepo
+  - D1
+  - React Router v7
+featured: true
+liveUrl: https://formrecap.dev
+githubUrl: https://github.com/jasonm4130/form-abandonment
+---
+
+## The Problem
+
+Most websites lose 70-80% of form submissions to abandonment. Users start filling out a form, get distracted or frustrated, and leave. That's revenue walking out the door.
+
+## The Solution
+
+FormRecap captures partial form submissions in real-time via a lightweight JavaScript snippet. When a user abandons a form, the captured data is processed by an AI pipeline that generates personalised follow-up sequences.
+
+## Technical Approach
+
+The entire stack runs on Cloudflare's edge infrastructure:
+
+- **Workers** for the API and webhook processing
+- **D1** for the database layer
+- **KV** for session management
+- **Queues** for async processing
+
+The monorepo is managed with Turborepo and pnpm workspaces, with shared packages for types, validation schemas, and UI components.
+
+## What I Learned
+
+Building a SaaS product from scratch as a side project taught me more about product thinking than any management course. Every feature decision becomes a trade-off against my limited evening hours.

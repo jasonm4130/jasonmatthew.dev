@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Hero from '@components/Hero.astro';
+import ProjectPreview from '@components/ProjectPreview.astro';
+import PostPreview from '@components/PostPreview.astro';
+import Button from '@components/Button.astro';
+import { sortItemsByDateDesc } from '@utils/data-utils';
+
+const allProjects = await getCollection('projects', ({ data }) => !data.draft);
+const featuredProjects = allProjects.filter((p) => p.data.featured).sort(sortItemsByDateDesc);
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const recentPosts = allPosts.sort(sortItemsByDateDesc).slice(0, 5);
+---
+
+<BaseLayout>
+  <Hero />
+
+  {featuredProjects.length > 0 && (
+    <section class="pb-16">
+      <h2 class="mb-8 font-sans text-sm font-600 uppercase tracking-widest text-[var(--color-accent)]">
+        Featured Projects
+      </h2>
+      <div class="grid gap-6 sm:grid-cols-2">
+        {featuredProjects.map((project) => (
+          <ProjectPreview project={project} />
+        ))}
+      </div>
+      <div class="mt-8">
+        <Button href="/projects">All projects</Button>
+      </div>
+    </section>
+  )}
+
+  {recentPosts.length > 0 && (
+    <section class="pb-16">
+      <h2 class="mb-8 font-sans text-sm font-600 uppercase tracking-widest text-[var(--color-accent)]">
+        Writing
+      </h2>
+      {recentPosts.map((post) => (
+        <PostPreview post={post} />
+      ))}
+      <div class="mt-8">
+        <Button href="/blog">All posts</Button>
+      </div>
+    </section>
+  )}
+</BaseLayout>

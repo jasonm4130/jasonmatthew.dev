@@ -1,0 +1,28 @@
+---
+interface Props {
+  prevUrl?: string;
+  nextUrl?: string;
+  currentPage: number;
+  lastPage: number;
+}
+
+const { prevUrl, nextUrl, currentPage, lastPage } = Astro.props;
+---
+
+{(prevUrl || nextUrl) && (
+  <nav class="flex items-center justify-between pt-8 font-sans text-sm">
+    {prevUrl ? (
+      <a href={prevUrl} class="text-[var(--color-accent)]">&larr; Previous</a>
+    ) : (
+      <span />
+    )}
+    <span class="text-[var(--color-muted)]">
+      Page {currentPage} of {lastPage}
+    </span>
+    {nextUrl ? (
+      <a href={nextUrl} class="text-[var(--color-accent)]">Next &rarr;</a>
+    ) : (
+      <span />
+    )}
+  </nav>
+)}
