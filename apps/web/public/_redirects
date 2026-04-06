@@ -1,0 +1,6 @@
+# Redirect jasonmatthew.me to jasonmatthew.dev (preserve path)
+https://jasonmatthew.me/* https://jasonmatthew.dev/:splat 301
+https://www.jasonmatthew.me/* https://jasonmatthew.dev/:splat 301
+
+# Redirect www to apex
+https://www.jasonmatthew.dev/* https://jasonmatthew.dev/:splat 301
