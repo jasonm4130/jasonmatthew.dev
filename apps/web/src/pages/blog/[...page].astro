@@ -5,10 +5,10 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import PostPreview from '@components/PostPreview.astro';
 import Pagination from '@components/Pagination.astro';
 import siteConfig from '@data/site-config';
-import { sortItemsByDateDesc } from '@utils/data-utils';
+import { isPublished, sortItemsByDateDesc } from '@utils/data-utils';
 
 export const getStaticPaths = (async ({ paginate }) => {
-  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const posts = await getCollection('blog', isPublished);
   return paginate(posts.sort(sortItemsByDateDesc), { pageSize: siteConfig.postsPerPage });
 }) satisfies GetStaticPaths;
 
@@ -17,14 +17,7 @@ const { page } = Astro.props as Props;
 ---
 
 <BaseLayout title="Blog">
-  <h1 class="mb-12 font-sans text-3xl font-700">Blog</h1>
-  {page.data.map((post: any) => (
-    <PostPreview post={post} />
-  ))}
-  <Pagination
-    prevUrl={page.url.prev}
-    nextUrl={page.url.next}
-    currentPage={page.currentPage}
-    lastPage={page.lastPage}
-  />
+  <h1 class="font-700 mb-12 font-sans text-3xl">Blog</h1>
+  {page.data.map((post: any) => <PostPreview post={post} />)}
+  <Pagination prevUrl={page.url.prev} nextUrl={page.url.next} currentPage={page.currentPage} lastPage={page.lastPage} />
 </BaseLayout>

@@ -5,10 +5,10 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import PostPreview from '@components/PostPreview.astro';
 import Pagination from '@components/Pagination.astro';
 import siteConfig from '@data/site-config';
-import { getAllTags, getPostsByTag, sortItemsByDateDesc } from '@utils/data-utils';
+import { getAllTags, getPostsByTag, isPublished, sortItemsByDateDesc } from '@utils/data-utils';
 
 export const getStaticPaths = (async ({ paginate }) => {
-  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const posts = await getCollection('blog', isPublished);
   const tags = getAllTags(posts);
   return [...tags.keys()].flatMap((tag) => {
     const filtered = getPostsByTag(posts, tag).sort(sortItemsByDateDesc);
@@ -22,16 +22,9 @@ const { id } = Astro.params;
 ---
 
 <BaseLayout title={`#${id}`}>
-  <h1 class="mb-12 font-sans text-3xl font-700">
+  <h1 class="font-700 mb-12 font-sans text-3xl">
     Posts tagged <span class="text-[var(--color-accent)]">#{id}</span>
   </h1>
-  {page.data.map((post: any) => (
-    <PostPreview post={post} />
-  ))}
-  <Pagination
-    prevUrl={page.url.prev}
-    nextUrl={page.url.next}
-    currentPage={page.currentPage}
-    lastPage={page.lastPage}
-  />
+  {page.data.map((post: any) => <PostPreview post={post} />)}
+  <Pagination prevUrl={page.url.prev} nextUrl={page.url.next} currentPage={page.currentPage} lastPage={page.lastPage} />
 </BaseLayout>

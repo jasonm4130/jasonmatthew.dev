@@ -1,12 +1,13 @@
 ---
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { getCollection, render } from 'astro:content';
+import { isPublished } from '@utils/data-utils';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import ExternalLink from '@icons/ExternalLink.astro';
 import GitHub from '@icons/GitHub.astro';
 
 export const getStaticPaths = (async () => {
-  const projects = await getCollection('projects', ({ data }) => !data.draft);
+  const projects = await getCollection('projects', isPublished);
   return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
 }) satisfies GetStaticPaths;
 
@@ -18,39 +19,45 @@ const { Content } = await render(project);
 <BaseLayout title={project.data.title} description={project.data.description}>
   <article>
     <header class="mb-10">
-      <h1 class="font-sans text-3xl font-700 md:text-4xl">{project.data.title}</h1>
+      <h1 class="font-700 font-sans text-3xl md:text-4xl">{project.data.title}</h1>
       <p class="mt-4 text-lg text-[var(--color-muted)]">{project.data.description}</p>
       <div class="mt-6 flex flex-wrap items-center gap-4">
-        {project.data.liveUrl && (
-          <a
-            href={project.data.liveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 font-sans text-sm font-600 text-[var(--color-accent)]"
-          >
-            Live site <ExternalLink class="h-4 w-4" />
-          </a>
-        )}
-        {project.data.githubUrl && (
-          <a
-            href={project.data.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 font-sans text-sm font-600 text-[var(--color-accent)]"
-          >
-            Source <GitHub class="h-4 w-4" />
-          </a>
-        )}
+        {
+          project.data.liveUrl && (
+            <a
+              href={project.data.liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-600 inline-flex items-center gap-1.5 font-sans text-sm text-[var(--color-accent)]"
+            >
+              Live site <ExternalLink class="h-4 w-4" />
+            </a>
+          )
+        }
+        {
+          project.data.githubUrl && (
+            <a
+              href={project.data.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-600 inline-flex items-center gap-1.5 font-sans text-sm text-[var(--color-accent)]"
+            >
+              Source <GitHub class="h-4 w-4" />
+            </a>
+          )
+        }
       </div>
-      {project.data.technologies.length > 0 && (
-        <div class="mt-4 flex flex-wrap gap-2">
-          {project.data.technologies.map((tech: string) => (
-            <span class="border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 font-sans text-xs text-[var(--color-muted)]">
-              {tech}
-            </span>
-          ))}
-        </div>
-      )}
+      {
+        project.data.technologies.length > 0 && (
+          <div class="mt-4 flex flex-wrap gap-2">
+            {project.data.technologies.map((tech: string) => (
+              <span class="border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 font-sans text-xs text-[var(--color-muted)]">
+                {tech}
+              </span>
+            ))}
+          </div>
+        )
+      }
     </header>
     <div class="prose prose-lg max-w-none">
       <Content />

@@ -1,5 +1,9 @@
 import type { CollectionEntry } from 'astro:content';
 
+export function isPublished({ data }: { data: { draft?: boolean; publishDate: Date } }) {
+  return !data.draft && data.publishDate <= new Date();
+}
+
 export function sortItemsByDateDesc(itemA: { data: { publishDate: Date } }, itemB: { data: { publishDate: Date } }) {
   return new Date(itemB.data.publishDate).getTime() - new Date(itemA.data.publishDate).getTime();
 }
