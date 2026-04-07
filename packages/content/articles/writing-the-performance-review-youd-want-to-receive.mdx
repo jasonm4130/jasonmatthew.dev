@@ -9,65 +9,71 @@ tags:
 draft: true
 ---
 
-Every performance review cycle, the same ritual plays out. Managers stare at a blank text box for twenty minutes, write something that could apply to literally anyone on the team, and hit submit. Engineers read it, feel vaguely unsatisfied, and go back to work.
+Performance reviews make everyone nervous. Managers stare at the blank text box, unsure how to compress six months of work into a few paragraphs. Engineers refresh the page wondering whether they're about to read something that changes their day. Both sides dread it, and that shared anxiety is usually what makes the whole thing bad.
 
-We've all been on both sides of this. The review that says "consistently delivers high-quality work and is a valued team member" tells you absolutely nothing. It's a participation trophy in paragraph form.
+It doesn't have to be this way.
 
-I've written a lot of bad reviews. I've also received a few genuinely great ones — the kind where you read them and think "okay, this person actually _sees_ me." Here's what I've learned about the difference.
+I have one rule that keeps me honest through every review cycle: **nothing in a performance review should be said for the first time.** If I'm writing something the person hasn't already heard from me in a 1:1, I've failed — not at the review, but at the months of management that preceded it.
 
-## The Test: Would You Pay for This Feedback?
-
-Before you submit a review, ask yourself: if this person had hired an executive coach for $300/hour, would the coach's feedback look anything like what you've written?
-
-If the answer is no — if your review is vaguer, softer, and less actionable than what a stranger with a clipboard could produce — you haven't done your job.
-
-A performance review is the most concentrated feedback most engineers get all year. Treat it like the scarce resource it is.
+A performance review should be a summary of conversations you've already had. Confirming things you've discussed, following up on actions you've agreed on, and documenting where you're headed together. If it feels like a surprise, the review isn't the problem — your feedback cadence is.
 
 ## What Bad Reviews Have in Common
 
-**They describe _what_ without explaining _why it matters_.** "Delivered the authentication rewrite on time" is a fact, not feedback. "Delivered the authentication rewrite on time, and the way you broke the migration into reversible steps meant we had zero production incidents — that's the kind of risk management that separates senior engineers from mid-levels" is feedback.
+**They describe _what_ without explaining _why it matters_.** "Delivered the authentication rewrite on time" is a fact, not feedback. "Delivered the authentication rewrite on time, and the way you broke the migration into reversible steps meant we had zero production incidents" is feedback. The difference is impact.
 
-**They avoid anything uncomfortable.** If someone's review is 100% positive, either they're perfect (unlikely) or you're conflict-averse (likely). The kindest thing you can do is name the gap. Not to punish — to give them something to work on.
+**They avoid anything uncomfortable.** If someone's review is 100% positive, either they're perfect (unlikely) or you've been avoiding a conversation you should have had months ago (likely). The kindest thing you can do is name the gap — not to punish, but to give them something to work on.
 
 **They use company jargon as a crutch.** "Demonstrates our value of customer obsession" is meaningless. "Spent two days investigating a performance issue that only affected 3% of users because she understood that those users had disproportionate contract value" is specific, memorable, and actually reinforces the behaviour you want to see more of.
 
-## A Framework That Works
+## A Simple Framework
 
-I structure every review around three things:
+The formal name for what I do is [SBI — Situation, Behavior, Impact](https://www.ccl.org/articles/leading-effectively-articles/closing-the-gap-between-intent-vs-impact-sbii/). But in plain language, it's three things: **what you did, why it mattered, and what's next.**
 
-### 1. The Pattern
+### What you did
 
-Not individual events — the _pattern_ across the review period. One great pull request is a data point. Consistently writing pull requests that other engineers use as reference material is a pattern. Patterns are more useful than highlights because they describe _who someone is becoming_, not just what they did.
+Not individual events — the patterns across the review period. I keep a running doc for each person throughout the cycle. Every time someone does something noteworthy — good or bad — I write a sentence or two. "You did X and it had Y impact." "In this situation, this approach didn't land well — here's what I observed." It takes thirty seconds in the moment and saves hours of "what did they do again?" at review time.
 
-### 2. The Impact
+One great pull request is a data point. Consistently writing pull requests that other engineers use as reference material is a pattern. Patterns describe _who someone is becoming_, not just what they did on a given Tuesday.
+
+### Why it mattered
 
 Every piece of feedback should connect to impact. Not "you mentored two junior engineers" but "the two engineers you mentored both shipped independently this quarter for the first time — that's a direct result of how you structured your pairing sessions."
 
-This is harder to write because it requires you to actually _notice_ impact, which means paying attention during the quarter instead of cramming at review time. There's no shortcut for this. If you're writing reviews from memory the week they're due, you've already lost.
+This is harder to write because it requires you to actually _notice_ impact. If you're writing reviews from memory the week they're due, you've already lost. The running doc is how you avoid that trap.
 
-### 3. The Edge
+### What's next
 
-What's the next level look like, and what's the specific gap between where they are and where they could be? Not "continue to grow your leadership skills" — that's astrology. Try "you're strong at technical decision-making within your team, but I haven't seen you influence decisions across teams yet. The API standardisation initiative next quarter would be a good place to practice that."
+This is where the review becomes useful beyond a backward-looking report card. I try to frame reviews around outcomes — what do we actually want from this process? What should this person be working towards? Once we've got that, the "what's working" and "what needs to change" become the path to get there, not abstract judgements.
 
-## The Uncomfortable Ones
+Not "continue to grow your leadership skills" — that's astrology. Try "you're strong at technical decision-making within your team, but I haven't seen you influence decisions across teams yet. The API standardisation initiative next quarter would be a good place to practice that."
+
+## The Hard Reviews
 
 The hardest reviews to write are for people who are underperforming. The temptation is to soften everything until the message evaporates. "There are some areas for growth" means "you're in trouble" but sounds like "you're doing fine."
 
-Don't do this. An engineer who's struggling deserves to _know_ they're struggling, clearly and without ambiguity, so they can make an informed decision about what to do next. Burying the message in euphemisms isn't kind — it's cowardly. It delays the conversation they need to have and robs them of the chance to course-correct.
+Here's the thing though — if you've been following the "nothing new" rule, this review shouldn't be a shock. You've already had the conversations. You've already named the gap in your 1:1s. The review is documenting a trajectory you've both been watching, not dropping a bomb.
 
-That doesn't mean being harsh. It means being honest. "Your output has dropped significantly this quarter. I don't know if that's burnout, boredom, or something else — but I want to figure it out with you, because the current trajectory isn't sustainable" is direct without being cruel.
+That doesn't make it easy. Being direct with someone about underperformance is hard even when they're expecting it. I won't pretend I get it right every time. But approaching it head-on, with the person's best interest genuinely at heart, consistently leads to better outcomes than softening the message until it means nothing.
+
+One thing I always do before a hard review conversation: check in first. Yes, they showed up to the meeting. But maybe they've had a terrible morning. Maybe life has happened and they can't cope with a heavy conversation right now. Give them the option. "We're going to talk about some difficult stuff today — are you in the right headspace for that, or should we reschedule?" It costs you nothing and it shows the person you see them as a human, not a line item.
+
+## Good Performers Come First
+
+There's a tendency to think of performance management as something you do _to_ underperformers. I think that's backwards. Performance starts with keeping your good performers performing well. Recognising the things they're doing right, making sure they know their work is seen, giving them growth opportunities before they have to ask.
+
+If you only pay attention to performance when someone's struggling, you'll lose the people who are excelling long before you notice. A review that says "consistently delivers high-quality work and is a valued team member" might technically be positive, but it tells the person nothing. It's a participation trophy in paragraph form. Your best people deserve better than that.
 
 ## The Process
 
 Here's what I actually do:
 
-1. **Keep a running doc per person throughout the quarter.** Every time someone does something noteworthy — good or bad — I write 1-2 sentences. This takes 30 seconds and saves hours of "what did they do again?" at review time.
-2. **Write the growth area first.** It's the hardest part, and if you leave it for last, you'll either skip it or phone it in.
-3. **Read it from their perspective.** Would you find this useful if you received it? Would you know _exactly_ what to do more of, less of, and differently? If not, rewrite.
-4. **Say it in person first.** Nothing in a written review should be a surprise. If it is, the review isn't the problem — your feedback cadence is.
+1. **Keep the running doc updated throughout the cycle.** Specific examples with impact — both strengths and improvement areas. This is the single most important thing. Everything else falls apart without it.
+2. **Start with outcomes.** What do we want this person to be working towards? Frame the review around that destination, then use what's working and what needs to change as the map to get there.
+3. **Write the growth area first.** It's the hardest part, and if you leave it for last, you'll either skip it or phone it in.
+4. **Read it from their perspective.** Would you find this useful if you received it? Would you know _exactly_ what to do more of, less of, and differently? If not, rewrite.
 
-## The Standard
+## The Point
 
-Write the review you wish your manager had written for you. Specific enough that it could only describe one person. Honest enough that it might be uncomfortable. Actionable enough that they can do something with it on Monday.
+Performance reviews don't have to be something either side dreads. If you've been having honest conversations throughout the year — the kind we talked about in [the 1:1 article](/blog/the-one-on-one-that-actually-changed-something) — the review should feel like a natural checkpoint, not a judgement day.
 
-That's the bar. Most reviews don't clear it. Yours should.
+A good review shouldn't surprise anyone. It should feel like a summary of conversations you've already had — and a plan for where you're going next.
