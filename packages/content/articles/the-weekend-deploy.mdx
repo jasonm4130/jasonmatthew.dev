@@ -6,63 +6,72 @@ tags:
   - side-projects
   - devops
   - engineering-management
+  - ai
 draft: true
 ---
 
-Saturday morning. Coffee's hot. I've got an idea for a feature. Two hours later, it's in production. No PR review. No staging environment. No change advisory board. Just me, my editor, and a `git push` that triggers a Cloudflare Pages deploy.
+Saturday morning. Coffee's hot. I've got an idea for a feature. A few hours later, it's in production. It went through CI, an AI-assisted code review, a proper PR, and a deploy pipeline — but the whole cycle happened in a fraction of the time it would take at work.
 
-Monday morning. Same person, different context. A two-line CSS fix goes through a pull request, gets reviewed by two engineers, passes CI, gets deployed to staging, gets smoke-tested, and then — maybe — makes it to production by Tuesday.
+Monday morning. Same person, different context. A similar change goes through a pull request, gets reviewed by two engineers, sparks a thirty-minute discussion about naming conventions, gets deployed to staging, gets smoke-tested, and then — maybe — makes it to production by Tuesday.
 
-Both of these workflows are correct. But the tension between them teaches me more about software delivery than any book on DevOps.
+I've been sitting with this contrast for a while now, and I think the interesting part isn't the speed difference. It's what the speed difference _tells you_ about where teams spend their time.
 
-## The Solo Speed
+## Not Cowboy Mode
 
-When I'm building a side project, I operate at a speed that would be irresponsible in a team context. I make decisions without consensus. I skip tests for things I can verify by eye. I deploy and watch the logs instead of writing automated monitoring. I refactor by rewriting entire files instead of making surgical edits.
+I should be clear about what my solo workflow actually looks like, because it's not what most people picture.
 
-This isn't because I think those practices don't matter. It's because the risk profile is fundamentally different. If I break FormRecap on a Saturday, the blast radius is me and a handful of early users who signed up knowing it was a solo project. If we break a client's production application at work, the blast radius is revenue, trust, and someone's weekend.
+I have CI/CD. I have test coverage. I use infrastructure-as-code. I work in branches and raise PRs. The code goes through reviews — it's just that the reviewer is an AI agent instead of a human. It's a rubber duck that talks back. It validates architecture decisions, catches things I've missed, pushes back on approaches that don't make sense.
 
-The speed isn't about cutting corners. It's about understanding which corners exist for _this_ context and which don't.
+I try to mirror production environments as closely as possible. Not because I'm disciplined for the sake of it, but because I've been burned enough times to know that shortcuts in tooling cost you later.
 
-## What Solo Shipping Teaches You About Teams
+So the speed isn't coming from skipping process. It's coming from removing the coordination overhead while keeping the engineering rigour. And that distinction matters a lot.
 
-Every time I build something alone, I'm reminded of how much team process exists to solve _coordination_ problems, not _quality_ problems.
+## The Half-Day Problem
 
-Code review isn't primarily about catching bugs — it's about shared understanding. Staging environments aren't primarily about testing — they're about giving stakeholders confidence. Sprint planning isn't primarily about estimation — it's about alignment.
+Here's something I've been struggling with honestly: I can build a feature in half a day on my own. Add a company, a team, stakeholders, and the same feature takes... significantly longer.
 
-When you strip away the coordination layer, you see how fast an individual can actually move. That's useful context for a manager, because it helps you identify when process is solving a real coordination problem versus when it's just ritual.
+I know _why_. Coordination takes time. Alignment takes time. Making sure everyone understands the approach, getting feedback from the right people, navigating dependencies across teams — all of that is real work that needs to happen. I'm not naive about that.
 
-If a process wouldn't exist for a solo developer, it should only exist for a team because it solves a specific team-scale problem. "We've always done it this way" is not that.
+But I also think some of it is waste. Six hours talking through the same idea because someone is stuck on their preferred solution and won't let go. An afternoon debating code style that doesn't make the product better _or_ worse. A week waiting for a review because the reviewer is overloaded and the PR got buried.
 
-## What Teams Teach You About Solo Shipping
+When you build solo, that waste becomes very visible — because it simply doesn't exist. You don't miss the circular debates. You don't miss the style arguments. And their absence tells you something about how much of your team's time is spent on coordination that isn't actually coordination. It's friction disguised as process.
 
-The flip side: building alone exposes every bad habit that team process normally catches.
+## What You Do Miss
 
-I've deployed breaking changes to production on a Saturday because I didn't have a review step to catch my assumption. I've built features that nobody wanted because I didn't have a product person to push back. I've written code that I can't understand two weeks later because I didn't have a teammate who'd ask "what does this function actually do?"
+But here's the flip side, and it's equally important: building alone also shows you what teams give you that you can't replicate.
 
-Solo speed is exhilarating, but it's also fragile. There's no safety net. The same absence of process that lets you ship in two hours also lets you ship the wrong thing in two hours.
+Other people find solutions you wouldn't have thought of. They bring context from different domains. They ask "have you considered...?" and the answer is no, you hadn't, and it changes the whole approach. That's not waste — that's the actual value of a team.
 
-## The Feedback Loop
+AI has gotten remarkably good at the mechanical parts of collaboration — reviewing code, catching bugs, validating patterns. But it doesn't bring a different _perspective_ in the way a human teammate does. It doesn't say "actually, I worked on something similar last year and here's what we learned." It doesn't have opinions shaped by different experiences.
 
-The most valuable thing about maintaining both workflows is the feedback loop between them.
+The engineering gap between solo and team has closed dramatically. AI, modern tooling, IaC, good CI — a single person can now do what used to require a small team just on the technical side. But the human parts — the different viewpoints, the "I didn't think of that" moments, the awareness of problems you don't even know exist — that gap is as wide as ever.
 
-**From solo to team:** "I built the entire feature deployment pipeline for FormRecap in an afternoon using Cloudflare Pages. Our team's deployment pipeline takes three days to modify. Some of that complexity is justified by our scale — but not all of it. Let's look at what we can simplify."
+## Where the Real Gap Lives
 
-**From team to solo:** "Our team's incident retrospective process caught a failure mode I never would have anticipated. I'm going to add basic health checks to my side project, because operating without observability is a choice, not a virtue."
+The thing that solo work really can't replicate isn't even engineering. It's everything else.
 
-Each context makes the other better. The solo work keeps my instincts sharp about what's actually hard versus what's artificially hard. The team work keeps my instincts sharp about what's actually risky versus what feels safe because the blast radius is small.
+Marketing. Sales. Support. Product strategy. Customer research. The entire apparatus that turns "I built a thing" into "people use the thing." I wrote about this in [The First Dollar](/blog/the-first-dollar) — building FormRecap was a weekend. Getting anyone to notice it is a completely different challenge.
 
-## The Manager's Edge
+When you're on a team inside a company, all of that exists around you whether you notice it or not. The product manager who translates customer needs into requirements. The designer who makes your feature usable. The support team who tells you what's actually broken. You take that for granted until you don't have it.
 
-As a manager, I think the most dangerous thing that can happen is losing your sense of what "fast" feels like. If you've spent three years in a world where every change takes a week, you start to think that's the natural speed of software. It's not. It's the speed of _your process applied to your context_.
+## The Calibration
 
-Building side projects is my way of recalibrating. When I sit in a planning meeting and someone says "that's a two-sprint effort," I can compare that estimate against my lived experience of building something similar alone. Sometimes the estimate is right — the team-scale complexity genuinely justifies the time. Sometimes it's not — and the gap tells you something about where your process has calcified.
+As a manager, this contrast is genuinely useful calibration. When someone says "that's a two-sprint effort," I can compare that against my experience of building something similar solo with AI assistance. Sometimes the estimate is right — the coordination complexity justifies the time. Sometimes the gap between my half-day and their two sprints tells me something about where the process has calcified.
 
-You can't have that calibration if you've never operated without the process. And you can't trust the process if you've never seen what happens without it.
+I don't use that comparison to challenge people's estimates — that would be obnoxious and ignore all the context that makes team work different. But I use it to ask better questions. "What's the biggest blocker on this?" "Is there a dependency we could decouple?" "Could we ship a simpler version first?" Those questions come from having a sense of what's technically possible when you strip away everything else.
 
-## The Two Deploys
+I talked about staying sharp in [The Side Project as a Management Tool](/blog/the-side-project-as-a-management-tool). This is the specific mechanism. The side project gives you a baseline for "how hard is this actually?" and the team context shows you all the reasons why "actually" is more complicated than a solo Saturday suggests.
 
-So I keep shipping on weekends. Not because I have to. Not because it makes me a better manager (though I think it does). Because the contrast between the two-hour deploy and the two-day deploy is where the interesting questions live.
+## The Interesting Questions
 
-Why is this fast? Why is that slow? Which of the slowness is essential complexity and which is accumulated habit? What would it take to make the team version closer to the solo version — without losing the things that make the team version _safe_?
+The contrast between my solo workflow and my team's workflow used to be about speed versus safety. Fast and reckless versus slow and careful. But AI and modern tooling have changed that equation. I'm not trading safety for speed anymore — I've got real process, real checks, real infrastructure. I'm just doing it without the coordination layer.
 
-Those questions don't have clean answers. But they're the right questions to be asking.
+That raises questions I don't have clean answers to yet:
+
+If AI can fill the code review role, what's the _human_ reviewer's actual job? Is it catching bugs, or is it something more valuable — like transferring context and building shared understanding?
+
+If a solo developer with AI can maintain proper engineering practices, what does that mean for team sizing? For how we think about productivity?
+
+If the remaining gap between solo and team is mostly about coordination and non-engineering functions, should we be investing more in making coordination efficient rather than adding more engineers?
+
+I don't know. But those feel like the right questions to be sitting with. And the only reason I can ask them is because I keep one foot in each world — the Saturday deploy and the Monday deploy — and pay attention to where they diverge.
