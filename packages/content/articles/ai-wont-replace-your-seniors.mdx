@@ -9,72 +9,84 @@ tags:
 draft: true
 ---
 
-Here's a pattern I'm seeing across every team I talk to.
+Here's a pattern I'm seeing on real teams, including my own.
 
-Junior engineers are shipping faster than ever. Pull requests are flowing. Code is compiling. Features are getting marked as done. Velocity metrics look _incredible_.
+Engineers are shipping faster than ever. Pull requests are flowing. Code is compiling. Features are getting marked as done. Velocity metrics look _incredible_.
 
-And the senior engineers are spending more time than ever reviewing, reverting, and quietly rewriting code that technically works but fundamentally misunderstands the problem.
+And the engineers who actually understand the codebase are spending more time than ever reviewing, reverting, and quietly rewriting code that technically works but fundamentally misunderstands the problem.
 
 AI didn't create this dynamic. But it's accelerating it in ways that most engineering managers aren't prepared for.
 
 ## The Productivity Illusion
 
-AI coding tools are genuinely impressive at producing code that _looks right_. It compiles. It passes the obvious test cases. It follows the patterns in your codebase. For a junior engineer, this feels like a superpower — and honestly, it is. The barrier between "I don't know how to implement this" and "I have working code" has collapsed.
+AI coding tools are genuinely impressive at producing code that _looks right_. It compiles. It passes the obvious test cases. It follows the patterns in your codebase. For an engineer who doesn't have deep expertise in the area, this feels like a superpower — and honestly, it is. The barrier between "I don't know how to implement this" and "I have working code" has collapsed.
 
 But "working code" and "correct code" are not the same thing. Neither are "correct code" and "good code."
 
 The gap between these levels has always existed. What's changed is that AI tools have made the first level trivially accessible while leaving the other two exactly as hard as they've always been. You still need judgement to write correct code. You still need experience to write good code. AI doesn't teach you either.
 
-## What Seniors Actually Do
+## It's About Skill, Not Title
 
-When I watch senior engineers use AI tools, they use them _differently_. They know what to ask for because they already know what the solution should look like. They can evaluate the output because they understand the domain. They catch the subtle bugs — the race condition, the N+1 query, the security assumption — because they've been burned by those bugs before.
+I wrote about [what actually makes a senior engineer senior](/blog/what-is-a-senior) — and it's not years of experience or a title on LinkedIn. AI is making that distinction sharper than ever.
 
-A senior engineer with AI is a force multiplier. A junior engineer with AI is a force _misdirector_. They're moving fast in a direction that might be wrong, producing volume that creates an illusion of progress.
+The engineers who can _evaluate and direct_ AI — who know what to ask for because they already know what the solution should look like, who catch the subtle bugs because they've been burned by those bugs before — they're getting genuinely more productive. AI is a force multiplier for them.
 
-This isn't the junior's fault. They're using the tools they've been given. The problem is that the feedback loop that used to exist — struggling with implementation, learning from the struggle, slowly building intuition — has been short-circuited.
+The engineers who _accept_ what AI gives them — who can't tell you whether the output is the right solution for the context, who don't have the instinct to spot the race condition or the N+1 query — they're producing volume that creates an illusion of progress. They're moving fast in a direction that might be wrong.
+
+And here's the uncomfortable part: this isn't just a junior engineer problem. Some engineers with "senior" in their title are in the same camp. AI doesn't care what's on your LinkedIn. It exposes anyone who's been getting by on output volume rather than deep understanding. Title inflation has been a problem for years — AI is just making it visible.
+
+## The Overwhelm Problem
+
+Here's something I've seen firsthand: a single engineer who leans heavily on AI can overwhelm an entire team with review requests. PRs flowing in faster than anyone can review them. The code compiles, the tests pass, but nobody has had time to actually evaluate whether the approach makes sense.
+
+Just because you _can_ produce ten PRs a day doesn't mean you _should_. Especially when your seniors don't have proportional force multiplier tools to handle the increased review load. We gave one side of the team a productivity boost and left the other side to deal with the consequences.
+
+That imbalance is a real problem and most teams haven't figured it out yet. AI can help with reviews — I use it that way myself in [my solo workflow](/blog/the-weekend-deploy) — but it's not the whole answer. Process plays a part. Architecture plays a part. If your codebase is well-structured with clear boundaries, there's less surface area to review. If your process routes the right PRs to the right people, you're not wasting senior time on things that don't need their expertise.
+
+There's no single fix. But pretending the review bottleneck doesn't exist — or blaming seniors for being "too slow" to review — misses the point entirely.
 
 ## The Learning Gap
 
 Here's what worries me most.
 
-The traditional path from junior to senior was paved with friction. You'd spend a day debugging a memory leak and come out the other side understanding how the garbage collector actually works. You'd write a database query that brought down staging and learn about query planning the hard way. You'd ship a feature that seemed simple and spend two weeks handling edge cases you didn't anticipate.
+The traditional path from inexperienced to expert was paved with friction. You'd spend a day debugging a memory leak and come out the other side understanding how the garbage collector actually works. You'd write a database query that brought down staging and learn about query planning the hard way. You'd ship a feature that seemed simple and spend two weeks handling edge cases you didn't anticipate.
 
 That friction was the learning. Not a byproduct of it — the actual mechanism.
 
-When an AI tool generates the code that handles the edge cases for you, you ship faster. But you also skip the part where you _understand_ why those edge cases exist. The next time a similar problem appears in a different context, you don't have the instinct to recognise it. You just ask the AI again. And the time after that. And the time after that.
+When AI generates the code that handles the edge cases for you, you ship faster. But you also skip the part where you _understand_ why those edge cases exist. The next time a similar problem appears in a different context, you don't have the instinct to recognise it. You just ask the AI again.
 
 The result is engineers who've shipped a lot of code but built very little understanding. They have a portfolio of outputs but not a foundation of knowledge. And when they encounter a problem that AI can't solve — an architecture decision, a production incident, a trade-off with no clear answer — they're stuck.
 
+## Learning vs Delivering
+
+I want to be clear: I'm not anti-AI. I use it constantly. I talked about using AI as a rubber duck that talks back in [The Weekend Deploy](/blog/the-weekend-deploy). I think it's a genuinely powerful tool. But there's a distinction between _learning_ and _delivering_ that's always existed, and I think it's more important now than ever.
+
+When you're delivering, use every tool you've got. Ship fast. Automate the boring stuff. Let AI handle the boilerplate. That's what it's for.
+
+When you're learning, the friction is the point. I still do LeetCode and CodeWars problems by hand. AI could solve them instantly — that's not the point. The cognitive load, the struggle, the "why doesn't this work?" loop — that's where the understanding gets built. Skip it and you skip the growth.
+
+The judgement about when to struggle and when to automate is itself a skill that needs to be developed. And it's one that managers need to actively support.
+
 ## What This Means for Managers
 
-If you manage a team with mixed seniority levels, here's what I'd be paying attention to:
+If you manage a team, here's what I'd be paying attention to:
 
-### 1. Velocity is no longer a signal of capability
+**Velocity is no longer a signal of capability.** An engineer shipping ten PRs a week might be less capable than one shipping three. The question isn't "how much are they shipping?" but "how much do they understand about what they're shipping?" If you're measuring output without measuring comprehension, you're tracking the wrong thing.
 
-A junior shipping ten PRs a week might be less capable than one shipping three. The question isn't "how much are they shipping?" but "how much do they understand about what they're shipping?" If you're measuring output without measuring comprehension, you're tracking the wrong thing.
+**Code review is more important than ever — and more strained.** The review isn't just about code quality anymore. It's the primary mechanism through which engineers learn _why_ something should be done differently. If your experienced engineers are too overloaded to review thoroughly — or if they're approving AI-generated code on autopilot because it "looks fine" — you're losing the most valuable feedback loop your team has.
 
-### 2. Code review just became your most important process
+**The seniority gap has changed shape.** The traditional gap was about implementation — junior engineers needed help writing code. The new gap is about _judgement_. Engineers can produce a solution to any problem. The question is whether they can tell you if it's the _right_ solution. This requires different mentoring. Less "here's how to write this function" and more "here's how to evaluate whether this approach is correct for our context."
 
-The code review isn't just about code quality anymore. It's the primary mechanism through which your junior engineers learn _why_ something should be done differently. If your seniors are too busy to review thoroughly — or if they're approving AI-generated code on autopilot because it "looks fine" — you're losing the most valuable feedback loop your team has.
+**Give people space to learn.** When you see someone struggling with something AI could solve in seconds, resist the instinct to say "just ask Copilot." At least sometimes. Create deliberate space for learning — code katas, architectural exercises, debugging challenges — where the goal is understanding, not output. The learning vs delivering split has always existed. AI just makes it more important to be intentional about which mode your team is in.
 
-### 3. You need to redefine what "junior" means
+## The Bifurcation
 
-The traditional junior engineer struggled with implementation and needed help writing code. The AI-era junior engineer doesn't struggle with implementation — they struggle with _judgement_. They can produce a solution to any problem. They can't tell you whether it's the _right_ solution.
+I don't know exactly when it happens, but I think we'll see a clearly visible split across engineering teams. Engineers who used AI to _accelerate_ their learning — who used the time saved on implementation to go deeper on understanding — will be dramatically more capable than their peers. Engineers who used AI to _replace_ their learning — who stopped at "it works" and never asked "but why?" — will have years of experience on paper with months of actual skill development.
 
-This is a different kind of seniority gap, and it requires different mentoring. Less "here's how to write this function" and more "here's how to evaluate whether this approach is correct for our context."
-
-### 4. Protect the struggle
-
-This might be the hardest one. When you see a junior engineer struggling with something that AI could solve in seconds, your instinct as a manager is to say "just use Copilot." Resist that instinct — at least sometimes. The struggle is where the learning happens. If you optimise away all the friction, you optimise away the growth.
-
-That doesn't mean banning AI tools. It means being intentional about _when_ to use them. Boilerplate? Use the AI. A complex architectural problem they've never encountered? Let them wrestle with it first. The judgement about when to struggle and when to automate is itself a skill that needs to be developed.
-
-## The Uncomfortable Prediction
-
-In two years, I think we'll see a clearly visible bifurcation in engineering teams. Engineers who used AI to _accelerate_ their learning — who used the time saved on implementation to go deeper on understanding — will be dramatically more capable than their peers. Engineers who used AI to _replace_ their learning — who stopped at "it works" and never asked "but why?" — will have years of experience on paper with months of actual skill development.
+This isn't a junior-vs-senior thing. It's a skill thing. It'll cut across titles and experience levels. Some engineers five years in will have genuinely deep understanding. Others with the same tenure will have been leaning on AI so heavily that they can't debug a production issue without it.
 
 As a manager, the question you need to ask yourself is: which kind of engineers is your team producing?
 
-The answer isn't about the tools. It's about the culture. Do your engineers have space to be slow when it matters? Do your seniors have time to teach, not just review? Does your team value understanding, or just output?
+The answer isn't about the tools. It's about the culture. Do your engineers have space to be slow when it matters? Do your experienced engineers have time to teach, not just review? Does your team value understanding, or just output?
 
-AI won't replace your senior engineers. But it might prevent your junior engineers from ever becoming senior. That's the problem worth solving.
+AI won't replace the engineers who truly understand what they're building. But it might prevent the ones who don't from ever getting there. That's the problem worth solving.
