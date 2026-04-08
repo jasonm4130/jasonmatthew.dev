@@ -201,30 +201,41 @@ pre.shiki {
 
 /* ─── Scroll Reveal Utility ────────────────────────────────── */
 
-@supports (animation-timeline: view()) {
-  .reveal {
-    animation: revealFade 1s ease-out both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 20%;
-  }
+.reveal {
+  opacity: 0;
+  translate: 0 8px;
+  transition:
+    opacity 0.4s ease-out,
+    translate 0.4s ease-out;
+}
+
+.reveal.in-view {
+  opacity: 1;
+  translate: 0 0;
 }
 
 /* ─── Signature Draw Animation ─────────────────────────────── */
 
-@supports (animation-timeline: view()) {
-  .signature-draw {
-    clip-path: inset(0 100% 0 0);
-    animation: revealSignature 2s ease-in-out both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 40%;
-  }
+.signature-draw {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 1.5s ease-in-out;
+}
 
-  .signature-draw-delay {
-    opacity: 0;
-    animation: fadeUp 0.5s ease-out both;
-    animation-timeline: view();
-    animation-range: entry 30% entry 45%;
-  }
+.signature-draw.in-view {
+  clip-path: inset(0 0 0 0);
+}
+
+.signature-draw-delay {
+  opacity: 0;
+  translate: 0 8px;
+  transition:
+    opacity 0.4s ease-out 1.2s,
+    translate 0.4s ease-out 1.2s;
+}
+
+.signature-draw-delay.in-view {
+  opacity: 1;
+  translate: 0 0;
 }
 
 /* ─── Hero Entrance ────────────────────────────────────────── */
@@ -303,17 +314,20 @@ pre.shiki {
   }
 
   .reveal {
-    animation: none !important;
+    opacity: 1;
+    translate: 0 0;
+    transition: none;
   }
 
   .signature-draw {
-    animation: none !important;
     clip-path: none;
+    transition: none;
   }
 
   .signature-draw-delay {
-    animation: none !important;
     opacity: 1;
+    translate: 0 0;
+    transition: none;
   }
 
   .nav-link-underline {

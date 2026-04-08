@@ -34,5 +34,28 @@ const { title, description, image, pageType } = Astro.props;
       </main>
       <Footer />
     </div>
+    <script>
+      function setupScrollReveal() {
+        const targets = document.querySelectorAll(
+          '.reveal:not(.in-view), .signature-draw:not(.in-view), .signature-draw-delay:not(.in-view)',
+        );
+        if (!targets.length) return;
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('in-view');
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1 },
+        );
+
+        targets.forEach((el) => observer.observe(el));
+      }
+      document.addEventListener('astro:page-load', setupScrollReveal);
+    </script>
   </body>
 </html>
