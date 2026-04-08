@@ -23,6 +23,11 @@
       var next = isDark ? 'light' : 'dark';
       localStorage.setItem('theme', next);
       applyTheme(next);
+      if (next === 'light') {
+        toggle.classList.remove('glow');
+        void toggle.offsetWidth;
+        toggle.classList.add('glow');
+      }
     });
   }
 

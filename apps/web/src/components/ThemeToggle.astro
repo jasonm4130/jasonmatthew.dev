@@ -1,14 +1,12 @@
 ---
-import Sun from '@icons/Sun.astro';
-import Moon from '@icons/Moon.astro';
+import Lightbulb from '@icons/Lightbulb.astro';
 ---
 
 <button
   id="theme-toggle"
   type="button"
-  class="relative flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+  class="theme-toggle flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-all hover:scale-105 hover:text-[var(--color-fg)]"
   aria-label="Toggle theme"
 >
-  <Sun class="absolute h-5 w-5 opacity-0 transition-opacity duration-300 dark:opacity-100" />
-  <Moon class="absolute h-5 w-5 opacity-100 transition-opacity duration-300 dark:opacity-0" />
+  <Lightbulb class="h-5 w-5" />
 </button>
