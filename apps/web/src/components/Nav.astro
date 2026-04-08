@@ -55,6 +55,11 @@ import Signature from '@icons/Signature.astro';
     const toggle = document.getElementById('mobile-menu-toggle');
     const menu = document.getElementById('mobile-menu');
     if (!toggle || !menu) return;
+
+    // Close menu on navigation (transition:persist keeps DOM state)
+    menu.classList.add('hidden');
+    toggle.setAttribute('aria-expanded', 'false');
+
     toggle.addEventListener('click', () => {
       const expanded = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', String(!expanded));

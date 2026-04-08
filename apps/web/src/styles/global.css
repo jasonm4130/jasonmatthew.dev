@@ -293,6 +293,10 @@ pre.shiki {
 /* ─── Reduced Motion ───────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .hero-title,
   .hero-accent,
   .hero-subtitle {
