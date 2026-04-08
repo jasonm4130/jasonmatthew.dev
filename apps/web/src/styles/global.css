@@ -164,30 +164,6 @@ pre.shiki {
   }
 }
 
-@keyframes draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes fillIn {
-  from {
-    fill-opacity: 0;
-  }
-  to {
-    fill-opacity: 1;
-  }
-}
-
-@keyframes revealSignature {
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
 @keyframes revealFade {
   from {
     opacity: 0;
@@ -212,23 +188,6 @@ pre.shiki {
 .reveal.in-view {
   opacity: 1;
   translate: 0 0;
-}
-
-/* ─── Signature Draw Animation ─────────────────────────────── */
-
-.signature-draw path {
-  fill: transparent;
-  stroke: currentColor;
-  stroke-width: 12;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  transition: fill 0.6s ease-out;
-}
-
-.signature-draw.in-view path {
-  animation: draw 2s ease-in-out forwards;
-  fill: currentColor;
-  transition: fill 0.6s ease-out 1.8s;
 }
 
 /* ─── Lightbulb Toggle ─────────────────────────────────────── */
@@ -352,21 +311,8 @@ pre.shiki {
     transition: none;
   }
 
-  .signature-draw path {
-    fill: currentColor;
-    stroke-dashoffset: 0;
-    animation: none;
-    transition: none;
-  }
-
   .theme-toggle.glow {
     animation: none;
-  }
-
-  .signature-draw-delay {
-    opacity: 1;
-    translate: 0 0;
-    transition: none;
   }
 
   .nav-link-underline {

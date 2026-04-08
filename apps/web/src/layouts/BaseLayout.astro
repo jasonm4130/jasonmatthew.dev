@@ -36,9 +36,7 @@ const { title, description, image, pageType } = Astro.props;
     </div>
     <script>
       function setupScrollReveal() {
-        const targets = document.querySelectorAll(
-          '.reveal:not(.in-view), .signature-draw:not(.in-view), .signature-draw-delay:not(.in-view)',
-        );
+        const targets = document.querySelectorAll('.reveal:not(.in-view)');
         if (!targets.length) return;
 
         const observer = new IntersectionObserver(
