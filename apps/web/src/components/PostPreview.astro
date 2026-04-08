@@ -16,6 +16,10 @@ const { post } = Astro.props;
         class="font-600 font-sans text-lg text-[var(--color-fg)] transition-colors group-hover:text-[var(--color-accent)]"
       >
         {post.data.title}
+        <span
+          class="inline-block translate-x-0 opacity-0 transition-all motion-safe:group-hover:translate-x-1 motion-safe:group-hover:opacity-100"
+          aria-hidden="true">&nbsp;&rarr;</span
+        >
       </h3>
       <span class="shrink-0 font-sans text-sm text-[var(--color-muted)]">
         <FormattedDate date={post.data.publishDate} />

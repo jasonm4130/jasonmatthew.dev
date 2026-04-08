@@ -11,7 +11,7 @@ const isActive = Astro.url.pathname === href || (href !== '/' && Astro.url.pathn
 <a
   href={href}
   class:list={[
-    'font-sans text-sm font-600 transition-colors',
+    'nav-link-underline font-600 font-sans text-sm no-underline',
     isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]',
     className,
   ]}

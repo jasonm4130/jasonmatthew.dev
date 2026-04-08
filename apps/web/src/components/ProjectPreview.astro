@@ -10,7 +10,7 @@ const { project } = Astro.props;
 ---
 
 <article
-  class="reveal group border border-[var(--color-border)] p-6 transition-colors hover:border-[var(--color-accent)]"
+  class="reveal group border border-[var(--color-border)] p-6 transition-all hover:border-[var(--color-accent)] motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-md"
 >
   <a href={`/projects/${project.id}`} class="block no-underline">
     <h3 class="font-600 font-sans text-xl text-[var(--color-fg)]">
