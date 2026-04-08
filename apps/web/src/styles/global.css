@@ -182,6 +182,12 @@ pre.shiki {
   }
 }
 
+@keyframes revealSignature {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
 @keyframes revealFade {
   from {
     opacity: 0;
@@ -206,18 +212,11 @@ pre.shiki {
 /* ─── Signature Draw Animation ─────────────────────────────── */
 
 @supports (animation-timeline: view()) {
-  .signature-draw path {
-    fill-opacity: 0;
-    stroke: currentColor;
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation:
-      draw 2s ease-in-out both,
-      fillIn 0.5s ease-out both;
-    animation-timeline: view(), view();
-    animation-range:
-      entry 0% entry 30%,
-      entry 30% entry 40%;
+  .signature-draw {
+    clip-path: inset(0 100% 0 0);
+    animation: revealSignature 2s ease-in-out both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
   }
 
   .signature-draw-delay {
@@ -307,10 +306,9 @@ pre.shiki {
     animation: none !important;
   }
 
-  .signature-draw path {
+  .signature-draw {
     animation: none !important;
-    fill-opacity: 1;
-    stroke-dashoffset: 0;
+    clip-path: none;
   }
 
   .signature-draw-delay {
