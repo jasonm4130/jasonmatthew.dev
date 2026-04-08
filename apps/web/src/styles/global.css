@@ -150,3 +150,181 @@ pre.shiki {
   background-color: var(--color-accent);
   color: #fff;
 }
+
+/* ─── Animation Keyframes ──────────────────────────────────── */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fillIn {
+  from {
+    fill-opacity: 0;
+  }
+  to {
+    fill-opacity: 1;
+  }
+}
+
+@keyframes revealFade {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* ─── Scroll Reveal Utility ────────────────────────────────── */
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: revealFade 1s ease-out both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 20%;
+  }
+}
+
+/* ─── Signature Draw Animation ─────────────────────────────── */
+
+@supports (animation-timeline: view()) {
+  .signature-draw path {
+    fill-opacity: 0;
+    stroke: currentColor;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation:
+      draw 2s ease-in-out both,
+      fillIn 0.5s ease-out both;
+    animation-timeline: view(), view();
+    animation-range:
+      entry 0% entry 30%,
+      entry 30% entry 40%;
+  }
+
+  .signature-draw-delay {
+    opacity: 0;
+    animation: fadeUp 0.5s ease-out both;
+    animation-timeline: view();
+    animation-range: entry 30% entry 45%;
+  }
+}
+
+/* ─── Hero Entrance ────────────────────────────────────────── */
+
+.hero-title {
+  animation: fadeUp 0.5s ease-out both;
+}
+
+.hero-accent {
+  animation: fadeUp 0.5s ease-out 0.2s both;
+}
+
+.hero-subtitle {
+  animation: fadeUp 0.5s ease-out 0.6s both;
+}
+
+/* ─── View Transitions ─────────────────────────────────────── */
+
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+::view-transition-old(root) {
+  animation: slideOutDown 0.25s ease-in both;
+}
+
+::view-transition-new(root) {
+  animation: slideInUp 0.25s ease-out both;
+}
+
+/* ─── Nav Link Animated Underline ──────────────────────────── */
+
+.nav-link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0% 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 2px;
+  transition:
+    background-size 0.3s ease-out,
+    color 0.2s ease;
+}
+
+.nav-link-underline:hover {
+  background-size: 100% 2px;
+}
+
+/* ─── Reduced Motion ───────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title,
+  .hero-accent,
+  .hero-subtitle {
+    animation: none;
+  }
+
+  .reveal {
+    animation: none !important;
+  }
+
+  .signature-draw path {
+    animation: none !important;
+    fill-opacity: 1;
+    stroke-dashoffset: 0;
+  }
+
+  .signature-draw-delay {
+    animation: none !important;
+    opacity: 1;
+  }
+
+  .nav-link-underline {
+    transition: color 0.2s ease;
+    background-size: 0% 2px;
+  }
+
+  .nav-link-underline:hover {
+    background-size: 100% 2px;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
