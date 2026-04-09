@@ -1,0 +1,25 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+}
+
+const { src, alt, width, height } = Astro.props;
+---
+
+<figure>
+  <video
+    autoplay
+    loop
+    muted
+    playsinline
+    width={width}
+    height={height}
+    aria-label={alt}
+    class="border-border w-full rounded-lg border"
+  >
+    <source src={src} type="video/mp4" />
+  </video>
+</figure>

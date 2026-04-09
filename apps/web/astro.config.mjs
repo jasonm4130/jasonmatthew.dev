@@ -9,6 +9,10 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   integrations: [mdx(), sitemap()],
+  image: {
+    layout: 'constrained',
+    responsiveStyles: false,
+  },
   markdown: {
     shikiConfig: {
       themes: {

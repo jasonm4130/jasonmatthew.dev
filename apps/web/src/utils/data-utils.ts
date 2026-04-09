@@ -8,6 +8,16 @@ export function sortItemsByDateDesc(itemA: { data: { publishDate: Date } }, item
   return new Date(itemB.data.publishDate).getTime() - new Date(itemA.data.publishDate).getTime();
 }
 
+export function sortItemsBySortOrder(
+  itemA: { data: { sortOrder?: number; publishDate: Date } },
+  itemB: { data: { sortOrder?: number; publishDate: Date } },
+) {
+  const orderA = itemA.data.sortOrder ?? Infinity;
+  const orderB = itemB.data.sortOrder ?? Infinity;
+  if (orderA !== orderB) return orderA - orderB;
+  return new Date(itemB.data.publishDate).getTime() - new Date(itemA.data.publishDate).getTime();
+}
+
 export function getAllTags(posts: CollectionEntry<'blog'>[]) {
   const tags = new Map<string, number>();
   posts.forEach((post) => {

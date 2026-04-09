@@ -35,6 +35,23 @@
   --color-surface: var(--color-surface);
 }
 
+/* ─── Responsive Images (Astro layout, TW4 compat) ─────────── */
+
+[data-astro-image] {
+  object-fit: var(--fit);
+  object-position: var(--pos);
+}
+
+[data-astro-image='constrained'] {
+  max-width: 100%;
+  height: auto;
+}
+
+[data-astro-image='full-width'] {
+  width: 100%;
+  height: auto;
+}
+
 /* ─── Base Styles ───────────────────────────────────────────── */
 
 @layer base {

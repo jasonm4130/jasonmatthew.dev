@@ -5,10 +5,10 @@ import Hero from '@components/Hero.astro';
 import ProjectPreview from '@components/ProjectPreview.astro';
 import PostPreview from '@components/PostPreview.astro';
 import Button from '@components/Button.astro';
-import { isPublished, sortItemsByDateDesc } from '@utils/data-utils';
+import { isPublished, sortItemsByDateDesc, sortItemsBySortOrder } from '@utils/data-utils';
 
 const allProjects = await getCollection('projects', isPublished);
-const featuredProjects = allProjects.filter((p) => p.data.featured).sort(sortItemsByDateDesc);
+const featuredProjects = allProjects.filter((p) => p.data.featured).sort(sortItemsBySortOrder);
 
 const allPosts = await getCollection('blog', isPublished);
 const recentPosts = allPosts.sort(sortItemsByDateDesc).slice(0, 5);

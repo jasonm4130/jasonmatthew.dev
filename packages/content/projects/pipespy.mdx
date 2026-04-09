@@ -8,44 +8,81 @@ technologies:
   - crossterm
   - GitHub Actions
 featured: true
+sortOrder: 2
 githubUrl: https://github.com/jasonm4130/pipespy
 ---
 
-## The Problem
+import AnimatedDemo from '@components/AnimatedDemo.astro';
 
-Every developer has been here: you're piping data between commands and something isn't right. Is the data malformed? Is throughput tanking? What does the output actually look like at this stage of the pipeline? Your options are `| head`, `| wc -l`, or `pv` for byte counts. None of them show you the actual data in context.
+<AnimatedDemo
+  src="/images/projects/pipespy-demo.mp4"
+  alt="pipespy demo showing compact mode, fullscreen toggle, and quiet mode"
+/>
 
-## The Solution
+## How It Started
 
-pipespy is a transparent pipeline proxy with a real-time TUI. Drop it anywhere in a pipeline and it shows you what's flowing through — throughput sparklines, record samples, format detection — all rendered to stderr so your data passes through completely untouched.
+I spend a lot of time piping data between commands — tailing logs, transforming JSON, filtering CSV exports. The workflow is always the same: build up a pipeline one stage at a time, run it, and hope the output looks right. When it doesn't, the debugging options are basically `| head`, `| wc -l`, or staring at a wall of text scrolling past. `pv` tells you how many bytes moved, but not what they looked like.
+
+I wanted something I could drop into any pipeline that would show me the actual data in context — throughput, record samples, format — without interfering with the pipeline itself. And I wanted an excuse to write something non-trivial in Rust.
+
+## What It Does
+
+Drop `pipespy` anywhere in a shell pipeline and it shows a real-time TUI on stderr while data passes through stdout untouched:
 
 ```bash
 cat events.jsonl | pipespy | jq '.users[]' | grep "active" > out.txt
 ```
 
-It auto-detects JSON, CSV, and plain text, then syntax-highlights the live record samples accordingly. Two display modes — a compact view that fits in a split pane, and a fullscreen mode with a line length histogram and extended stats.
+It auto-detects JSON, CSV, and plain text, then syntax-highlights the live record samples. There are two display modes — a compact view that fits in a split terminal pane (throughput, sparkline, last N records), and a fullscreen mode with a line length histogram, min/max/avg stats, and a larger record viewer. Press `f` to toggle between them, `q` to detach.
 
-## Architecture
+There's also a `--quiet` mode that skips the TUI entirely and prints a one-line summary when the pipeline completes — useful for scripts where you just want to know throughput.
 
-The design is a three-thread model: a reader thread pumps stdin into a shared ring buffer, a writer thread drains it to stdout, and a TUI thread samples stats on a timer to render on stderr via ratatui.
+## The Three-Thread Model
 
-The key constraint was data integrity — every byte in must come out, in order, unmodified. The TUI thread never touches the data path. By rendering to stderr and using crossterm's `use-dev-tty` feature for keyboard input, the visual output is completely isolated from the pipeline data. This is verified by integration tests that assert byte-for-byte equality.
+The core design is three threads sharing a ring buffer:
 
-Using raw `libc::tcsetattr` on stderr's file descriptor instead of crossterm's default `enable_raw_mode()` (which targets stdin) was necessary because stdin is the data pipe, not a terminal. A subtle bug that would have been invisible in any project where stdin is interactive.
+1. **Reader** — reads stdin line-by-line into a shared `VecDeque` behind `Arc<Mutex<>>` with a `Condvar`. Records per-line byte lengths for stats.
+2. **Writer** — drains the buffer to stdout. Blocks when the buffer is empty, wakes when data arrives.
+3. **TUI** — samples the stats collector every 500ms and renders to stderr via ratatui. Never touches the data path.
 
-## Distribution
+The `Condvar` does the heavy lifting for flow control. The reader blocks when the buffer hits capacity (default 8MB), the writer blocks when it's empty, and `mark_done()` wakes both sides on EOF. It's simple — deliberately so. A lock-free ring buffer would be faster, but `Mutex` + `Condvar` is correct and the bottleneck is I/O, not the buffer.
 
-One of the goals was making installation frictionless. The project ships via four channels, all automated:
+## The stderr Problem
 
-- **Homebrew** — `brew install jasonm4130/tap/pipespy`
-- **crates.io** — `cargo install pipespy`
-- **Pre-built binaries** — macOS and Linux (arm64 + amd64) via GitHub Releases
-- **Shell installer** — `curl | sh` one-liner
+This was the gnarliest bug to track down. The TUI renders to stderr via `CrosstermBackend::new(stderr())`, which works great — except crossterm's `enable_raw_mode()` calls `tcsetattr` on **stdin**, which is a pipe when you're in a pipeline. It fails silently or panics depending on the platform.
 
-A single `git tag` triggers a GitHub Actions workflow that builds cross-platform binaries, creates a GitHub Release, publishes to crates.io, and auto-updates the Homebrew formula with correct SHA256 hashes. Zero manual steps after the tag.
+The fix was bypassing crossterm's raw mode entirely and calling `libc::tcsetattr` directly on stderr's file descriptor:
+
+```rust
+let stderr_fd = stderr().as_raw_fd();
+let orig_termios = enable_raw_mode_on_fd(stderr_fd)?;
+```
+
+Similarly, keyboard input (`event::poll` / `event::read`) defaults to reading from stdin — which is where the data comes from. Enabling crossterm's `use-dev-tty` feature redirects event reading to `/dev/tty` instead, so `f` and `q` work while data flows through stdin.
+
+These are the kinds of bugs that don't exist in any tutorial or example project, because those examples always assume stdin is interactive. It took a while to figure out, but it's the most interesting part of the codebase.
+
+## Format Detection and Highlighting
+
+Format detection runs once, after 4+ sample lines have accumulated. The logic is simple: if every non-empty line parses as valid JSON, it's JSON. If every line has the same number of commas (≥1), it's CSV. Otherwise, plain text. You can override with `--json`, `--csv`, or `--no-detect`.
+
+The JSON highlighter is a character-by-character state machine that tracks whether a string is a key or value based on the preceding structural character (`{` or `,` means key, `:` means value). Keys get green, values get cyan, numbers get yellow. CSV just cycles through six colours per column with grey commas.
+
+## Automated Distribution
+
+I wanted the installation experience to be frictionless, so I set up four channels — all triggered by a single `git tag`:
+
+1. A GitHub Actions workflow cross-compiles for macOS and Linux (arm64 + amd64)
+2. Tarballs get attached to a GitHub Release
+3. `cargo publish` pushes to crates.io
+4. A final job computes SHA256 hashes, clones my [homebrew-tap](https://github.com/jasonm4130/homebrew-tap) repo, writes an updated Ruby formula with the new version and hashes, and pushes
+
+The result: `brew install jasonm4130/tap/pipespy` works within minutes of tagging a release. No manual steps, no copy-pasting hashes.
 
 ## What I Learned
 
-Building a TUI tool that lives inside a pipeline is a different beast from a standalone terminal app. The usual assumptions — stdin is a terminal, stdout is where you render — are inverted. Every terminal control operation needs to be explicitly routed to stderr, and keyboard events need to come from `/dev/tty` instead of stdin. It's the kind of systems-level detail that Rust makes you confront honestly rather than papering over.
+Rust's ownership model is genuinely useful for concurrent code — not in the "it prevents data races" textbook sense, but practically: the compiler caught two places where I was holding a lock across a blocking call. In Go or Python those would have been deadlocks discovered at 2am. In Rust they were compile errors.
 
-I also got to explore Rust's concurrency model in a practical setting. The shared ring buffer between reader and writer threads is simple (`VecDeque` behind `Arc<Mutex<>>` with a `Condvar`), but getting the blocking semantics right — push blocks when full, pop blocks when empty, everything unblocks on completion — required thinking carefully about the state machine. Rust's ownership model caught several potential deadlocks at compile time.
+The TUI ecosystem (ratatui + crossterm) is mature and well-documented, but the moment you step outside the "normal" use case — like rendering to stderr with piped stdin — you're on your own. That's fine, and honestly that's where the fun is, but it's worth knowing going in.
+
+Building the distribution pipeline took almost as long as the tool itself, and it was worth every minute. The difference between "you can clone and build it" and "you can `brew install` it" is the difference between a side project and something that feels real.

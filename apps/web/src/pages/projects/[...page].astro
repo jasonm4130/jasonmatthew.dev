@@ -5,11 +5,11 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import ProjectPreview from '@components/ProjectPreview.astro';
 import Pagination from '@components/Pagination.astro';
 import siteConfig from '@data/site-config';
-import { isPublished, sortItemsByDateDesc } from '@utils/data-utils';
+import { isPublished, sortItemsBySortOrder } from '@utils/data-utils';
 
 export const getStaticPaths = (async ({ paginate }) => {
   const projects = await getCollection('projects', isPublished);
-  return paginate(projects.sort(sortItemsByDateDesc), { pageSize: siteConfig.projectsPerPage });
+  return paginate(projects.sort(sortItemsBySortOrder), { pageSize: siteConfig.projectsPerPage });
 }) satisfies GetStaticPaths;
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
