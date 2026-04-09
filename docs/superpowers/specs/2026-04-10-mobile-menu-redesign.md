@@ -22,7 +22,7 @@ Redesign the mobile navigation menu on jasonmatthew.dev to replace the current i
 - **Letter-spacing**: Subtle `tracking-wide` (0.025em) on nav links within the mobile menu
 - **Vertical gap**: Increase from `gap-3` to `gap-5` (20px) for generous spacing
 - **Padding**: `px-4 py-6` for the menu panel — more vertical breathing room
-- **Tagline**: Below the links, separated by a thin `border-t border-[var(--color-border)]` divider with `pt-4 mt-4`. Text: site tagline from `site-config.ts`. Styled as `text-xs uppercase tracking-widest text-[var(--color-muted)]`
+- **Tagline**: Below the links, separated by a thin `border-t border-[var(--color-border)]` divider with `pt-4 mt-4`. Text: `siteConfig.subtitle` ("Leading teams, shipping code, leaving things better") from `site-config.ts`. Styled as `text-xs uppercase tracking-widest text-[var(--color-muted)]`
 
 ### Animation
 
