@@ -21,7 +21,7 @@ export default defineConfig({
       [
         rehypeAutolinkHeadings,
         {
-          behavior: 'prepend',
+          behavior: 'append',
           properties: { class: 'heading-anchor', ariaLabel: 'Link to this section' },
           content: {
             type: 'element',

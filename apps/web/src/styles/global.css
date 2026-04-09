@@ -144,28 +144,25 @@
 
 /* ─── Heading Anchor Links ────────────────────────────────── */
 
+:is(h2, h3, h4, h5, h6):has(.heading-anchor) {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25em;
+}
+
 .heading-anchor {
   text-decoration: none;
-  position: absolute;
-  right: 100%;
-  padding-right: 0.25em;
 }
 
 .heading-anchor-icon {
   color: var(--color-muted);
-  opacity: 0;
+  opacity: 0.3;
   font-weight: 400;
+  font-size: 0.75em;
   transition: opacity 0.2s ease;
 }
 
-:is(h2, h3, h4, h5, h6):has(.heading-anchor) {
-  position: relative;
-}
-
-:is(h2, h3, h4, h5, h6):hover .heading-anchor-icon {
-  opacity: 1;
-}
-
+:is(h2, h3, h4, h5, h6):hover .heading-anchor-icon,
 .heading-anchor:focus-visible .heading-anchor-icon {
   opacity: 1;
 }
