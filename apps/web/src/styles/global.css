@@ -309,6 +309,63 @@ pre.shiki {
   background-size: 100% 2px;
 }
 
+/* ─── Mobile Menu Transitions ────────────────────────────── */
+
+.mobile-menu {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 0.3s ease-out,
+    opacity 0.3s ease-out;
+}
+
+.mobile-menu.is-open {
+  max-height: 20rem;
+  opacity: 1;
+}
+
+/* ─── Mobile Menu Nav Link Overrides ─────────────────────── */
+
+#mobile-menu .nav-link-underline {
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+}
+
+/* ─── Hamburger → X Animation ────────────────────────────── */
+
+.hamburger-bar {
+  position: absolute;
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.hamburger-bar:nth-child(1) {
+  transform: translateY(-6px);
+}
+
+.hamburger-bar:nth-child(3) {
+  transform: translateY(6px);
+}
+
+[aria-expanded='true'] .hamburger-bar:nth-child(1) {
+  transform: rotate(45deg);
+}
+
+[aria-expanded='true'] .hamburger-bar:nth-child(2) {
+  opacity: 0;
+}
+
+[aria-expanded='true'] .hamburger-bar:nth-child(3) {
+  transform: rotate(-45deg);
+}
+
 /* ─── Reduced Motion ───────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -344,5 +401,13 @@ pre.shiki {
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none;
+  }
+
+  .mobile-menu {
+    transition: none;
+  }
+
+  .hamburger-bar {
+    transition: none;
   }
 }
