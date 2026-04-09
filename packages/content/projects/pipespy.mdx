@@ -1,0 +1,51 @@
+---
+title: pipespy
+description: A real-time pipeline debugger for the terminal, built in Rust. Drop it into any shell pipeline to see throughput, record samples, and format detection — without touching your data.
+publishDate: 2026-04-09
+technologies:
+  - Rust
+  - ratatui
+  - crossterm
+  - GitHub Actions
+featured: true
+githubUrl: https://github.com/jasonm4130/pipespy
+---
+
+## The Problem
+
+Every developer has been here: you're piping data between commands and something isn't right. Is the data malformed? Is throughput tanking? What does the output actually look like at this stage of the pipeline? Your options are `| head`, `| wc -l`, or `pv` for byte counts. None of them show you the actual data in context.
+
+## The Solution
+
+pipespy is a transparent pipeline proxy with a real-time TUI. Drop it anywhere in a pipeline and it shows you what's flowing through — throughput sparklines, record samples, format detection — all rendered to stderr so your data passes through completely untouched.
+
+```bash
+cat events.jsonl | pipespy | jq '.users[]' | grep "active" > out.txt
+```
+
+It auto-detects JSON, CSV, and plain text, then syntax-highlights the live record samples accordingly. Two display modes — a compact view that fits in a split pane, and a fullscreen mode with a line length histogram and extended stats.
+
+## Architecture
+
+The design is a three-thread model: a reader thread pumps stdin into a shared ring buffer, a writer thread drains it to stdout, and a TUI thread samples stats on a timer to render on stderr via ratatui.
+
+The key constraint was data integrity — every byte in must come out, in order, unmodified. The TUI thread never touches the data path. By rendering to stderr and using crossterm's `use-dev-tty` feature for keyboard input, the visual output is completely isolated from the pipeline data. This is verified by integration tests that assert byte-for-byte equality.
+
+Using raw `libc::tcsetattr` on stderr's file descriptor instead of crossterm's default `enable_raw_mode()` (which targets stdin) was necessary because stdin is the data pipe, not a terminal. A subtle bug that would have been invisible in any project where stdin is interactive.
+
+## Distribution
+
+One of the goals was making installation frictionless. The project ships via four channels, all automated:
+
+- **Homebrew** — `brew install jasonm4130/tap/pipespy`
+- **crates.io** — `cargo install pipespy`
+- **Pre-built binaries** — macOS and Linux (arm64 + amd64) via GitHub Releases
+- **Shell installer** — `curl | sh` one-liner
+
+A single `git tag` triggers a GitHub Actions workflow that builds cross-platform binaries, creates a GitHub Release, publishes to crates.io, and auto-updates the Homebrew formula with correct SHA256 hashes. Zero manual steps after the tag.
+
+## What I Learned
+
+Building a TUI tool that lives inside a pipeline is a different beast from a standalone terminal app. The usual assumptions — stdin is a terminal, stdout is where you render — are inverted. Every terminal control operation needs to be explicitly routed to stderr, and keyboard events need to come from `/dev/tty` instead of stdin. It's the kind of systems-level detail that Rust makes you confront honestly rather than papering over.
+
+I also got to explore Rust's concurrency model in a practical setting. The shared ring buffer between reader and writer threads is simple (`VecDeque` behind `Arc<Mutex<>>` with a `Condvar`), but getting the blocking semantics right — push blocks when full, pop blocks when empty, everything unblocks on completion — required thinking carefully about the state machine. Rust's ownership model caught several potential deadlocks at compile time.
