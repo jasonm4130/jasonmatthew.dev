@@ -141,6 +141,28 @@
   border: 1px solid var(--color-border);
 }
 
+/* ─── Heading Anchor Links ────────────────────────────────── */
+
+.heading-anchor {
+  text-decoration: none;
+  margin-right: 0.25em;
+}
+
+.heading-anchor-icon {
+  color: var(--color-muted);
+  opacity: 0;
+  font-weight: 400;
+  transition: opacity 0.2s ease;
+}
+
+:is(h2, h3, h4, h5, h6):hover .heading-anchor-icon {
+  opacity: 1;
+}
+
+.heading-anchor:focus-visible .heading-anchor-icon {
+  opacity: 1;
+}
+
 /* ─── Shiki Syntax Highlighting ────────────────────────────── */
 
 pre.shiki {
