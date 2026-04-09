@@ -327,7 +327,7 @@ pre.shiki {
 
 /* ─── Mobile Menu Nav Link Overrides ─────────────────────── */
 
-#mobile-menu .nav-link-underline {
+.mobile-menu .nav-link-underline {
   font-size: 1rem;
   letter-spacing: 0.025em;
 }
