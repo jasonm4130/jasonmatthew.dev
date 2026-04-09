@@ -43,19 +43,64 @@ import Signature from '@icons/Signature.astro';
 
 <script>
   function setupMobileMenu() {
-    const toggle = document.getElementById('mobile-menu-toggle');
-    const menu = document.getElementById('mobile-menu');
+    const toggle = document.getElementById('mobile-menu-toggle') as HTMLButtonElement | null;
+    const menu = document.getElementById('mobile-menu') as HTMLElement | null;
     if (!toggle || !menu) return;
 
-    // Close menu on navigation (transition:persist keeps DOM state)
-    menu.classList.add('hidden');
-    toggle.setAttribute('aria-expanded', 'false');
+    // After the guard, TypeScript still widens back to nullable inside closures.
+    // Capture as non-nullable references for use in nested functions.
+    const toggleEl: HTMLButtonElement = toggle;
+    const menuEl: HTMLElement = menu;
 
-    toggle.addEventListener('click', () => {
-      const expanded = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!expanded));
-      menu.classList.toggle('hidden');
+    // Ensure menu is closed on page load (Astro view transitions keep DOM state)
+    menuEl.classList.remove('is-open');
+    toggleEl.setAttribute('aria-expanded', 'false');
+
+    function openMenu() {
+      menuEl.classList.add('is-open');
+      toggleEl.setAttribute('aria-expanded', 'true');
+      document.addEventListener('keydown', onKeyDown);
+    }
+
+    function closeMenu() {
+      menuEl.classList.remove('is-open');
+      toggleEl.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('keydown', onKeyDown);
+      toggleEl.focus();
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        closeMenu();
+        return;
+      }
+
+      if (e.key !== 'Tab') return;
+
+      const focusable = menuEl.querySelectorAll<HTMLElement>('a, button');
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    toggleEl.addEventListener('click', () => {
+      const isOpen = toggleEl.getAttribute('aria-expanded') === 'true';
+      if (isOpen) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
     });
   }
+
   document.addEventListener('astro:page-load', setupMobileMenu);
 </script>
