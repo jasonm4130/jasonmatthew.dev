@@ -32,11 +32,6 @@ import Signature from '@icons/Signature.astro';
   <div id="mobile-menu" class="mobile-menu border-t border-[var(--color-border)] sm:hidden">
     <div class="flex flex-col items-center gap-5 px-4 py-6 text-center">
       {siteConfig.headerNavLinks.map((link) => <NavLink href={link.href}>{link.text}</NavLink>)}
-      <div class="mt-4 w-full border-t border-[var(--color-border)] pt-4">
-        <p class="text-xs uppercase tracking-widest text-[var(--color-muted)]">
-          {siteConfig.subtitle}
-        </p>
-      </div>
     </div>
   </div>
 </nav>
