@@ -16,7 +16,7 @@ const { Content } = await render(page);
 <BaseLayout title={page.data.title}>
   <article>
     <h1 class="font-700 mb-10 font-sans text-3xl md:text-4xl">{page.data.title}</h1>
-    <div class="reveal prose prose-lg max-w-none">
+    <div class="prose prose-lg max-w-none">
       <Content />
     </div>
   </article>
