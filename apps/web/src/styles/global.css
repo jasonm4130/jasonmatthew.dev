@@ -78,6 +78,7 @@
     font-family: var(--font-sans);
     font-weight: 700;
     line-height: 1.2;
+    scroll-margin-top: 5rem;
   }
 
   code,
@@ -145,7 +146,9 @@
 
 .heading-anchor {
   text-decoration: none;
-  margin-right: 0.25em;
+  position: absolute;
+  right: 100%;
+  padding-right: 0.25em;
 }
 
 .heading-anchor-icon {
@@ -153,6 +156,10 @@
   opacity: 0;
   font-weight: 400;
   transition: opacity 0.2s ease;
+}
+
+:is(h2, h3, h4, h5, h6):has(.heading-anchor) {
+  position: relative;
 }
 
 :is(h2, h3, h4, h5, h6):hover .heading-anchor-icon {
