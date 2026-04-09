@@ -146,9 +146,6 @@
 
 .heading-anchor {
   text-decoration: none;
-  position: absolute;
-  right: 100%;
-  padding-right: 0.25em;
 }
 
 .heading-anchor-icon {
@@ -158,16 +155,25 @@
   transition: opacity 0.2s ease;
 }
 
-:is(h2, h3, h4, h5, h6):has(.heading-anchor) {
-  position: relative;
-}
-
 :is(h2, h3, h4, h5, h6):hover .heading-anchor-icon {
   opacity: 1;
 }
 
 .heading-anchor:focus-visible .heading-anchor-icon {
   opacity: 1;
+}
+
+/* Desktop: break anchor out to the left of the container */
+@media (min-width: 64rem) {
+  :is(h2, h3, h4, h5, h6):has(.heading-anchor) {
+    position: relative;
+  }
+
+  .heading-anchor {
+    position: absolute;
+    right: 100%;
+    padding-right: 0.25em;
+  }
 }
 
 /* ─── Shiki Syntax Highlighting ────────────────────────────── */
