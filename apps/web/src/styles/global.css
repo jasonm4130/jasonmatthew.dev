@@ -249,19 +249,6 @@ pre.shiki {
   animation: glowPulse 0.6s ease-out;
 }
 
-.signature-draw-delay {
-  opacity: 0;
-  translate: 0 8px;
-  transition:
-    opacity 0.4s ease-out 1.2s,
-    translate 0.4s ease-out 1.2s;
-}
-
-.signature-draw-delay.in-view {
-  opacity: 1;
-  translate: 0 0;
-}
-
 /* ─── Hero Entrance ────────────────────────────────────────── */
 
 .hero-title {
