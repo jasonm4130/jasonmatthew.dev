@@ -19,13 +19,15 @@ const { Content } = await render(post);
   <article>
     <header class="mb-10">
       <h1 class="font-700 font-sans text-3xl md:text-4xl">{post.data.title}</h1>
-      <div class="mt-4 flex items-center gap-4 font-sans text-sm text-[var(--color-muted)]">
-        <FormattedDate date={post.data.publishDate} />
+      <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-sm text-[var(--color-muted)]">
+        <span class="whitespace-nowrap">
+          <FormattedDate date={post.data.publishDate} />
+        </span>
         {
           post.data.tags.length > 0 && (
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-x-3 gap-y-2">
               {post.data.tags.map((tag: string) => (
-                <a href={`/tags/${tag}`} class="text-[var(--color-accent)]">
+                <a href={`/tags/${tag}`} class="whitespace-nowrap text-[var(--color-accent)]">
                   #{tag}
                 </a>
               ))}
