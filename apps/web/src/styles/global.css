@@ -211,10 +211,10 @@ pre.shiki {
 
 .reveal {
   opacity: 0;
-  translate: 0 8px;
+  translate: 0 20px;
   transition:
-    opacity 0.4s ease-out,
-    translate 0.4s ease-out;
+    opacity 0.5s cubic-bezier(0.33, 1, 0.68, 1),
+    translate 0.5s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .reveal.in-view {
