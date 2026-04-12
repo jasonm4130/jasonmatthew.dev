@@ -10,7 +10,7 @@ const { href, class: className } = Astro.props;
 <a
   href={href}
   class:list={[
-    'font-600 inline-block border-2 border-[var(--color-accent)] px-6 py-2.5 font-sans text-sm text-[var(--color-accent)] no-underline transition-all hover:bg-[var(--color-accent)] hover:text-white motion-safe:active:scale-[0.98]',
+    'font-600 inline-block border-2 border-[var(--color-accent)] px-6 py-2.5 font-sans text-sm text-[var(--color-accent)] no-underline transition-[background-color,color,transform] duration-200 hover:bg-[var(--color-accent)] hover:text-white motion-safe:active:scale-[0.98]',
     className,
   ]}
 >

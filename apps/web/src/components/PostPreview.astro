@@ -17,7 +17,7 @@ const { post } = Astro.props;
       >
         {post.data.title}
         <span
-          class="inline-block translate-x-0 opacity-0 transition-all motion-safe:group-hover:translate-x-1 motion-safe:group-hover:opacity-100"
+          class="inline-block translate-x-0 opacity-0 transition-[transform,opacity] duration-200 motion-safe:group-hover:translate-x-1 motion-safe:group-hover:opacity-100"
           aria-hidden="true">&nbsp;&rarr;</span
         >
       </h3>
