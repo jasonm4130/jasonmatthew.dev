@@ -1,0 +1,57 @@
+---
+title: "AWS Durable Lambda: The Deployment Gotcha Nobody's Talking About"
+excerpt: "AWS Lambda Durable Execution broke the 15-minute wall. It also broke every deployment assumption you had. Here's the alias mismatch problem and how to fix it."
+publishDate: 2026-04-21
+tags:
+  - aws
+  - serverless
+  - architecture
+  - lambda
+draft: true
+---
+
+{/* DRAFT — Outline for review */}
+
+## Hook
+
+AWS Lambda Durable Execution shipped at re:Invent 2025 and broke the 15-minute wall. Functions can now run for up to a year with native checkpoint and replay. We adopted it early for batch AI inference workloads.
+
+Then our first deployment corrupted every in-flight execution.
+
+## The Problem: Alias Mismatch
+
+{/* Explain how durable functions replay from line 1, not resume from where they stopped */}
+{/* The SDK re-executes the handler, checks execution history, skips completed steps */}
+{/* Strict determinism requirement: code must follow the exact same path */}
+
+{/* The killer: if you use a mutable alias (e.g. "live") and deploy while a function is sleeping, the resumption hits the NEW code version. Non-Deterministic Error. Execution crashes. */}
+
+{/* Table: Unqualified ($LATEST) = Unsafe, Mutable Alias = Unsafe, Qualified Version N = Safe */}
+
+## The Math
+
+{/* For a system with 5 deploys/day and a 10-minute wait state: 3.4% failure probability per execution */}
+{/* In a high-volume system, that's a constant stream of corrupted executions */}
+
+## The Fix: Side-by-Side Pattern
+
+{/* Immutability: every deploy publishes a new Lambda version */}
+{/* Referential Anchoring: triggers point to Version ARN, not Alias ARN */}
+{/* Longevity: old versions coexist indefinitely (75GB storage limit is generous) */}
+{/* Discovery: Alias can still be used for "find latest" but actual invocation resolves to a specific version */}
+
+## AllowInvokeLatest
+
+{/* Set to false in production. Forces all durable workflows to anchor to a specific immutable version */}
+{/* But this alone doesn't solve alias updates — alias is still a qualified ARN but mutable */}
+
+## What This Means for Your CI/CD
+
+{/* Traditional "drain" = seconds for HTTP connections. Durable "drain" = up to a year */}
+{/* Standard blue/green where old version is deleted is incompatible */}
+{/* You need version coexistence, not version replacement */}
+
+## Takeaway
+
+{/* Durable Lambda is a paradigm shift, but the deployment model hasn't caught up */}
+{/* If you're adopting it: version-pin from day one, never route through a mutable alias */}

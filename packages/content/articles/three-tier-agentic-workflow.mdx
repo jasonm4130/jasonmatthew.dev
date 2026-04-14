@@ -1,0 +1,62 @@
+---
+title: 'The Three-Tier Agentic Workflow: How I Use Repomix, Gemini, and Cursor Without Wasting Tokens'
+excerpt: "Most engineers use AI tools in isolation. Here's the workflow I use to chain three of them together — and why the planning phase matters more than the coding phase."
+publishDate: 2026-05-19
+tags:
+  - ai
+  - developer-tools
+  - productivity
+  - architecture
+draft: true
+---
+
+{/* DRAFT — Outline for review */}
+
+## Hook
+
+{/* The "Context Debt" trap: long iterative Cursor sessions where the AI re-processes entire chat history for every prompt */}
+{/* The insight: separate planning from execution, use the right tool for each stage */}
+
+## The Problem with Single-Tool AI Workflows
+
+{/* Feeding raw codebase context into a research agent = friction */}
+{/* Using Cursor for planning + research + implementation = token waste */}
+{/* The AI tools are good at different things — treat them that way */}
+
+## The Three Tiers
+
+### Tier 1: Repomix — Structural Mapping
+
+{/* npx repomix --style xml --output-show-stats */}
+{/* Package your repo blueprints into a digestible format */}
+{/* This is the "local state" capture */}
+
+### Tier 2: Gemini — Research & Planning
+
+{/* Upload the Repomix XML to standard Gemini chat */}
+{/* Have it analyze architecture, identify gaps, spot unknown unknowns */}
+{/* Draft a targeted Deep Research prompt */}
+{/* Then run Deep Research for live-web patterns (S3 Vectors, Durable Lambda, etc.) */}
+{/* Output: a spec.md combining local context with modern patterns */}
+
+### Tier 3: Cursor — Surgical Implementation
+
+{/* Open spec.md, use @File and @Symbol mentions */}
+{/* New chat session per task — session hygiene */}
+{/* Zero credits spent on planning or research */}
+
+## Why This Works
+
+{/* Up-to-date intelligence: Deep Research finds patterns that didn't exist when base models were trained */}
+{/* Credit preservation: planning and research use zero Cursor credits */}
+{/* Each tool does what it's best at */}
+
+## Real Example
+
+{/* Walk through a specific example — discovering S3 Vectors patterns or Durable Lambda deployment strategies */}
+{/* Show the actual prompts and outputs at each tier */}
+
+## Takeaway
+
+{/* The AI coding assistant isn't the bottleneck. Your planning is. */}
+{/* Invest 30 minutes in planning to save 3 hours of iterative prompting */}

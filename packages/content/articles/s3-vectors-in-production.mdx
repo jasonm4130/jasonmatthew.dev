@@ -1,0 +1,54 @@
+---
+title: 'S3 Vectors in Production: What We Learned Before GA'
+excerpt: "Everyone told us to use Pinecone. We chose S3 Vectors before it was GA. Here's what happened when we pointed a production RAG pipeline at it."
+publishDate: 2026-05-05
+tags:
+  - aws
+  - ai
+  - architecture
+  - vectors
+draft: true
+---
+
+{/* DRAFT — Outline for review */}
+
+## Hook
+
+{/* re:Invent 2025, S3 Vectors announced. We were already running it in production. */}
+{/* The move from HNSWLib to S3 Vectors wasn't about hype — we had real scaling and concurrency bottlenecks */}
+
+## Why We Moved Off HNSWLib
+
+{/* Concurrency bottlenecks at scale */}
+{/* The operational burden of self-managed vector indices */}
+{/* What "serverless RAG" actually means in practice */}
+
+## The Architecture
+
+{/* How S3 Vectors fits into a production RAG pipeline */}
+{/* Edge-native with Bedrock inference */}
+{/* Bespoke chunking — this matters more than the embedding model (counter-intuitive finding) */}
+{/* Diagram opportunity here */}
+
+## Cost Comparison
+
+{/* S3 Vectors vs Pinecone vs pgvector — real production numbers */}
+{/* The query volume question: S3 Vectors scales with data processed, cheap for low-volume, expensive at high query volumes */}
+{/* When each option makes sense */}
+
+## What Surprised Us
+
+{/* Things that worked better than expected */}
+{/* Things that didn't — gotchas, limitations */}
+{/* The partnership with AWS product team — what it's like giving feedback on a pre-GA service */}
+
+## When to Use S3 Vectors (and When Not To)
+
+{/* Decision framework: query volume growth trajectory is the key question */}
+{/* If you're building RAG for enterprise content (low query volume, high data volume) — S3 Vectors is ideal */}
+{/* If you're building a high-QPS consumer search — consider alternatives */}
+
+## Takeaway
+
+{/* Storage-first vector search is a paradigm shift */}
+{/* re:Invent breakout session in May — come say hi */}
