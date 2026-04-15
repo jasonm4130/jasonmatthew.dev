@@ -29,9 +29,9 @@ export type SiteConfig = {
 const siteConfig: SiteConfig = {
   website: 'https://jasonmatthew.dev',
   title: 'Jason Matthew',
-  subtitle: 'Leading teams, shipping code, leaving things better',
+  subtitle: 'Building AI systems, shipping code, leaving things better',
   description:
-    'Engineering Manager from Brisbane, Australia. I lead teams, ship side projects, and write about engineering leadership, accessibility, and building things that matter.',
+    'Engineer from Brisbane, Australia. I build AI systems and cloud infrastructure at scale, ship side projects, and write about what I learn along the way.',
   author: 'Jason Matthew',
   headerNavLinks: [
     { text: 'Home', href: '/' },
