@@ -10,7 +10,7 @@ tags:
 draft: false
 ---
 
-We adopted AWS Lambda Durable Execution shortly after it went GA at re:Invent 2025. We were running batch AI inference workloads that needed to checkpoint, wait for downstream processing, and resume — exactly what Durable Lambda was built for. No more Step Functions orchestration for what was fundamentally a single logical workflow.
+We adopted AWS Lambda Durable Execution shortly after it went GA at re:Invent 2025. We were running batch AI inference workloads that needed to checkpoint, wait for downstream processing, and resume. Exactly what Durable Lambda was built for. No more Step Functions orchestration for what was fundamentally a single logical workflow.
 
 Then we deployed while pipelines were running, and some of them broke.
 
@@ -18,11 +18,11 @@ Not all of them. Some. That was the confusing part.
 
 ## What happened
 
-We had 3-4 engineers all pushing code, getting merges into develop. The pace was high — deadlines, fast iteration. Every merge triggered a deployment. Every deployment published a new Lambda version behind our `live` alias.
+We had 3-4 engineers all pushing code, getting merges into develop. The pace was high: deadlines, fast iteration. Every merge triggered a deployment. Every deployment published a new Lambda version behind our `live` alias.
 
 Some durable executions that had been running on old code would hit a checkpoint, resume, and fail. Others would complete fine. The pattern was inconsistent and the errors were opaque.
 
-Once we read the docs, it clicked immediately. But it wasn't something we'd thought about — because regular Lambda doesn't work this way.
+Once we read the docs, it clicked immediately. But it wasn't something we'd thought about, because regular Lambda doesn't work this way.
 
 ## Why it happens: the replay model
 
@@ -30,7 +30,7 @@ Here's the thing most people miss about Durable Lambda. When your function resum
 
 The SDK intercepts every durable operation (`context.step()`, `context.wait()`, etc.) and checks the execution history. If it finds a recorded result for that step, it skips the actual execution and returns the cached result. This is how it "fast-forwards" to the resumption point without re-running side effects.
 
-The requirement for this to work is strict determinism. The code must follow the exact same logical path as the original run. Same step names, same sequence, same branching logic. If anything changes between the original execution and the replay, the SDK can't match steps to their cached results — and you get a non-deterministic error.
+The requirement for this to work is strict determinism. The code must follow the exact same logical path as the original run. Same step names, same sequence, same branching logic. If anything changes between the original execution and the replay, the SDK can't match steps to their cached results, and you get a non-deterministic error.
 
 This is fundamentally different from a regular Lambda, where a new deployment only affects new invocations. With Durable Lambda, a deployment can affect _currently sleeping_ executions the next time they wake up.
 
@@ -38,7 +38,7 @@ This is fundamentally different from a regular Lambda, where a new deployment on
 
 Here's how it plays out in practice. You have a `live` alias pointing to your current Lambda version. An execution starts on version 5, runs a few steps, hits a `context.wait()`, and sleeps. While it's sleeping, you deploy. The `live` alias now points to version 6.
 
-When the execution wakes up, the Lambda service invokes the function using the alias ARN. The alias resolves to version 6. The SDK replays from line one — but against version 6's code, not version 5's. If anything changed in the step logic, names, or sequencing, the replay fails.
+When the execution wakes up, the Lambda service invokes the function using the alias ARN. The alias resolves to version 6. The SDK replays from line one, but against version 6's code, not version 5's. If anything changed in the step logic, names, or sequencing, the replay fails.
 
 | Invocation type          | What happens on resume                                    | Safe? |
 | ------------------------ | --------------------------------------------------------- | ----- |
@@ -46,13 +46,13 @@ When the execution wakes up, the Lambda service invokes the function using the a
 | Mutable alias (`:live`)  | Follows the alias pointer — hits new version after deploy | No    |
 | Qualified version (`:5`) | Always hits the immutable code of version 5               | Yes   |
 
-The executions that passed in our case were the ones that happened to have the same step logic between the old and new code. The ones that failed were the ones where a step had been renamed, reordered, or where new logic had been added before an existing step. It wasn't random — it was deterministic, just hard to see without understanding the replay model.
+The executions that passed in our case were the ones that happened to have the same step logic between the old and new code. The ones that failed were the ones where a step had been renamed, reordered, or where new logic had been added before an existing step. It wasn't random. It was deterministic, just hard to see without understanding the replay model.
 
-## This isn't purely a bug — it's a gotcha
+## This isn't purely a bug, it's a gotcha
 
-Here's the nuance. The alias-follows-latest behaviour isn't inherently broken. If you have a long-running pipeline and you notice something is wrong, or you improve the logic, you might _want_ the next checkpoint to pick up the new code. Hot-patching a running execution could be genuinely useful.
+Here's the nuance. The alias-follows-latest behaviour isn't inherently broken. If you have a long-running pipeline and you notice something is wrong, or you improve the logic, you might _want_ the next checkpoint to pick up the new code. Hot-patching a running execution can be useful.
 
-But you need to know it's happening. If you don't — if you just expect Lambda to behave like Lambda — you'll get bitten the first time multiple engineers are deploying while pipelines are in flight.
+But you need to know it's happening. If you don't, if you just expect Lambda to behave like Lambda, you'll get bitten the first time multiple engineers are deploying while pipelines are in flight.
 
 ## How the replay model works in detail
 
@@ -69,13 +69,13 @@ When the execution resumes:
 
 The SDK operates in two modes automatically: **ReplayMode** (returning cached results, suppressing logs) and **ExecutionMode** (executing normally, checkpointing results). The transition happens when it reaches the first uncompleted operation.
 
-Each checkpoint stores the operation ID, type, name, status, and cached result. Operations are indexed sequentially — the position and name must match across invocations for replay to work.
+Each checkpoint stores the operation ID, type, name, status, and cached result. Operations are indexed sequentially. The position and name must match across invocations for replay to work.
 
 ### What breaks determinism
 
 Three common patterns will cause non-deterministic errors:
 
-**Random control flow outside steps.** If you branch based on `Math.random()`, `Date.now()`, or external state outside of a `context.step()`, the branch may go a different direction on replay. The SDK expects the same sequence of durable operations — if a branch causes an operation to appear or disappear, replay fails.
+**Random control flow outside steps.** If you branch based on `Math.random()`, `Date.now()`, or external state outside of a `context.step()`, the branch may go a different direction on replay. The SDK expects the same sequence of durable operations. If a branch causes an operation to appear or disappear, replay fails.
 
 ```javascript
 // Bad — Date.now() returns a different value on replay
@@ -94,13 +94,13 @@ if (now > someThreshold) {
 }
 ```
 
-**Side effects outside steps.** API calls, database writes, or any operation with side effects that lives outside a `context.step()` will execute on every replay. That's not just a correctness problem — it's a cost problem. An unguarded Bedrock inference call outside a step runs every time the function replays.
+**Side effects outside steps.** API calls, database writes, or any operation with side effects that lives outside a `context.step()` will execute on every replay. That's not just a correctness problem. It's a cost problem. An unguarded Bedrock inference call outside a step runs every time the function replays.
 
 **Dynamic step names.** Step names must be deterministic. If you generate step names using timestamps, random values, or external state, the SDK can't match them to cached results on replay.
 
 ## The fix: version-pinned deployments
 
-The solution is straightforward once you understand the problem. Every deployment publishes a new numbered Lambda version (1, 2, 3...), and your triggers reference that specific version — not the alias.
+The solution is straightforward once you understand the problem. Every deployment publishes a new numbered Lambda version (1, 2, 3...), and your triggers reference that specific version, not the alias.
 
 In CDK, this means your EventBridge rules, S3 triggers, or whatever initiates the durable execution should target `lambdaFunction.currentVersion`, not an alias.
 
@@ -128,17 +128,17 @@ cfnFunction.addPropertyOverride('DurableConfig', {
 });
 ```
 
-This prevents anyone from accidentally starting a durable execution via `$LATEST`. It's a guardrail — it won't stop the alias mismatch problem on its own, but it catches the most obvious mistake.
+This prevents anyone from accidentally starting a durable execution via `$LATEST`. It's a guardrail. It won't stop the alias mismatch problem on its own, but it catches the most obvious mistake.
 
 ## What this means for your CI/CD
 
-Traditional deployment strategies assume a short drain period — a few seconds for HTTP connections to close before shifting traffic. With Durable Lambda, the "drain" period is the entire `ExecutionTimeout`, which can be up to a year.
+Traditional deployment strategies assume a short drain period: a few seconds for HTTP connections to close before shifting traffic. With Durable Lambda, the "drain" period is the entire `ExecutionTimeout`, which can be up to a year.
 
 Standard blue/green deployments where the old version is deleted after the shift are incompatible with durable execution. You need version coexistence, not version replacement.
 
 In practice this means:
 
-- **Publish a new Lambda version on every deployment.** This is the default CDK behaviour with `currentVersion`, but make sure your `RemovalPolicy` is set to `RETAIN` — you don't want CDK cleaning up old versions that still have active executions.
+- **Publish a new Lambda version on every deployment.** This is the default CDK behaviour with `currentVersion`, but make sure your `RemovalPolicy` is set to `RETAIN`. You don't want CDK cleaning up old versions that still have active executions.
 - **Never delete old versions while executions are in flight.** Lambda allows up to 75GB of code storage per account, which is enough for hundreds of versions.
 - **Pin your SDK version.** Include `@aws/durable-execution-sdk-js` in your deployment package rather than relying on the runtime-managed version. Pin it in your `package.json`. You don't want a runtime update changing replay behaviour under active executions.
 
@@ -150,8 +150,8 @@ In practice this means:
 
 ## The takeaway
 
-Durable Lambda is a genuine paradigm shift. Writing long-running stateful workflows in a single Lambda handler — without Step Functions, without managing state machines — is a meaningful simplification. We're running production AI inference pipelines on it and the developer experience is excellent.
+Durable Lambda is a real change in how you write long-running stateful workflows. A single Lambda handler, no Step Functions, no state machine to manage. We're running production AI inference pipelines on it and the developer experience is excellent.
 
-But the deployment model is different from everything else in Lambda-land. If you're adopting it, version-pin from day one. Don't wait until you hit the "some pass, some fail" confusion we did. The replay model is elegant but unforgiving — it expects the same code at every checkpoint, and the default alias behaviour doesn't guarantee that.
+But the deployment model is different from everything else in Lambda-land. If you're adopting it, version-pin from day one. Don't wait until you hit the "some pass, some fail" confusion we did. The replay model is elegant but unforgiving. It expects the same code at every checkpoint, and the default alias behaviour doesn't guarantee that.
 
 The [AWS docs](https://docs.aws.amazon.com/lambda/latest/dg/durable-best-practices.html) cover this, but it's easy to skim past. Hopefully this saves you a confusing afternoon.

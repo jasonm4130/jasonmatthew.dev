@@ -10,17 +10,17 @@ tags:
 draft: false
 ---
 
-Saturday morning. Coffee's hot. I've got an idea for a feature. A few hours later, it's in production. It went through CI, an AI-assisted code review, a proper PR, and a deploy pipeline — but the whole cycle happened in a fraction of the time it would take at work.
+Saturday morning. Coffee's hot. I've got an idea for a feature. A few hours later, it's in production. It went through CI, an AI-assisted code review, a proper PR, and a deploy pipeline. The whole cycle happened in a fraction of the time it would take at work.
 
-Monday morning. Same person, different context. A similar change goes through a pull request, gets reviewed by two engineers, sparks a thirty-minute discussion about naming conventions, gets deployed to staging, gets smoke-tested, and then — maybe — makes it to production by Tuesday.
+Monday morning. Same person, different context. A similar change goes through a pull request, gets reviewed by two engineers, sparks a thirty-minute discussion about naming conventions, gets deployed to staging, gets smoke-tested, and maybe makes it to production by Tuesday.
 
-I've been sitting with this contrast for a while now, and I think the interesting part isn't the speed difference. It's what the speed difference _tells you_ about where teams spend their time.
+I've been sitting with this contrast for a while now. The interesting part isn't the speed difference. It's what the speed difference _tells you_ about where teams spend their time.
 
 ## Not Cowboy Mode
 
 I should be clear about what my solo workflow actually looks like, because it's not what most people picture.
 
-I have CI/CD. I have test coverage. I use infrastructure-as-code. I work in branches and raise PRs. The code goes through reviews — it's just that the reviewer is an AI agent instead of a human. It's a rubber duck that talks back. It validates architecture decisions, catches things I've missed, pushes back on approaches that don't make sense.
+I have CI/CD. I have test coverage. I use infrastructure-as-code. I work in branches and raise PRs. The code goes through reviews. The reviewer is just an AI agent instead of a human. It's a rubber duck that talks back. It validates architecture decisions, catches things I've missed, pushes back on approaches that don't make sense.
 
 I try to mirror production environments as closely as possible. Not because I'm disciplined for the sake of it, but because I've been burned enough times to know that shortcuts in tooling cost you later.
 
@@ -30,48 +30,44 @@ So the speed isn't coming from skipping process. It's coming from removing the c
 
 Here's something I've been struggling with honestly: I can build a feature in half a day on my own. Add a company, a team, stakeholders, and the same feature takes... significantly longer.
 
-I know _why_. Coordination takes time. Alignment takes time. Making sure everyone understands the approach, getting feedback from the right people, navigating dependencies across teams — all of that is real work that needs to happen. I'm not naive about that.
+I know _why_. Coordination takes time. Alignment takes time. Making sure everyone understands the approach, getting feedback from the right people, navigating dependencies across teams. All of that is real work that needs to happen. I'm not naive about that.
 
-But I also think some of it is waste. Six hours talking through the same idea because someone is stuck on their preferred solution and won't let go. An afternoon debating code style that doesn't make the product better _or_ worse. A week waiting for a review because the reviewer is overloaded and the PR got buried.
+But some of it is waste. Six hours talking through the same idea because someone is stuck on their preferred solution and won't let go. An afternoon debating code style that doesn't make the product better _or_ worse. A week waiting for a review because the reviewer is overloaded and the PR got buried.
 
-When you build solo, that waste becomes very visible — because it simply doesn't exist. You don't miss the circular debates. You don't miss the style arguments. And their absence tells you something about how much of your team's time is spent on coordination that isn't actually coordination. It's friction disguised as process.
+When you build solo, that waste becomes very visible, because it simply doesn't exist. You don't miss the circular debates. You don't miss the style arguments. Their absence tells you something about how much of your team's time is spent on coordination that isn't actually coordination. It's friction disguised as process.
 
 ## What You Do Miss
 
-But here's the flip side, and it's equally important: building alone also shows you what teams give you that you can't replicate.
+The flip side is equally important: building alone also shows you what teams give you that you can't replicate.
 
-Other people find solutions you wouldn't have thought of. They bring context from different domains. They ask "have you considered...?" and the answer is no, you hadn't, and it changes the whole approach. That's not waste — that's the actual value of a team.
+Other people find solutions you wouldn't have thought of. They bring context from different domains. They ask "have you considered...?" and the answer is no, you hadn't, and it changes the whole approach. That's the actual value of a team.
 
-AI has gotten remarkably good at the mechanical parts of collaboration — reviewing code, catching bugs, validating patterns. But it doesn't bring a different _perspective_ in the way a human teammate does. It doesn't say "actually, I worked on something similar last year and here's what we learned." It doesn't have opinions shaped by different experiences.
+AI has gotten remarkably good at the mechanical parts of collaboration. Reviewing code, catching bugs, validating patterns. It doesn't bring a different _perspective_ the way a human teammate does. It doesn't say "actually, I worked on something similar last year and here's what we learned." It doesn't have opinions shaped by different experiences.
 
-The engineering gap between solo and team has closed dramatically. AI, modern tooling, IaC, good CI — a single person can now do what used to require a small team just on the technical side. But the human parts — the different viewpoints, the "I didn't think of that" moments, the awareness of problems you don't even know exist — that gap is as wide as ever.
+The engineering gap between solo and team has closed dramatically. AI, modern tooling, IaC, good CI: a single person can now do what used to require a small team on the technical side. The human parts are where the gap remains. Different viewpoints, "I didn't think of that" moments, awareness of problems you don't even know exist. That gap is as wide as ever.
 
 ## Where the Real Gap Lives
 
 The thing that solo work really can't replicate isn't even engineering. It's everything else.
 
-Marketing. Sales. Support. Product strategy. Customer research. The entire apparatus that turns "I built a thing" into "people use the thing." I wrote about this in [The First Dollar](/blog/the-first-dollar) — building FormRecap was a weekend. Getting anyone to notice it is a completely different challenge.
+Marketing. Sales. Support. Product strategy. Customer research. The entire apparatus that turns "I built a thing" into "people use the thing." I wrote about this in [The First Dollar](/blog/the-first-dollar). Building FormRecap was a weekend. Getting anyone to notice it is a completely different challenge.
 
 When you're on a team inside a company, all of that exists around you whether you notice it or not. The product manager who translates customer needs into requirements. The designer who makes your feature usable. The support team who tells you what's actually broken. You take that for granted until you don't have it.
 
 ## The Calibration
 
-As a manager, this contrast is genuinely useful calibration. When someone says "that's a two-sprint effort," I can compare that against my experience of building something similar solo with AI assistance. Sometimes the estimate is right — the coordination complexity justifies the time. Sometimes the gap between my half-day and their two sprints tells me something about where the process has calcified.
+As a manager, this contrast is useful calibration. When someone says "that's a two-sprint effort," I can compare that against my experience of building something similar solo with AI assistance. Sometimes the estimate is right and the coordination complexity justifies the time. Sometimes the gap between my half-day and their two sprints tells me something about where the process has calcified.
 
-I don't use that comparison to challenge people's estimates — that would be obnoxious and ignore all the context that makes team work different. But I use it to ask better questions. "What's the biggest blocker on this?" "Is there a dependency we could decouple?" "Could we ship a simpler version first?" Those questions come from having a sense of what's technically possible when you strip away everything else.
+I don't use that comparison to challenge people's estimates. That would be obnoxious and ignore all the context that makes team work different. I use it to ask better questions. "What's the biggest blocker on this?" "Is there a dependency we could decouple?" "Could we ship a simpler version first?" Those questions come from having a sense of what's technically possible when you strip away everything else.
 
 I talked about staying sharp in [The Side Project as a Management Tool](/blog/the-side-project-as-a-management-tool). This is the specific mechanism. The side project gives you a baseline for "how hard is this actually?" and the team context shows you all the reasons why "actually" is more complicated than a solo Saturday suggests.
 
 ## The Interesting Questions
 
-The contrast between my solo workflow and my team's workflow used to be about speed versus safety. Fast and reckless versus slow and careful. But AI and modern tooling have changed that equation. I'm not trading safety for speed anymore — I've got real process, real checks, real infrastructure. I'm just doing it without the coordination layer.
+The contrast between my solo workflow and my team's workflow used to be about speed versus safety. Fast and reckless versus slow and careful. AI and modern tooling have changed that equation. I'm not trading safety for speed anymore. I've got real process, real checks, real infrastructure. I'm just doing it without the coordination layer.
 
-That raises questions I don't have clean answers to yet:
+That raises questions I don't have clean answers to yet.
 
-If AI can fill the code review role, what's the _human_ reviewer's actual job? Is it catching bugs, or is it something more valuable — like transferring context and building shared understanding?
+If AI can fill the code review role, and a solo developer can maintain proper engineering practices alone, the remaining gap between solo and team is mostly coordination and non-engineering functions. So what's the _human_ reviewer's actual job now — catching bugs, or transferring context? What does that mean for team sizing and how we measure productivity? Should we be investing more in making coordination efficient rather than adding more engineers?
 
-If a solo developer with AI can maintain proper engineering practices, what does that mean for team sizing? For how we think about productivity?
-
-If the remaining gap between solo and team is mostly about coordination and non-engineering functions, should we be investing more in making coordination efficient rather than adding more engineers?
-
-I don't know. But those feel like the right questions to be sitting with. And the only reason I can ask them is because I keep one foot in each world — the Saturday deploy and the Monday deploy — and pay attention to where they diverge.
+I don't know. But those feel like the right questions to be sitting with. And the only reason I can ask them is because I keep one foot in each world and pay attention to where they diverge.

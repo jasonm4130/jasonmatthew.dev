@@ -10,55 +10,55 @@ featured: true
 draft: false
 ---
 
-Borrowing James Clear's format — here's what I'm seeing from leading three AI teams at Squiz.
+Borrowing James Clear's format. Here's what I'm seeing from leading three AI teams at Squiz.
 
 ## 3 Patterns
 
 ### 1. Management experience is the best predictor of AI success
 
-If you've managed humans, you know that "hallucinations" are often just a failure of context delegation. You don't expect a junior engineer to read your mind — you give them specs, context, and guardrails. You set clear acceptance criteria. You check in at milestones rather than waiting for the final deliverable.
+If you've managed humans, you know that "hallucinations" are often a failure of context delegation. You don't expect a junior engineer to read your mind. You give them specs, context, and guardrails. You set clear acceptance criteria. You check in at milestones rather than waiting for the final deliverable.
 
-Leaders who treat AI agents like junior staff are thriving. ICs who expect magic are frustrated.
+The leaders I work with who treat AI agents like junior staff are getting real output. The ICs expecting magic are stuck.
 
-This isn't a metaphor — it's structural. Apple's "The Illusion of Thinking" paper (NeurIPS 2025) found that reasoning models exhibit three performance regimes based on problem complexity: at low complexity, they're great; at medium complexity, they shine with the right guidance; at high complexity, they collapse entirely. The models don't truly reason in the way we'd like to believe. They're wicked fast and getting more capable every month, but at their core they're pattern-matching at scale, not thinking through problems the way your senior engineers do.
+There's a structural reason for this. Apple's "The Illusion of Thinking" paper (NeurIPS 2025) found that reasoning models exhibit three performance regimes based on problem complexity. At low complexity, they're great. At medium complexity, they shine with the right guidance. At high complexity, they collapse entirely. The models don't truly reason in the way we'd like to believe. They're wicked fast and getting more capable every month, but at their core they're pattern-matching at scale, not thinking through problems the way your senior engineers do.
 
-That's exactly why the delegation framing matters. You wouldn't hand a junior engineer an ambiguous problem with no context and expect a perfect solution. You'd scope the work, provide examples, define done. The same discipline produces dramatically better results with AI tools.
+That's exactly why the delegation framing matters. You wouldn't hand a junior engineer an ambiguous problem with no context and expect a perfect solution. You'd scope the work, provide examples, define done. The same discipline compounds dramatically better results with AI tools.
 
 We need to stop coaching people to "prompt" and start coaching them to "delegate."
 
 ### 2. Autonomy is useless without a Definition of Done
 
-There's a rush for long-running autonomous agents — tools like [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) (a Claude Code plugin that loops until a task is complete), [Beast Mode](https://gist.github.com/burkeholland/88af0249c4b6aff3820bf37898c8bacf) (aggressive autonomous coding for VS Code), or [Copilot Orchestra](https://github.com/ShepAlderson/copilot-orchestra) (multi-agent orchestration with planning, implementation, and review agents). Engineers want to say "go fix X" and walk away.
+There's a rush for long-running autonomous agents. Tools like [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) (a Claude Code plugin that loops until a task is complete), [Beast Mode](https://gist.github.com/burkeholland/88af0249c4b6aff3820bf37898c8bacf) (aggressive autonomous coding for VS Code), or [Copilot Orchestra](https://github.com/ShepAlderson/copilot-orchestra) (multi-agent orchestration with planning, implementation, and review agents). Engineers want to say "go fix X" and walk away.
 
 But an agent burning tokens for twenty minutes is useless if it doesn't know when to stop.
 
-The killer feature isn't model size or agent sophistication. It's the feedback loop. Agents need self-correction mechanisms — test suites, linters, type checkers, Playwright runs — to validate their own work before asking for human review. The best agent workflows I've seen look less like "AI writes code" and more like "AI writes code, runs the tests, reads the failures, fixes the code, runs the tests again, and only surfaces when everything passes."
+The killer feature isn't model size or agent sophistication. It's the feedback loop. Agents need self-correction mechanisms. Test suites, linters, type checkers, Playwright runs. They need something to validate their own work before asking for human review. The best agent workflows I've seen aren't "AI writes code". They're "AI writes code, runs the tests, reads the failures, fixes the code, runs the tests again, and only surfaces when everything passes."
 
-This is where tools like Ralph Wiggum get interesting. The loop isn't "keep trying forever" — it's "keep trying until the acceptance criteria are met, with automated validation at each step." The agent needs to know what "done" looks like, and it needs to be able to check its own work. Without that, autonomy is just expensive noise.
+This is where tools like Ralph Wiggum get interesting. The loop isn't "keep trying forever". It's "keep trying until the acceptance criteria are met, with automated validation at each step." The agent needs to know what "done" looks like, and it needs to be able to check its own work. Without that, autonomy is just expensive noise.
 
-The practical implication for engineering managers: your team's ability to write clear, falsifiable acceptance criteria is about to become the single most important skill on the team. If your specs are vague, your agents will be vague. If your specs are precise, your agents will surprise you.
+The practical implication for engineering managers. Your team's ability to write clear, falsifiable acceptance criteria is about to become the single most important skill on the team. If your specs are vague, your agents will be vague. If your specs are precise, your agents will surprise you.
 
-### 3. Context is King, but Humans are the Castle
+### 3. Context beats model size, every time
 
-You can throw unlimited tokens at the most capable model available, but it still struggles to hold the full state of a legacy codebase in working memory. The biggest models aren't always the best if they lack the _why_.
+You can throw unlimited tokens at the most capable model available, and it will still struggle to hold the full state of a legacy codebase in working memory. The biggest models aren't always the best if they lack the _why_.
 
-The Apple paper reinforces this directly — at high complexity, reasoning models don't just slow down, they give up. Their reasoning effort actually _declines_ past a complexity threshold, even when they have budget left. They're not trying harder on hard problems. They're pattern-matching, and when the patterns run out, so does the capability.
+The Apple paper reinforces this directly. At high complexity, reasoning models don't just slow down, they give up. Their reasoning effort actually _declines_ past a complexity threshold, even when they have budget left. They're not trying harder on hard problems. They're pattern-matching, and when the patterns run out, so does the capability.
 
-This is why humans are still the ultimate context window. We understand the unwritten architectural principles, the historical decisions that shaped the codebase, the political dynamics that make one approach feasible and another career-limiting. We understand the system interactions that no context window can capture yet.
+Humans are still the ultimate context window. We understand the unwritten architectural principles, the historical decisions that shaped the codebase, the political dynamics that make one approach feasible and another career-limiting. We understand the system interactions that no context window can capture yet.
 
-AI bridges the syntax gap. Humans must guard the system integrity.
+AI closes the syntax gap. The system integrity is still a human job.
 
-The practical takeaway: invest in documentation, ADRs, and architectural decision records. Not because you've always been told to, but because those documents are now literally the context that makes your AI tools effective. The team with a well-maintained architecture guide gets better AI output than the team with the bigger model.
+The practical takeaway. Invest in documentation, ADRs, and architectural decision records. Not because you've always been told to, but because those documents are now literally the context that makes your AI tools effective. The team with a well-maintained architecture guide gets better AI output than the team with the bigger model.
 
 ## 2 Predictions
 
 ### 1. AC-Driven Development will replace the TDD hype
 
-We don't need humans writing every unit test — agents can do that, and they're getting good at it. The real shift is towards Acceptance Criteria Driven Development.
+We don't need humans writing every unit test. Agents can do that, and they're getting good at it. The real shift is towards Acceptance Criteria Driven Development.
 
 The human job becomes defining high-fidelity success metrics. The agent's job is to write the tests that prove those metrics are met, write the code that passes the tests, and iterate until everything is green.
 
-The spec isn't a Jira ticket with three bullet points anymore. It's a prompt with falsifiable criteria that forces the agent to validate its own work before reporting "done." Think less "As a user I want..." and more "Given X state, when Y happens, the system must produce Z output — and here's how to verify it."
+The spec isn't a Jira ticket with three bullet points anymore. It's a prompt with falsifiable criteria that forces the agent to validate its own work before reporting "done." Move away from "As a user I want..." and write "Given X state, when Y happens, the system must produce Z output, and here's how to verify it."
 
 This changes what we hire for. The engineers who thrive will be the ones who can define precise acceptance criteria and evaluate whether the output meets them. The engineers who struggle will be the ones who can write code but can't articulate what success looks like.
 
@@ -66,14 +66,14 @@ This changes what we hire for. The engineers who thrive will be the ones who can
 
 We'll see a split between Architects (who design systems, define constraints, and manage AI agents as part of their workflow) and Operators (who debug production issues, stitch together AI outputs, and handle the messy reality of deployed systems).
 
-The middle ground of writing boilerplate — the work that filled a lot of "senior" engineers' days — is disappearing. This doesn't mean fewer jobs. It means different jobs, and the transition will be uncomfortable for people who built their identity around the craft of writing code rather than the craft of solving problems.
+The middle ground of writing boilerplate, the work that filled a lot of "senior" engineers' days, is disappearing. This doesn't mean fewer jobs. It means different jobs, and the transition will be uncomfortable for people who built their identity around the craft of writing code rather than the craft of solving problems.
 
-I wrote more about what I think "senior" actually means in [a separate post](/blog/what-is-a-senior) — but the short version is that force multiplication matters more than individual output, and AI is about to make that distinction impossible to ignore.
+I wrote more about what I think "senior" actually means in [a separate post](/blog/what-is-a-senior). The short version is that force multiplication matters more than individual output, and AI is about to make that distinction impossible to ignore.
 
 ## 1 Experiment
 
-**The Context Check:** Next time you use an AI tool, treat it like a new hire on their first day. Don't just paste the error code. Paste the error, the relevant file, _and_ a summary of "how we do things here" — your architectural patterns, your naming conventions, your deployment constraints, the decisions you've made and why.
+**The Context Check:** Next time you use an AI tool, treat it like a new hire on their first day. Don't just paste the error code. Paste the error, the relevant file, _and_ a summary of "how we do things here". Your architectural patterns, your naming conventions, your deployment constraints, the decisions you've made and why.
 
 If the output improves dramatically, your problem wasn't the model. It was your delegation.
 
-And if you're a manager reading this — that's the same skill you've been building for years. You already know how to give context, set expectations, and define done. You've just been doing it with humans. The tooling changed. The skill didn't.
+And if you're a manager reading this, that's the same skill you've been building for years. You already know how to give context, set expectations, and define done. You've just been doing it with humans. The tooling changed. The skill didn't.
