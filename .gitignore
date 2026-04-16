@@ -17,9 +17,9 @@ dist
 .DS_Store
 
 # Claude Code
-.claude/settings.local.json
-.claude/CLAUDE.local.md
+.claude/
 .superpowers/
+docs/superpowers/
 
 # Editor
 .vscode/*
