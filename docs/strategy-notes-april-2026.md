@@ -4,11 +4,11 @@
 
 ## Context
 
-Career positioning has shifted from "Engineering Manager" to "Principal Contributor & Engineering Manager" — leading with technical depth, keeping management as secondary signal. Full strategy docs live in the Obsidian vault under `Projects/Job Hunting/`.
+Career positioning has shifted from "Engineering Manager" to "Principal Engineer & Engineering Manager" — leading with technical depth, keeping management as secondary signal. Full strategy docs live in the Obsidian vault under `Areas/Professional/Career Resilience/`.
 
 Key docs to reference:
 
-- `Projects/Job Hunting/Public Narrative.md` — recruiter/panel-safe narrative
+- `Areas/Professional/Career Resilience/Public Narrative.md` — recruiter/panel-safe narrative
 - `Areas/Professional/Career Resilience/Resume.md` — rewritten for dual-track
 - `Areas/Professional/Career Resilience/LinkedIn/LinkedIn Profile Update - April 2026.md` — LinkedIn copy
 
@@ -22,7 +22,7 @@ New framing should match the resume/LinkedIn: lead with building, not managing.
 Suggested rewrite direction:
 
 - Open with what you build, not who you manage
-- "Principal Contributor & Engineering Manager" not just "Engineering Manager"
+- "Principal Engineer & Engineering Manager" not just "Engineering Manager"
 - Lead with Conversational Search, Content Readiness, S3 Vectors — the technical work
 - Keep the "Lead by Example" section but reframe as "I chose EM to learn org-level change; I drive the most value through architecture and code"
 - North star: work that reaches beyond one company — open source, tools, teaching
