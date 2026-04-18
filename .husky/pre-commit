@@ -1,1 +1,10 @@
+#!/bin/sh
+
+# Regenerate OG images if content files changed
+if git diff --cached --name-only | grep -q '^packages/content/'; then
+  echo "Content changed — regenerating OG images..."
+  pnpm generate:og
+  git add apps/web/public/og/ apps/web/public/favicon-512.png apps/web/public/apple-touch-icon.png apps/web/public/favicon.svg
+fi
+
 npx lint-staged
