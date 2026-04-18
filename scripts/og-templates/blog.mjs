@@ -13,10 +13,8 @@ export function blogTemplate({ title, date, tags }) {
     )
     .join('');
 
-  return html`
-    <div
-      style="display:flex;flex-direction:column;width:100%;height:100%;background:#121212;padding:48px;font-family:Sora;"
-    >
+  const markup = `
+    <div style="display:flex;flex-direction:column;width:100%;height:100%;background:#121212;padding:48px;font-family:Sora;">
       <div style="display:flex;position:absolute;top:0;left:0;right:0;height:6px;background:#e8553d;"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span style="color:#f0f0f0;font-size:18px;opacity:0.6;letter-spacing:2px;">JASONMATTHEW.DEV</span>
@@ -29,4 +27,5 @@ export function blogTemplate({ title, date, tags }) {
       <div style="display:flex;gap:12px;">${tagPills}</div>
     </div>
   `;
+  return html(markup);
 }
