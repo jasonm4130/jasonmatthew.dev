@@ -6,7 +6,13 @@
 [![Deployed on Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-deployed-f38020?style=flat-square&logo=cloudflare&logoColor=white)](https://pages.cloudflare.com)
 [![Scheduled Rebuild](https://img.shields.io/github/actions/workflow/status/jasonm4130/jasonmatthew.dev/scheduled-rebuild.yml?style=flat-square&label=scheduled%20rebuild)](https://github.com/jasonm4130/jasonmatthew.dev/actions/workflows/scheduled-rebuild.yml)
 
-Personal portfolio and blog for [Jason Matthew](https://jasonmatthew.dev) — Principal Engineer & Engineering Manager from Brisbane, Australia.
+Personal portfolio and blog for [Jason Matthew](https://jasonmatthew.dev). Engineering Manager from Brisbane, Australia, working across AI, Search, and Platform.
+
+## What This Is
+
+The site publishes writing on production AI systems, engineering leadership, and platform architecture. It also serves as a portfolio of side projects. The technical choices here reflect the same decisions I make in my day job: static-first where possible, edge-deployed, no unnecessary runtime dependencies.
+
+OG images are generated at build time via Satori. No CMS. Content lives in MDX files under version control.
 
 ## Tech Stack
 
@@ -28,16 +34,6 @@ apps/web/              Astro site (components, layouts, pages, styles)
 packages/content/      MDX content (articles, projects, pages)
 scripts/               OG image generation and build tooling
 ```
-
-## OG Image Generation
-
-Every blog post and project gets a unique, branded Open Graph card generated at build time. No manual image creation needed — publish a post, get a card.
-
-```bash
-pnpm generate:og       # Generate all OG images + favicons
-```
-
-A pre-commit hook automatically regenerates images when content files change.
 
 ## Getting Started
 
@@ -62,4 +58,4 @@ pnpm generate:og       # Regenerate OG images
 
 ## License
 
-MIT &mdash; see [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE) for details.
