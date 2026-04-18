@@ -2,7 +2,7 @@
 
 ## Project Purpose
 
-Personal portfolio and blog for Jason Matthew, Engineering Manager at Squiz. Built with Astro on Cloudflare Pages. Monorepo managed by Turborepo + pnpm.
+Personal portfolio and blog for Jason Matthew, Principal Engineer & Engineering Manager at Squiz. Built with Astro on Cloudflare Pages. Monorepo managed by Turborepo + pnpm.
 
 ## Monorepo Structure
 

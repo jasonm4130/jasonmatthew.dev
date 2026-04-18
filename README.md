@@ -6,43 +6,48 @@
 [![Deployed on Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-deployed-f38020?style=flat-square&logo=cloudflare&logoColor=white)](https://pages.cloudflare.com)
 [![Scheduled Rebuild](https://img.shields.io/github/actions/workflow/status/jasonm4130/jasonmatthew.dev/scheduled-rebuild.yml?style=flat-square&label=scheduled%20rebuild)](https://github.com/jasonm4130/jasonmatthew.dev/actions/workflows/scheduled-rebuild.yml)
 
-Personal portfolio and blog for [Jason Matthew](https://jasonmatthew.dev) — Engineering Manager from Brisbane, Australia.
+Personal portfolio and blog for [Jason Matthew](https://jasonmatthew.dev) — Principal Engineer & Engineering Manager from Brisbane, Australia.
 
 ## Tech Stack
 
-| Layer     | Tech                                                               |
-| --------- | ------------------------------------------------------------------ |
-| Framework | [Astro 5](https://astro.build) with TypeScript strict mode         |
-| Styling   | [Tailwind CSS v4](https://tailwindcss.com) via `@tailwindcss/vite` |
-| Content   | MDX with Zod-validated schemas                                     |
-| Fonts     | Sora (headings) + Libre Baskerville (body) + Monaspace Neon (code) |
-| Deploy    | [Cloudflare Pages](https://pages.cloudflare.com) (static output)   |
-| Monorepo  | [Turborepo](https://turbo.build) + pnpm workspaces                 |
-| Quality   | ESLint, Prettier, Husky + lint-staged                              |
+| Layer     | Tech                                                                          |
+| --------- | ----------------------------------------------------------------------------- |
+| Framework | [Astro 5](https://astro.build) with TypeScript strict mode                    |
+| Styling   | [Tailwind CSS v4](https://tailwindcss.com) via `@tailwindcss/vite`            |
+| Content   | MDX with Zod-validated schemas                                                |
+| Fonts     | Sora (headings) + Libre Baskerville (body) + Monaspace Neon (code)            |
+| OG Images | [Satori](https://github.com/vercel/satori) + resvg-js (build-time generation) |
+| Deploy    | [Cloudflare Pages](https://pages.cloudflare.com) (static output)              |
+| Monorepo  | [Turborepo](https://turbo.build) + pnpm workspaces                            |
+| Quality   | ESLint, Prettier, Husky + lint-staged                                         |
 
 ## Project Structure
 
 ```
 apps/web/              Astro site (components, layouts, pages, styles)
 packages/content/      MDX content (articles, projects, pages)
+scripts/               OG image generation and build tooling
 ```
+
+## OG Image Generation
+
+Every blog post and project gets a unique, branded Open Graph card generated at build time. No manual image creation needed — publish a post, get a card.
+
+```bash
+pnpm generate:og       # Generate all OG images + favicons
+```
+
+A pre-commit hook automatically regenerates images when content files change.
 
 ## Getting Started
 
 **Prerequisites:** Node 22+ and pnpm 10+
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Start dev server
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Preview production build
-pnpm -F @jasonmatthew/web preview
+pnpm install           # Install dependencies
+pnpm dev               # Start dev server
+pnpm build             # Build for production (includes OG generation)
+pnpm -F @jasonmatthew/web preview   # Preview production build
 ```
 
 ## Other Commands
@@ -52,6 +57,7 @@ pnpm typecheck         # TypeScript checking
 pnpm lint              # ESLint
 pnpm format            # Prettier format
 pnpm format:check      # Prettier check (CI)
+pnpm generate:og       # Regenerate OG images
 ```
 
 ## License
