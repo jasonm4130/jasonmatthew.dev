@@ -12,9 +12,20 @@ interface Props {
 const { title, description = siteConfig.description, image, pageType = 'website' } = Astro.props;
 const resolvedTitle = title ? `${title} | ${siteConfig.title}` : `${siteConfig.title} — ${siteConfig.subtitle}`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const resolvedImage = image?.src
-  ? new URL(image.src, Astro.site).toString()
-  : new URL('/og-default.jpg', Astro.site).toString();
+function resolveOgImage(pathname: string, image?: { src: string }) {
+  if (image?.src) return new URL(image.src, Astro.site).toString();
+
+  let ogPath = '/og/default.png';
+  const cleanPath = pathname.replace(/\/$/, '');
+  if (cleanPath.startsWith('/blog/')) {
+    ogPath = `/og/blog/${cleanPath.replace('/blog/', '')}.png`;
+  } else if (cleanPath.startsWith('/projects/')) {
+    ogPath = `/og/projects/${cleanPath.replace('/projects/', '')}.png`;
+  }
+  return new URL(ogPath, Astro.site).toString();
+}
+
+const resolvedImage = resolveOgImage(Astro.url.pathname, image);
 ---
 
 <meta charset="utf-8" />
