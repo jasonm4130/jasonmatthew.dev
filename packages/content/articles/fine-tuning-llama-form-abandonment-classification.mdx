@@ -14,12 +14,14 @@ I trained 7 LoRA adapters across 4 model families over a weekend. The best hit 0
 
 [FormRecap](https://formrecap.com) captures form interaction events (focus, blur, input, scroll, exit). When someone abandons a form, a binary "abandoned" label is useless for recovery. The system needs to classify _why_ they left. Six classes, each mapping to a different product action:
 
-→ `validation_error` → fix the form UX
-→ `distraction` → re-engagement email
-→ `comparison_shopping` → targeted discount
-→ `accidental_exit` → browser notification
-→ `bot` → ignore
-→ `committed_leave` → accept gracefully
+| Class                 | Action               |
+| --------------------- | -------------------- |
+| `validation_error`    | Fix the form UX      |
+| `distraction`         | Re-engagement email  |
+| `comparison_shopping` | Targeted discount    |
+| `accidental_exit`     | Browser notification |
+| `bot`                 | Ignore               |
+| `committed_leave`     | Accept gracefully    |
 
 ## Why fine-tune
 
@@ -104,12 +106,14 @@ Full results across all 7 fine-tuned models:
 
 Per-class F1 for the lead model (Gemma 2B full):
 
-→ validation_error: 0.957
-→ distraction: 1.000
-→ comparison_shopping: 0.900
-→ accidental_exit: 1.000
-→ bot: 0.889
-→ committed_leave: 0.750
+| Class               | F1    |
+| ------------------- | ----- |
+| validation_error    | 0.957 |
+| distraction         | 1.000 |
+| comparison_shopping | 0.900 |
+| accidental_exit     | 1.000 |
+| bot                 | 0.889 |
+| committed_leave     | 0.750 |
 
 The weakest classes are comparison_shopping (0.900) and committed_leave (0.750). Both involve browsing without input and deliberate departure. The distinction is intent (evaluating options vs decided not to proceed), which is ambiguous from event traces alone. This is an honest limitation.
 
@@ -117,15 +121,15 @@ The weakest classes are comparison_shopping (0.900) and committed_leave (0.750).
 
 ## What I'd do differently
 
-→ 52 test examples is thin. Bootstrap CIs are wide ([0.81, 0.98]). 200+ real examples for production confidence.
+**52 test examples is thin.** Bootstrap CIs are wide ([0.81, 0.98]). 200+ real examples for production confidence.
 
-→ Start with the plain HF stack. Don't optimise prematurely. Add Unsloth only if training speed is actually the bottleneck. For 884 examples, the ~2x speedup (20 min vs 41 min) is not worth hours of dependency debugging.
+**Start with the plain HF stack.** Don't optimise prematurely. Add Unsloth only if training speed is actually the bottleneck. For 884 examples, the ~2x speedup (20 min vs 41 min) is not worth hours of dependency debugging.
 
-→ Test the deployment path on day one. We discovered CF's practical constraints late. A 10-minute upload test would have saved the retraining detour.
+**Test the deployment path on day one.** We discovered CF's practical constraints late. A 10-minute upload test would have saved the retraining detour.
 
-→ Use vLLM for eval serving. Raw HuggingFace `model.generate()` runs at 30-40s per call. vLLM would be 10-50x faster. We skipped it after the Unsloth experience ("one more thing that can break") but eval speed matters more than training speed for iteration velocity.
+**Use vLLM for eval serving.** Raw HuggingFace `model.generate()` runs at 30-40s per call. vLLM would be 10-50x faster. We skipped it after the Unsloth experience ("one more thing that can break") but eval speed matters more than training speed for iteration velocity.
 
-→ For production serving, Together AI or Fireworks AI offer BYO-LoRA with logprobs at per-token pricing. No cold starts, no GPU idle costs. The right answer for anything beyond a demo.
+**For production, consider Together AI or Fireworks AI.** They offer BYO-LoRA with logprobs at per-token pricing. No cold starts, no GPU idle costs. The right answer for anything beyond a demo.
 
 ---
 
