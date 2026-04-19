@@ -1,5 +1,9 @@
 import type { CollectionEntry } from 'astro:content';
 
+export function isNotDraft({ data }: { data: { draft?: boolean } }) {
+  return !data.draft;
+}
+
 export function isPublished({ data }: { data: { draft?: boolean; publishDate: Date } }) {
   return !data.draft && (import.meta.env.DEV || data.publishDate <= new Date());
 }

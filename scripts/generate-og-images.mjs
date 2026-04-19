@@ -58,9 +58,7 @@ async function generateOgImages() {
 
   // Blog posts
   const articles = readContent('articles');
-  const publishedArticles = articles.filter(
-    (a) => !a.data.draft && a.data.publishDate && new Date(a.data.publishDate) <= new Date(),
-  );
+  const publishedArticles = articles.filter((a) => !a.data.draft);
   for (const { slug, data } of publishedArticles) {
     const markup = blogTemplate({
       title: data.title,
@@ -73,9 +71,7 @@ async function generateOgImages() {
 
   // Projects
   const projects = readContent('projects');
-  const publishedProjects = projects.filter(
-    (p) => !p.data.draft && p.data.publishDate && new Date(p.data.publishDate) <= new Date(),
-  );
+  const publishedProjects = projects.filter((p) => !p.data.draft);
   for (const { slug, data } of publishedProjects) {
     const markup = projectTemplate({
       title: data.title,

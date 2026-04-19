@@ -2,8 +2,8 @@ name: Scheduled Rebuild
 
 on:
   schedule:
-    # Run daily at 8 AM AEST (10 PM UTC previous day)
-    - cron: '0 22 * * *'
+    # Run daily at midnight AEST (14:00 UTC previous day)
+    - cron: '0 14 * * *'
   workflow_dispatch: # Allow manual triggers
 
 jobs:
