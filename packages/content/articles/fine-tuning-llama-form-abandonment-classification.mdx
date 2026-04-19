@@ -1,0 +1,135 @@
+---
+title: '7 Models, 2 Deployment Targets, and the Part That Actually Mattered Was Calibration'
+excerpt: 'I fine-tuned 7 LoRA adapters across 4 model families for form abandonment classification. Every baseline scored 0.06. The best fine-tune hit 0.96. The interesting part was everything after.'
+publishDate: 2026-05-05
+tags:
+  - ai
+  - fine-tuning
+  - machine-learning
+  - cloudflare
+draft: false
+---
+
+I trained 7 LoRA adapters across 4 model families over a weekend. The best hit 0.96 F1 on a 6-class classification task where every baseline scored 0.06. That part was interesting. The part that changed how I think about deploying fine-tuned models was everything after: calibration, deployment constraints, and the gap between accurate and trustworthy.
+
+[FormRecap](https://formrecap.com) captures form interaction events (focus, blur, input, scroll, exit). When someone abandons a form, a binary "abandoned" label is useless for recovery. The system needs to classify _why_ they left. Six classes, each mapping to a different product action:
+
+→ `validation_error` → fix the form UX
+→ `distraction` → re-engagement email
+→ `comparison_shopping` → targeted discount
+→ `accidental_exit` → browser notification
+→ `bot` → ignore
+→ `committed_leave` → accept gracefully
+
+## Why fine-tune
+
+Every general-purpose system I tested scored between 0.06 and 0.11 macro-F1.
+
+| System                 | Macro-F1 | ECE   |
+| ---------------------- | -------- | ----- |
+| Majority class         | 0.063    | 0.019 |
+| Claude Haiku 4.5       | 0.063    | 0.423 |
+| 5-shot Llama 3.2 3B    | 0.065    | 0.653 |
+| Zero-shot Gemma 2B     | 0.063    | 0.755 |
+| Zero-shot Mistral 7B   | 0.095    | 0.645 |
+| Zero-shot Llama 3.2 3B | 0.108    | 0.632 |
+
+Claude Haiku 4.5 scores the same as majority class. A $0.25/M token model with strong general reasoning is no better than always predicting class 1. Event traces are a domain-specific language. Without fine-tuning, models have no idea what `focus:email, input:email(x8), blur:email(invalid_format)` means.
+
+![Baseline comparison](/images/blog/lora-baselines.svg)
+
+## The first model
+
+Llama 3.2 3B. QLoRA NF4, LoRA r=16, alpha 32, DoRA enabled. 884 synthetic training examples generated with Claude Sonnet. 52 hand-labelled real test examples, independent from training data. 41 minutes on a Modal L4 GPU. About $0.50.
+
+F1 = 0.856. An ~8x improvement over the best baseline.
+
+The first data generation run produced 50% exact duplicates. LLMs generating synthetic data will produce identical event traces if you let them. Fixed with per-call randomisation, timing jitter, and in-run dedup rejection.
+
+I started with Unsloth for 2x training speedup. Spent 3 hours debugging dependency conflicts: the torch × xformers × torchao version triangle, plus TRL 0.19+ rejecting Unsloth's `<EOS_TOKEN>` proxy. Dropped it for the plain HuggingFace stack (transformers + PEFT + TRL + bitsandbytes). Dependencies resolved first try. Training worked immediately. Boring technology applies to ML tooling too.
+
+## The constraint that shaped the architecture
+
+Day one discovery: Cloudflare Workers AI BYO-LoRA does not support Llama 3.2. This forced a pivot to Gemma 2B.
+
+Gemma 2B unconstrained: F1 = 0.916. Better than Llama 3B (0.856) despite being 22% smaller. Unexpected.
+
+Then CF's LoRA constraints hit. The documentation says rank up to 32 and adapters under 300MB. The reality is different. Every adapter in Cloudflare's official HuggingFace collection uses the same config: r=8, target_modules=["q_proj", "v_proj"]. Two modules, not seven.
+
+We tested r=16 with all seven linear modules. The adapter uploaded successfully. Inference timed out. Consistently. The documented limits are aspirational, not operational.
+
+Under the real CF constraints (r=8, 2 modules, no DoRA), Gemma 2B collapsed from 0.916 to 0.249. A 73% quality loss. The constraint removed 95% of trainable parameters. The model learned the output format (83.7% token accuracy) but lost classification ability.
+
+Llama 1B at 0.196 establishes the capacity floor. Mistral 7B with the same CF constraints scored 0.760. The 7B model has ~3x the capacity per module, so even training just q_proj and v_proj gives enough expressiveness. Capacity partially compensates for constraint.
+
+The full picture: Mistral 7B without DoRA, all modules, on an H100. 4 minutes, ~$0.30. H100 is actually cheaper than L4 for 7B models because it finishes so fast. F1 = 0.961. Best model overall.
+
+This forced a dual-deployment architecture. CF Workers AI handles edge inference (sub-200ms from Australia). Modal runs the full adapter with logprob extraction for calibration-critical paths. The constraint made the architecture more interesting than "deploy everywhere" would have been.
+
+![F1 vs parameters](/images/blog/lora-f1-vs-params.svg)
+
+## Calibration: the part that actually mattered
+
+Classification accuracy gets you most of the way to a useful system. Calibration gets you the rest. When the model says 90% confident, is it right 90% of the time? For a system that triggers automated actions on real users, this matters more than raw accuracy.
+
+When you ask an LLM to output a confidence score, it gives you a number. That number is largely fabricated. Xiong et al. showed this systematically at ICLR 2024 ("Can LLMs Express Their Uncertainty?"): LLMs are overconfident when verbalising confidence, likely imitating human patterns. Our verbalised confidence ECE was 0.145 on Gemma 2B. When the model said 90% confident, it was right about 75% of the time.
+
+Logprobs are structurally better. Instead of asking the model to verbalise a number, look at the probability it assigned to the output token. The training format uses a leading digit (1-6) for each class. Each digit is a single token. That gives a clean scalar from the softmax, no parsing needed. This is the same approach Fireworks AI documented in their "$2 classifier" post.
+
+The leading-digit design was load-bearing for all of this. Multi-token class names would require aggregating probabilities across tokens with tokenisation ambiguity. One digit, one token, one probability.
+
+Raw logprob ECE: 0.103. Better, but still miscalibrated. Neural networks are systematically overconfident, and fine-tuned models especially so (Guo et al., 2017).
+
+Temperature scaling is the simplest fix that works. Fit a single scalar T on a validation set by minimising negative log-likelihood. Divide logits by T before softmax. One number, one line of code. For Gemma 2B, optimal T = 0.500, meaning the raw probabilities needed significant spreading. After scaling, ECE dropped to 0.056. When the calibrated model says 80% confident, it's right about 80% of the time, give or take ~6 percentage points.
+
+Caveat: ECE with 52 test examples is noisy. These numbers are directional, not precise. The 95% confidence intervals already communicate this. 200+ real test examples would give numbers worth making product decisions on.
+
+CF Workers AI does not expose logprobs for BYO-LoRA on the original dedicated models. The edge path gets verbalised confidence only. The Modal path gets calibrated logprobs. The gap between them (ECE 0.145 vs 0.056) is itself a measurable result. For low-stakes actions (show a tooltip), verbalised is fine. For high-stakes actions (send a recovery email), you want the calibrated path.
+
+![Calibration comparison](/images/blog/lora-calibration.svg)
+
+## The complete picture
+
+Full results across all 7 fine-tuned models:
+
+| Model            | Config               | F1    | 95% CI         | ECE   |
+| ---------------- | -------------------- | ----- | -------------- | ----- |
+| Llama 3.2 1B     | r=16, 7 mod, DoRA    | 0.196 | [0.117, 0.274] | 0.154 |
+| Gemma 2B CF      | r=8, 2 mod, no DoRA  | 0.249 | [0.151, 0.336] | 0.129 |
+| Mistral 7B CF    | r=8, 2 mod, no DoRA  | 0.760 | [0.648, 0.852] | 0.075 |
+| Llama 3.2 3B     | r=16, 7 mod, DoRA    | 0.856 | [0.764, 0.930] | 0.094 |
+| Gemma 2B no-DoRA | r=16, 7 mod, no DoRA | 0.896 | [0.810, 0.963] | 0.040 |
+| Gemma 2B full    | r=16, 7 mod, DoRA    | 0.916 | [0.813, 0.981] | 0.056 |
+| Mistral 7B full  | r=16, 7 mod, no DoRA | 0.961 | —              | 0.041 |
+
+Per-class F1 for the lead model (Gemma 2B full):
+
+→ validation_error: 0.957
+→ distraction: 1.000
+→ comparison_shopping: 0.900
+→ accidental_exit: 1.000
+→ bot: 0.889
+→ committed_leave: 0.750
+
+The weakest classes are comparison_shopping (0.900) and committed_leave (0.750). Both involve browsing without input and deliberate departure. The distinction is intent (evaluating options vs decided not to proceed), which is ambiguous from event traces alone. This is an honest limitation.
+
+![Per-class F1](/images/blog/lora-per-class-f1.svg)
+
+## What I'd do differently
+
+→ 52 test examples is thin. Bootstrap CIs are wide ([0.81, 0.98]). 200+ real examples for production confidence.
+
+→ Start with the plain HF stack. Don't optimise prematurely. Add Unsloth only if training speed is actually the bottleneck. For 884 examples, the ~2x speedup (20 min vs 41 min) is not worth hours of dependency debugging.
+
+→ Test the deployment path on day one. We discovered CF's practical constraints late. A 10-minute upload test would have saved the retraining detour.
+
+→ Use vLLM for eval serving. Raw HuggingFace `model.generate()` runs at 30-40s per call. vLLM would be 10-50x faster. We skipped it after the Unsloth experience ("one more thing that can break") but eval speed matters more than training speed for iteration velocity.
+
+→ For production serving, Together AI or Fireworks AI offer BYO-LoRA with logprobs at per-token pricing. No cold starts, no GPU idle costs. The right answer for anything beyond a demo.
+
+---
+
+- **Demo:** [labs.formrecap.com](https://labs.formrecap.com)
+- **Source:** [github.com/jasonm4130/formrecap-lora-classifier](https://github.com/jasonm4130/formrecap-lora-classifier) (Apache 2.0)
+- **Adapters:** [HuggingFace Hub](https://huggingface.co/jasonm4130) (5 adapters published)
+- **Reproduce:** Clone, `uv sync`, `op run --env-file .env.op -- modal run training/modal_app.py::run_train`. Trained model in under 5 minutes on H100.
