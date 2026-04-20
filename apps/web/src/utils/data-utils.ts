@@ -4,8 +4,15 @@ export function isNotDraft({ data }: { data: { draft?: boolean } }) {
   return !data.draft;
 }
 
+// Brisbane is UTC+10 year-round (no DST). publishDate in frontmatter is a bare
+// date that Zod coerces to UTC midnight, but authors mean "midnight AEST of
+// that day" — so shift "now" forward by the offset when comparing.
+const BRISBANE_OFFSET_MS = 10 * 60 * 60 * 1000;
+
 export function isPublished({ data }: { data: { draft?: boolean; publishDate: Date } }) {
-  return !data.draft && (import.meta.env.DEV || data.publishDate <= new Date());
+  return (
+    !data.draft && (import.meta.env.DEV || data.publishDate.getTime() <= Date.now() + BRISBANE_OFFSET_MS)
+  );
 }
 
 export function sortItemsByDateDesc(itemA: { data: { publishDate: Date } }, itemB: { data: { publishDate: Date } }) {
