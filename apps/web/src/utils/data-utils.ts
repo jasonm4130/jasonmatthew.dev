@@ -42,12 +42,3 @@ export function getAllTags(posts: CollectionEntry<'blog'>[]) {
 export function getPostsByTag(posts: CollectionEntry<'blog'>[], tag: string) {
   return posts.filter((post) => post.data.tags.includes(tag));
 }
-
-export function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
-}

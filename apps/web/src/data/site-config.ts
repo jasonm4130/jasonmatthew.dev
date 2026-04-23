@@ -1,19 +1,14 @@
-export type Image = {
-  src: string;
-  alt?: string;
-};
-
-export type Link = {
+type Link = {
   text: string;
   href: string;
 };
 
-export type SocialLink = {
+type SocialLink = {
   platform: string;
   href: string;
 };
 
-export type SiteConfig = {
+type SiteConfig = {
   website: string;
   title: string;
   subtitle: string;
