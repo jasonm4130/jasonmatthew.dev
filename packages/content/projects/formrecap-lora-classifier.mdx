@@ -1,0 +1,52 @@
+---
+title: FormRecap LoRA Classifier
+description: 7 LoRA adapters across 4 model families for form abandonment classification. The best fine-tune hit F1 = 0.96 on a 6-class task where every general-purpose baseline scored 0.06. Dual-deployed on Modal for power and Cloudflare Workers AI for production inference.
+publishDate: 2026-04-19
+technologies:
+  - Llama 3.2 3B
+  - Gemma 2B
+  - QLoRA / DoRA
+  - HuggingFace (PEFT, TRL, bitsandbytes)
+  - Modal
+  - Cloudflare Workers AI
+featured: true
+sortOrder: 2
+liveUrl: https://lab.formrecap.com
+githubUrl: https://github.com/jasonm4130/formrecap-lora-classifier
+---
+
+## The Problem
+
+[FormRecap](https://formrecap.com) captures form interaction events: focus, blur, input, scroll, exit. When someone abandons a form, a binary "abandoned" label is useless for recovery. The system needs to classify _why_ they left, because each reason maps to a different product action: fix the UX, send a re-engagement email, offer a discount, do nothing because it's a bot.
+
+Six classes. Every general-purpose system tested scored between 0.06 and 0.11 macro-F1. Claude Haiku 4.5 scored the same as always-predict-class-1. Event traces are a domain-specific language and general models have no idea what `focus:email, input:email(x8), blur:email(invalid_format)` actually means.
+
+## The Approach
+
+Seven LoRA adapters trained across four model families: Llama 3.2 3B, Gemma 2B, Mistral 7B, and Phi-3 Mini. QLoRA NF4 quantisation, LoRA r=16 alpha=32, DoRA enabled. 884 synthetic training examples generated with Claude Sonnet, rejection-sampled to deduplicate. 52 hand-labelled real test examples held independent.
+
+The best Llama 3.2 3B fine-tune hit **F1 = 0.96** — an ~8x lift over the strongest baseline. Trained on a Modal L4 GPU in 41 minutes for about $0.50.
+
+## What Actually Mattered
+
+Calibration mattered more than raw accuracy. A 0.96 F1 model that confidently misclassifies bots as comparison shoppers produces worse product outcomes than a 0.92 F1 model that knows when it's uncertain. ECE went from 0.42 (Claude Haiku zero-shot) to 0.04 after temperature scaling on the fine-tuned model.
+
+Synthetic data quality also dominated. The first generation run produced 50% exact duplicates because LLMs generating event traces will quietly converge on the same outputs. Per-call randomisation, timing jitter, and in-run dedup rejection cut that to under 2%.
+
+## The Constraint That Shaped Production
+
+Cloudflare Workers AI BYO-LoRA does not support Llama 3.2. That forced a pivot to Gemma 2B for the production deployment. Unconstrained Gemma 2B hit F1 = 0.92 — better than Llama 3B in some configurations despite being smaller.
+
+Then Cloudflare's actual BYO-LoRA constraints hit: documentation says rank up to 32 and adapters under 300MB, but every adapter in CF's official HuggingFace collection uses `r=8, target_modules=["q_proj", "v_proj"]`. Two modules, not seven. The deployable adapter is a much narrower fine-tune than the research one.
+
+Result: dual deployment. Modal hosts the larger Llama adapter for batch inference and offline evaluation. Cloudflare Workers AI hosts the constrained Gemma adapter for production real-time inference.
+
+## Engineering Notes
+
+- Started with Unsloth for the 2x training speedup, dropped it after 3 hours fighting the torch × xformers × torchao version triangle and TRL 0.19 rejecting Unsloth's `<EOS_TOKEN>` proxy. Plain HuggingFace stack (transformers + PEFT + TRL + bitsandbytes) resolved first try and trained immediately. Boring technology applies to ML tooling too.
+- Hand-labelled 52 real test examples kept the eval honest. Synthetic-only test sets reward models that learn the synthesis distribution rather than the real one.
+- Full reproduction repo on GitHub. Full write-up with charts on the [blog](/blog/fine-tuning-llama-form-abandonment-classification).
+
+## Live Demo
+
+[lab.formrecap.com](https://lab.formrecap.com) — interact with a form, watch the classifier label your abandonment in real time.
