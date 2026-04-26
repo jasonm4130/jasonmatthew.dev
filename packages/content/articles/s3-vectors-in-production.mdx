@@ -1,54 +1,147 @@
 ---
-title: 'S3 Vectors in Production: What We Learned Before GA'
-excerpt: "Everyone told us to use Pinecone. We chose S3 Vectors before it was GA. Here's what happened when we pointed a production RAG pipeline at it."
-publishDate: 2026-05-05
+title: 'We Were Going to Build More Vector Servers. AWS Sold Us Storage Instead.'
+excerpt: "We were three months into a server-backed vector store redesign when AWS shipped S3 Vectors at re:Invent. Production traffic moved over the same day. Here's the story, the five options we evaluated, and what we'd pick again."
+publishDate: 2026-05-12
 tags:
   - aws
   - ai
   - architecture
   - vectors
-draft: true
+  - rag
+draft: false
 ---
 
-{/* DRAFT — Outline for review */}
+Amazon S3 Vectors hit GA at [AWS re:Invent](https://aws.amazon.com/blogs/aws/amazon-s3-vectors-now-generally-available-with-increased-scale-and-performance/) on Tuesday, December 2nd, 2025. We'd tested through preview. We moved production traffic the same day.
 
-## Hook
+Three months earlier we were running about 25,000 vectors per customer across a fleet of HNSWLib instances. The new ceiling is 2 billion vectors per index. We don't cap customer indexes, so any one of them could grow into that headroom without us re-architecting the platform underneath.
 
-{/* re:Invent 2025, S3 Vectors announced. We were already running it in production. */}
-{/* The move from HNSWLib to S3 Vectors wasn't about hype — we had real scaling and concurrency bottlenecks */}
+This is the story of how we got from one shape to the other, and what it took to stop building vector servers ourselves.
 
-## Why We Moved Off HNSWLib
+## What we just shipped
 
-{/* Concurrency bottlenecks at scale */}
-{/* The operational burden of self-managed vector indices */}
-{/* What "serverless RAG" actually means in practice */}
+[Conversational Search](https://www.squiz.net/features/conversational-search) shipped in April 2025. Production RAG, grounded in customer-owned content through the Funnelback search backend. Four-stage pipeline: rewrite the user's question, retrieve from a vector index, generate an answer with Bedrock, run an agentic validation pass that re-runs the chain if the answer fails schema or scope.
 
-## The Architecture
+The orchestration was Step Functions. The vector store was HNSWLib on EC2. Each customer got their own per-client index. Multiple indexes loaded into memory per instance through sparse memory mapping, with clients distributed across instances and regions.
 
-{/* How S3 Vectors fits into a production RAG pipeline */}
-{/* Edge-native with Bedrock inference */}
-{/* Bespoke chunking — this matters more than the embedding model (counter-intuitive finding) */}
-{/* Diagram opportunity here */}
+It worked. Customers were live. Latency was within budget. We had the production traffic to prove the architecture was the right shape.
 
-## Cost Comparison
+The thing we hadn't priced was how this scaled along two axes at once: per-client index growth, and the rate at which the customer pipeline filled the available capacity.
 
-{/* S3 Vectors vs Pinecone vs pgvector — real production numbers */}
-{/* The query volume question: S3 Vectors scales with data processed, cheap for low-volume, expensive at high query volumes */}
-{/* When each option makes sense */}
+## The math we ran
 
-## What Surprised Us
+Two months in, we ran the math.
 
-{/* Things that worked better than expected */}
-{/* Things that didn't — gotchas, limitations */}
-{/* The partnership with AWS product team — what it's like giving feedback on a pre-GA service */}
+Per-customer vector counts were creeping up. Some customers had 25,000 today; their content roadmap pointed at 5x or 10x within a year. Multiply that by an inbound customer pipeline that wasn't slowing down, and the EC2 fleet was on track to scale linearly with both. Every new client meant either more memory pressure on existing instances or another instance to spin up.
 
-## When to Use S3 Vectors (and When Not To)
+The instance class wasn't the lever. We weren't compute-bound, we were memory-bound. Sparse memory mapping had bought us a margin that was about to run out. Larger instances would buy a few more months. They wouldn't buy a different shape of problem.
 
-{/* Decision framework: query volume growth trajectory is the key question */}
-{/* If you're building RAG for enterprise content (low query volume, high data volume) — S3 Vectors is ideal */}
-{/* If you're building a high-QPS consumer search — consider alternatives */}
+What we needed was a vector store where adding a customer didn't reshape the platform underneath the existing ones, and where per-customer index size could grow by an order of magnitude without forcing a re-tier.
 
-## Takeaway
+## The five options we evaluated
 
-{/* Storage-first vector search is a paradigm shift */}
-{/* re:Invent breakout session in May — come say hi */}
+We evaluated five options.
+
+| Option                                    | What it gave us                                           | What stopped us                                                                                                     |
+| ----------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Pinecone**                              | Mature managed service, sub-100ms ANN, the obvious choice | Per-pod / per-namespace cost shape didn't amortise across our customer count and growth trajectory                  |
+| **OpenSearch Service (k-NN)**             | AWS-native, low-latency, already in our toolchain         | Cost shape for per-customer index isolation didn't fit our multi-tenant pattern at our scale                        |
+| **Postgres with pgvector (RDS / Aurora)** | Familiar SQL, transactional, versatile                    | Query latency at our embedding dimensionality wasn't competitive without careful index tuning we didn't want to own |
+| **MemoryDB**                              | Sub-millisecond in-memory queries                         | Cost-prohibitive at our data volume. Paying for resident memory we didn't need at our query rate                    |
+| **Self-managed HNSWLib redesign**         | Total control, evolution of what we ran                   | Ops burden grew linearly with customer count. This was the "more vector servers" path                               |
+
+The pattern was clear. The managed options either didn't fit our multi-tenant cost shape, didn't hit our latency budget, or asked us to pay for capability we weren't using. Going self-managed put us back in the same business we were trying to leave. The least-bad path was building a new server-backed vector platform ourselves: per-tenant isolation, larger memory profiles, sharded indexes. We had the design. We didn't have the calendar.
+
+## Then S3 Vectors landed
+
+The S3 Vectors preview launched in July 2025. We engaged with the AWS team shortly after, ran a few conversations with the product owner, and stood up testing environments against the preview limits.
+
+The architecture matched almost everything in our self-managed redesign brief: per-tenant isolation, no resident-memory ceiling, no provisioning step. Two differences mattered. AWS would run it. We wouldn't.
+
+The signal from the AWS team was that release would be soon. By that point internal interest had escalated. The CEO and our chairman were asking me a few times a week whether the announcement had landed yet, which is the kind of question you start getting when a technical choice has become a business deadline. We tested through preview against representative workloads, fed back what we found to the team, and stayed close to the roadmap.
+
+By Tuesday December 2nd, when AWS announced GA on the re:Invent stage, we had production architecture wired up, indexes ready, and a cutover plan rehearsed against the 50-million-vector preview ceiling.
+
+We moved production traffic the same day.
+
+## The architecture today
+
+The production stack today moves a query through four layers.
+
+1. **Edge-native orchestration.** Cloudflare Workers handle the request, with Durable Objects coordinating the four-stage pipeline. The Step Functions orchestration we shipped on in April is gone, replaced for unrelated reasons that are their own post.
+2. **Bedrock for inference.** Question rewrite, answer generation, and validation all sit on Bedrock, with model selection per pipeline stage.
+3. **S3 Vectors for retrieval.** Per-customer indexes, no resident-memory ceiling, no instance provisioning. Indexes are queried directly from the orchestration layer; we don't manage anything underneath.
+4. **Bespoke chunking at ingest.** Content is chunked with a Q&A-tuned strategy before vectorisation. This piece is still ours and matters more than the embedding model. (See the next section.)
+
+![Production architecture: query path through Cloudflare Workers and Durable Objects, parallel calls to Bedrock and S3 Vectors, async writes to DynamoDB](/images/blog/s3-vectors-architecture.svg)
+
+The shift in shape is the part that matters for this post. We're no longer in the business of provisioning vector capacity. We don't run indexes. We don't size instances. We don't worry about how many customers fit on a node. We submit vectors, query vectors, and pay for what we use.
+
+## What surprised us
+
+### Better than expected
+
+**Latency.** Preview marketing was "sub-second." Reality, including the embedding-generation step on Bedrock, lands around 500ms end-to-end for a typical query. The retrieval itself is comfortably inside the 100ms-or-less band advertised at GA for frequent queries. Embedding generation now dominates the round-trip, not the vector lookup.
+
+**Integration friction was negligible.** SDK quality is on par with the rest of S3. CloudFormation and CLI support shipped together. No custom Terraform resources, no missing primitives. Putting vectors in is `PutVectors`. Querying is `QueryVectors`. The mental model maps directly to the rest of S3.
+
+**Cutover was clean.** Migrating an existing index off HNSWLib was a few-day exercise, not a few-week one. We could write to S3 Vectors in parallel during the transition and switch reads per-tenant.
+
+### Worse than expected
+
+**Backup is your problem.** S3 Vectors inherits the underlying S3 durability story (99.999%), but there's no point-in-time recovery, no snapshots, no AWS Backup integration for vector buckets at GA. Our mitigation: keep source chunks and metadata in regular S3, ready to re-embed and repush. A cost line we hadn't planned for.
+
+**Write throughput is bounded.** [1,000 `PutVectors` requests per second per index, or 2,500 vectors per second per index](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-limitations.html), whichever you hit first. Batch size caps at 500 vectors per request. Initial customer ingest at scale needs throughput planning, not optimism.
+
+**The console is sparse.** Day-to-day inspection (list indexes, peek at vectors, sanity-check metadata, count entries) isn't there yet. We built our own scripts and CLI tooling for the things we needed visibility on. Standard for a new AWS service.
+
+### Partnership dynamics
+
+The engagement loop was the unexpected part. Pre-GA AWS services have a particular shape: raise an issue, the product team gets a real-time signal, the next preview build often has the fix. We hit that loop more than once. The flip side is that the public docs trail the actual behaviour by weeks, so the people you're talking to inside AWS are the documentation.
+
+## The piece we still own
+
+The piece we kept owning is the chunking layer. We're convinced it matters more than the embedding model.
+
+Generic document chunking is fixed-size windows over prose with some overlap. It works for general semantic search. It breaks for Q&A retrieval against customer content. Three reasons compound:
+
+1. **Question and answer shapes don't fit natural prose boundaries.** A useful answer is rarely the same length as a paragraph, and the prose that contains it is rarely structured to make the answer easy to retrieve.
+2. **Metadata at the chunk level is the lever.** Subject tags, page context, topical scope: this is what lets retrieval filter to the relevant slice of a customer's site, not the relevant slice of the open web.
+3. **The embedding model can't compensate for a chunking miss.** Doubling the embedding dimensions doesn't help if the right answer was split between two chunks.
+
+What we run is workload-aware. We know the shapes of questions our customers' end-users ask, the shapes of answers buried in their content, and the metadata that scopes those answers to the right tenant and the right page. The chunking lives at that intersection.
+
+The takeaway: vector storage is now a commodity. Embedding models are commoditising fast. The differentiated layer is the chunking layer. That's where the workload-specific knowledge lives, and it's where staying close to your customers' content shape pays out.
+
+## When this is right for you
+
+### When S3 Vectors is the right call
+
+- **High data volume per tenant.** Millions to billions of vectors. The cost shape rewards you the most at scale.
+- **Low-to-medium query rate.** Hundreds of QPS per bucket is fine. Thousands isn't the workload it's optimised for.
+- **Latency budget tolerates 100-800ms.** AWS publishes that band; your end-to-end with embedding adds on top.
+- **Multi-tenant isolation is a first-class requirement.** Per-customer indexes, no shared memory pressure between tenants.
+- **Cost matters more than absolute speed.** Storage-tier economics, not in-memory.
+
+### When it isn't
+
+- **Sub-50ms latency required.** Real-time recommendations, autocomplete, anything the user is _waiting on the screen_ for. Use MemoryDB or OpenSearch.
+- **High-QPS consumer search.** Thousands of QPS per index. Use OpenSearch managed.
+- **Heavy relational query mix.** SQL joins next to vector similarity. Use pgvector on RDS or Aurora.
+- **Graph-aware retrieval.** Multi-hop reasoning over relationships. Use Neptune Analytics.
+- **Backup or PITR today.** Mitigate by keeping source data and re-embedding, or wait for AWS Backup integration.
+
+### The shape that fit us
+
+Conversational Search is high data volume per tenant, modest QPS per tenant by consumer-search standards (it's an enterprise B2B product, not a consumer search engine), and the 100-800ms retrieval band is well inside our user-facing budget once embedding latency is in the picture. Multi-tenant isolation is a first-class requirement. The cost shape rewarded us for not paying for in-memory capacity we didn't need.
+
+If your shape rhymes with that, S3 Vectors is the easy answer. If it doesn't, the framework above tells you which AWS option does. Either way, the days of building your own vector servers are probably behind you.
+
+## See us at AWS Summit Sydney
+
+[Julie Brettle](https://www.linkedin.com/in/julie-brettle/), Squiz CPO, is presenting this story at [AWS Summit Sydney](https://aws.amazon.com/events/summits/sydney/) on **Wednesday May 13th, 3:30pm**. More architectural detail, the partnership with the AWS team, and the production numbers we couldn't share here. If you're going to be in Sydney, come along.
+
+## The takeaway
+
+Sometimes the right move is to wait for someone else to ship what you were going to build. The trick is having the design ready to recognise it when it lands. We had a server-backed redesign briefed and queued. We never built it. AWS shipped storage instead, and we'd already done the thinking that let us cut over the same day.
+
+Vector storage was the commodity. The chunking is the moat. The lesson generalises further than vectors.
