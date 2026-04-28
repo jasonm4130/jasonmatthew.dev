@@ -4,6 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import remarkRewriteDraftLinks from './src/plugins/remark-rewrite-draft-links.mjs';
 
 export default defineConfig({
   site: 'https://jasonmatthew.dev',
@@ -16,6 +17,7 @@ export default defineConfig({
     responsiveStyles: false,
   },
   markdown: {
+    remarkPlugins: [remarkRewriteDraftLinks],
     rehypePlugins: [
       rehypeSlug,
       [
