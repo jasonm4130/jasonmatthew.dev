@@ -2,13 +2,24 @@ name: Scheduled Rebuild
 
 on:
   schedule:
-    # Run daily at midnight AEST (14:00 UTC previous day)
+    # Daily at midnight AEST (14:00 UTC previous day)
     - cron: '0 14 * * *'
-  workflow_dispatch: # Allow manual triggers
+  workflow_dispatch:
 
 jobs:
-  trigger-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Cloudflare Pages deploy
-        run: curl -s -X POST "${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}"
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo build --filter=@jasonmatthew/web
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
