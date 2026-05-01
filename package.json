@@ -26,7 +26,8 @@
     "prettier-plugin-tailwindcss": "^0.6.0",
     "satori": "^0.26.0",
     "satori-html": "^0.3.2",
-    "turbo": "^2.0.0"
+    "turbo": "^2.0.0",
+    "wrangler": "^4.87.0"
   },
   "lint-staged": {
     "*.{js,mjs,ts,tsx,json,css,md,mdx}": "prettier --write",
