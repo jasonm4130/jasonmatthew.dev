@@ -1,0 +1,331 @@
+---
+interface Props {
+  name: string;
+  caption?: string;
+  alt: string;
+}
+
+const { name, caption, alt } = Astro.props;
+
+const sources = import.meta.glob('../diagrams/*.svg', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+
+const key = `../diagrams/${name}.svg`;
+const svg = sources[key];
+
+if (!svg) {
+  throw new Error(
+    `Diagram "${name}" not found. Run \`pnpm generate:diagrams\` after adding scripts/diagrams/${name}.mmd.`,
+  );
+}
+
+const dialogId = `diagram-dialog-${name}`;
+---
+
+<figure class="diagram" role="group" aria-label={alt}>
+  <button
+    type="button"
+    class="diagram-trigger"
+    data-diagram-trigger
+    data-diagram-target={dialogId}
+    aria-label={`Expand diagram: ${alt}`}
+  >
+    <div class="diagram-svg" set:html={svg} />
+    <span class="diagram-hint" aria-hidden="true">Tap to expand</span>
+  </button>
+  {caption && <figcaption class="diagram-caption">{caption}</figcaption>}
+</figure>
+
+<dialog id={dialogId} class="diagram-dialog" aria-label={alt}>
+  <div class="diagram-toolbar">
+    <div class="diagram-toolbar-group">
+      <button type="button" data-zoom-out aria-label="Zoom out" class="diagram-tool">−</button>
+      <button type="button" data-zoom-reset aria-label="Reset zoom" class="diagram-tool">Reset</button>
+      <button type="button" data-zoom-in aria-label="Zoom in" class="diagram-tool">+</button>
+    </div>
+    <span class="diagram-shortcut-hint" aria-hidden="true">Cmd / Ctrl + scroll to zoom · drag to pan</span>
+    <button type="button" class="diagram-tool diagram-close" data-diagram-close aria-label="Close diagram"
+      >&times;</button
+    >
+  </div>
+  <div class="diagram-dialog-content">
+    <div class="diagram-dialog-svg" data-pan-target set:html={svg} />
+  </div>
+</dialog>
+
+<style>
+  /* ── Inline preview ───────────────────────────── */
+
+  .diagram {
+    margin: 2rem 0;
+    --color-bg: #faf8f5;
+    --color-fg: #111111;
+    --color-accent: #e8553d;
+    --color-muted: #6b6b6b;
+  }
+  :global(.dark) .diagram {
+    --color-bg: #121212;
+    --color-fg: #f0f0f0;
+    --color-muted: #9a9a9a;
+  }
+
+  @media (min-width: 1024px) {
+    .diagram {
+      width: min(100vw - 4rem, 1200px);
+      margin-left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+
+  .diagram-trigger {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    cursor: zoom-in;
+    color: inherit;
+  }
+  .diagram-trigger:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
+  }
+
+  .diagram-svg :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .diagram-hint {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-muted);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    pointer-events: none;
+  }
+
+  .diagram-caption {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  /* ── Fullscreen dialog ────────────────────────── */
+
+  .diagram-dialog {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    --color-bg: #faf8f5;
+    --color-fg: #111111;
+    --color-accent: #e8553d;
+    --color-muted: #6b6b6b;
+    flex-direction: column;
+  }
+  :global(.dark) .diagram-dialog {
+    --color-bg: #121212;
+    --color-fg: #f0f0f0;
+    --color-muted: #9a9a9a;
+  }
+  .diagram-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.85);
+  }
+  /* Only lay out the dialog when open; otherwise the browser default
+     display:none keeps it hidden. */
+  .diagram-dialog[open] {
+    display: flex;
+  }
+
+  .diagram-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-muted);
+    flex: 0 0 auto;
+    font-family: var(--font-sans);
+  }
+  .diagram-toolbar-group {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .diagram-tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.625rem;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1;
+    color: var(--color-fg);
+    background: var(--color-bg);
+    border: 1px solid var(--color-muted);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .diagram-tool:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  .diagram-tool:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .diagram-close {
+    font-size: 1.25rem;
+  }
+  .diagram-shortcut-hint {
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  /* Hide the keyboard hint on touch / coarse-pointer devices. */
+  @media (hover: none) and (pointer: coarse) {
+    .diagram-shortcut-hint {
+      display: none;
+    }
+  }
+
+  .diagram-dialog-content {
+    flex: 1 1 auto;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+    /* Prevent wheel events scrolling the page underneath. */
+    overscroll-behavior: contain;
+  }
+
+  .diagram-dialog-svg {
+    width: 100%;
+    max-width: 1400px;
+    padding: 1rem;
+    box-sizing: border-box;
+    cursor: grab;
+  }
+  .diagram-dialog-svg:active {
+    cursor: grabbing;
+  }
+  .diagram-dialog-svg :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>
+
+<script>
+  import Panzoom from '@panzoom/panzoom';
+  import type { PanzoomObject } from '@panzoom/panzoom';
+
+  // Cache one panzoom instance per dialog so we don't rebuild on every open.
+  const instances = new WeakMap<HTMLDialogElement, PanzoomObject>();
+  let activeKeyHandler: ((e: KeyboardEvent) => void) | null = null;
+
+  function setupDialog(dialog: HTMLDialogElement): PanzoomObject | null {
+    const cached = instances.get(dialog);
+    if (cached) return cached;
+
+    const panTarget = dialog.querySelector<HTMLElement>('[data-pan-target]');
+    const content = dialog.querySelector<HTMLElement>('.diagram-dialog-content');
+    if (!panTarget || !content) return null;
+
+    const pz = Panzoom(panTarget, {
+      maxScale: 6,
+      minScale: 0.4,
+      step: 0.3,
+      animate: true,
+    });
+
+    content.addEventListener(
+      'wheel',
+      (e) => {
+        // Always swallow wheel inside the dialog so the page beneath stays put.
+        e.preventDefault();
+        if (e.ctrlKey || e.metaKey) pz.zoomWithWheel(e);
+      },
+      { passive: false },
+    );
+
+    dialog.querySelector('[data-zoom-in]')?.addEventListener('click', () => pz.zoomIn());
+    dialog.querySelector('[data-zoom-out]')?.addEventListener('click', () => pz.zoomOut());
+    dialog.querySelector('[data-zoom-reset]')?.addEventListener('click', () => pz.reset());
+
+    instances.set(dialog, pz);
+    return pz;
+  }
+
+  function openDialog(dialog: HTMLDialogElement) {
+    const pz = setupDialog(dialog);
+    if (!pz) return;
+
+    dialog.showModal();
+    // Reset to fit/centre on every open so the reader gets a predictable view.
+    pz.reset({ animate: false });
+
+    activeKeyHandler = (e: KeyboardEvent) => {
+      if (e.key === '+' || e.key === '=') {
+        pz.zoomIn();
+        e.preventDefault();
+      } else if (e.key === '-' || e.key === '_') {
+        pz.zoomOut();
+        e.preventDefault();
+      } else if (e.key === '0') {
+        pz.reset();
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('keydown', activeKeyHandler);
+  }
+
+  document.addEventListener('click', (e) => {
+    const el = e.target as HTMLElement;
+
+    const trigger = el.closest<HTMLElement>('[data-diagram-trigger]');
+    if (trigger) {
+      const id = trigger.dataset.diagramTarget;
+      if (!id) return;
+      const dialog = document.getElementById(id) as HTMLDialogElement | null;
+      if (dialog) openDialog(dialog);
+      return;
+    }
+
+    const close = el.closest<HTMLElement>('[data-diagram-close]');
+    if (close) {
+      close.closest('dialog')?.close();
+    }
+  });
+
+  document.addEventListener(
+    'close',
+    (e) => {
+      const target = e.target as HTMLElement;
+      if (target.classList?.contains('diagram-dialog') && activeKeyHandler) {
+        document.removeEventListener('keydown', activeKeyHandler);
+        activeKeyHandler = null;
+      }
+    },
+    true,
+  );
+</script>

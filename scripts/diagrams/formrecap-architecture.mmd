@@ -1,0 +1,33 @@
+flowchart LR
+    classDef external fill:#fafafa,stroke:#888888,stroke-dasharray:4 3,color:#111111
+    classDef accent fill:#fafafa,stroke:#e8553d,stroke-width:2px,color:#111111
+
+    Browser["Visitor browser<br/>2.7KB snippet"]:::external
+
+    subgraph CF["Cloudflare edge"]
+        direction TB
+        W["Workers · Hono<br/>API + SPA"]
+        DO["Durable Objects<br/>per-session state<br/>alarm-based detection"]:::accent
+        WF["Workflows<br/>recovery pipeline"]
+        Q["Queues<br/>at-least-once delivery"]
+        D1[("D1<br/>encrypted snapshots")]
+        KV[("KV<br/>tokens · rate limit")]
+        AE[("Analytics Engine<br/>field events")]
+        CR["Cron Triggers<br/>cleanup · digest"]
+    end
+
+    Resend["Resend<br/>transactional email"]:::external
+    Stripe["Stripe<br/>billing"]:::external
+
+    Browser -- "sendBeacon · text/plain" --> W
+    W --> DO
+    W --> AE
+    DO -- "alarm fires" --> D1
+    DO -- "enqueue" --> Q
+    Q --> WF
+    WF -- "magic link" --> Resend
+    Resend -. "click restores state" .-> W
+    W <--> KV
+    W <--> D1
+    W <--> Stripe
+    CR --> D1

@@ -6,7 +6,7 @@
 [![Deployed on Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-deployed-f38020?style=flat-square&logo=cloudflare&logoColor=white)](https://pages.cloudflare.com)
 [![Scheduled Rebuild](https://img.shields.io/github/actions/workflow/status/jasonm4130/jasonmatthew.dev/scheduled-rebuild.yml?style=flat-square&label=scheduled%20rebuild)](https://github.com/jasonm4130/jasonmatthew.dev/actions/workflows/scheduled-rebuild.yml)
 
-Personal portfolio and blog for [Jason Matthew](https://jasonmatthew.dev). Engineering Manager from Brisbane, Australia, working across AI, Search, and Platform.
+Personal portfolio and blog for [Jason Matthew](https://jasonmatthew.dev). Brisbane-based engineer building production AI systems, edge infrastructure, and ML platforms at scale.
 
 ## What This Is
 
@@ -54,6 +54,13 @@ pnpm lint              # ESLint
 pnpm format            # Prettier format
 pnpm format:check      # Prettier check (CI)
 pnpm generate:og       # Regenerate OG images
+pnpm generate:diagrams # Regenerate architecture SVGs from scripts/diagrams/*.mmd
+```
+
+`generate:diagrams` uses `@mermaid-js/mermaid-cli` which needs a local Chromium. One-time setup:
+
+```bash
+pnpm dlx @puppeteer/browsers install chrome-headless-shell
 ```
 
 ## License

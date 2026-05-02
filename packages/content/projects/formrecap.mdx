@@ -32,6 +32,14 @@ The snippet auto-discovers forms on the page, watches for field changes, and fir
 
 ## Architecture
 
+import Diagram from '@components/Diagram.astro';
+
+<Diagram
+  name="formrecap-architecture"
+  alt="FormRecap architecture diagram showing the data flow from the visitor's browser through Cloudflare Workers, Durable Objects, D1, Queues, Workflows, KV, Analytics Engine, and Cron Triggers, with external connections to Resend and Stripe."
+  caption="The full stack runs on Cloudflare. External dependencies are limited to Resend (email) and Stripe (billing)."
+/>
+
 The entire stack is Cloudflare-native. No AWS, no Vercel, no external databases.
 
 - **Workers (Hono)** — API routing, SPA serving, webhook handling
