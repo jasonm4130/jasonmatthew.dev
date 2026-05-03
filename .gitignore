@@ -24,3 +24,9 @@ docs/superpowers/
 # Editor
 .vscode/*
 !.vscode/extensions.json
+
+# Graphify build artifacts
+graphify-out/
+
+# Local Claude Code settings (per-user)
+.claude/settings.local.json
