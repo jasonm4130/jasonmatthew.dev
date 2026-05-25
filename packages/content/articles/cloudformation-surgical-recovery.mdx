@@ -1,0 +1,97 @@
+---
+title: 'The CloudFormation Recovery AWS Documents in Halves'
+excerpt: "A rogue delete put a 200-resource CloudFormation stack into DELETE_FAILED. We took the surgical path instead of backup-and-restore and were back in two hours. Here's the technique and why AWS spreads it across two separate documents."
+publishDate: 2026-05-26
+tags:
+  - aws
+  - cloudformation
+  - incident-response
+  - infrastructure
+draft: false
+---
+
+A developer ran a stack delete in our dev environment, Friday around midday. It wasn't supposed to happen. Two or three ephemeral child stacks (functions and claim-check S3 buckets) deleted outright. The parent stack and two of its children landed in DELETE_FAILED. The rest of the nested children carried `DeletionPolicy: Retain` on their stack constructs, so they survived the cascade as standalone orphans, with the DynamoDB tables and S3 buckets we cared about still inside them. About 200 resources across the whole thing.
+
+Two paths from there. Back the data up, finish destroying what was broken, recreate from the template, restore. Or leave the data exactly where it sits, finish cleaning up the broken parts, and bring CloudFormation management back over the top.
+
+We took the second path. We were back in about two hours, including planning and the bits where the import didn't adopt cleanly first time. The backup we ran in parallel hadn't finished yet.
+
+## The fork in the road
+
+Full restore was the obvious choice. We have a tested restore playbook, we drill it, and a 200-resource stack with a clean backup is well within its capability. The estimate looked like this: about two hours to back up the data, another two to three to restore once the stack was deleted and recreated. Call it four to five hours start to finish, plus the operational pain of a manual restore on a fleet of tables and buckets.
+
+The surgical path was the one we hadn't done before at this scale. The idea: retry the parent stack delete with `--retain-resources` covering the children that still held our data, use the same flag on the two children stuck in DELETE_FAILED (their blockers stayed behind as orphans to mop up later), then build a minimal replacement parent named the same as the original stack and adopt the survivors under it. Once everything was back under CFN management, redeploy the full template over the top as a normal stack update. The data never moves. The template comes back in two phases: minimal first, full after.
+
+Both paths were viable. The restore playbook was the safety net either way. We picked surgical because we were curious whether it could work at this size, and because if it did, we wanted to know what it took.
+
+## Why surgical won
+
+Three reasons made surgical worth attempting.
+
+**Data state guarantee.** A restore is bounded by the freshness of your snapshot. Even a continuous-backup PITR is typically about five minutes behind real time, so writes in that trailing window aren't recoverable. Surgical leaves the data in the exact state it was in when the delete was issued. No backup-lag math, no "what about the writes between snapshot and incident" conversation. The DynamoDB tables and S3 buckets came out the other side identical to how they went in.
+
+**Lower downtime ceiling.** Two hours, including the iteration loop, beat the four-to-five-hour restore estimate by enough margin that the choice was worth the experiment. The 200-resource size made the restore path long enough to hurt; it also made surgical's iteration loop short enough to absorb.
+
+**Capability reps.** Dev is the right place to learn this. The next time a stack lands in DELETE_FAILED, it might not be dev. Doing the surgical pattern once in a low-stakes environment, with the restore playbook running as a parachute, is the cheapest way to make it available when you actually need it.
+
+## Run the backup anyway
+
+The framing most people start with is "surgical or restore". That's the wrong frame.
+
+CloudFormation resource import is non-destructive. It doesn't touch the data. It changes which stack owns the resource, nothing else. Which means you can run the backup at the same time as the surgical attempt and lose nothing by doing both.
+
+We did. The first thing we did after deciding on surgical was kick off the backup. It took about two hours, exactly the time the surgical recovery took. The backup never had to be used. If the surgical attempt had stalled, we'd have switched lanes to the restore path with no progress lost.
+
+This is the bit worth remembering. The choice isn't surgical _or_ restore. The choice is surgical _with restore running as the safety net_. Worst case, you abandon the surgical attempt and you're in the same place you'd have been at the start of the restore path. Best case, you finish before the backup does and you delete it. The downside is bounded; the upside is the two-hour outcome.
+
+## The technique
+
+Four primitives carry the whole pattern.
+
+**`DeletionPolicy: Retain` on stateful resources and on the nested-stack constructs themselves.** When the broken parent gets cleaned up, what survives is the nested-stack children that hold your data, but only if each `AWS::CloudFormation::Stack` resource in the parent template carried its own retain policy. Retain on the data inside alone would preserve the tables and buckets as bare orphans, but the child stack wrapper around them would be gone. The import-back recovery path needs that wrapper intact. Worth pairing with `UpdateReplacePolicy: Retain` on the stateful resources too. The [`DeletionPolicy` docs](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-deletionpolicy.html) cover the distinction.
+
+**A minimal replacement parent named the same as the eventual rebuild.** This is the bit that turns recovery into a normal deploy at the end. Create a small CFN template that declares minimal nested children referencing your orphaned stacks. Give the parent the exact name the original stack had. Import. When you later redeploy the full template, CFN sees an existing stack and runs a stack update, which fills in all the compute that got stripped, exactly where the original template said it should go. No second import cycle. No name drift.
+
+One caveat: resource import only supports one level of nesting, so this works cleanly when your orphans are leaf nested stacks. If any orphan is itself a parent of further children, you'll hit the limit and need to flatten or stage.
+
+**Minimum-viable child templates for import.** Don't hand-roll these from scratch. Take the original nested stack template, delete everything you're not adopting (functions, alarms, IAM policy attachments, anything ephemeral), and use what's left. The originals may not have `DeletionPolicy: Retain` on every resource you're keeping, and required properties may be missing or stale. Budget an iteration loop for the gaps. CFN doesn't check that template configuration matches actual resource values at import time. It validates four things: the resource exists, the required properties are present in the template, the properties and values conform to the resource type schema, and the resource isn't already owned by another stack. Property values that disagree with the live resource pass import and surface later when you run drift detection. The [import resources manually docs](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/import-resources-manually.html) state this explicitly.
+
+**Hardcoded ARNs where the original used cross-stack references.** Every `!Ref`, `!GetAtt`, and `Fn::ImportValue` in the original was pointing at something. After the broken stack got cleaned up, half those somethings no longer existed in CFN-managed form. Inline the literal value. The role ARN. The bucket name. The DynamoDB table ARN. The KMS key ID. Feels ugly. It is. But it's the path through, and the follow-up full deploy re-stitches the references properly once everything's stable. The [best practices for importing](https://repost.aws/knowledge-center/cfn-best-practices-for-importing-resources) page nominally advises "match the properties of the existing resource", which is aspirational for the incident case. Both positions are compatible because import is lenient on what it actually enforces.
+
+## The iteration loop
+
+Import did not adopt cleanly on the first attempt. We didn't expect it to. The shape of the iteration loop is what makes this pattern feel slow when you read about it and fast when you do it.
+
+Each failed import told us something specific. A required property the minimum-viable template was missing. A cross-stack `Fn::ImportValue` pointing at an export whose stack no longer existed. After a successful import, a follow-up drift detection run caught optional fields we'd left at the default that disagreed with the live resource values. Same kind of fix, different operation.
+
+The iteration loop benefited from having Claude as a pair on the template edits. The cycle of "import failed because X, here's the error, what's the smallest template change that fixes it" is exactly the kind of mechanical-but-fiddly work that AI handles well. The same iteration in 2020 would have been slower because the error-message-to-template-diff translation would have been entirely manual. In 2026 it isn't, and that's part of why "two hours including pivots" is achievable now in a way it wouldn't have been then.
+
+By the time we had the orphaned nested stacks adopted under the minimal parent, drift detection ran clean. The full template deploy went straight in on top as a stack update, filling in the functions, alarms, and everything else the minimal templates had left out.
+
+## When to reach for this
+
+Two conditions made this a reasonable call.
+
+**Dev environment.** The blast radius of the surgical attempt being wrong was bounded. No customer traffic, no SLA, no incident timer. If the import had failed catastrophically (which it can't, because it's non-destructive, but if every retry had stalled), we'd have switched to restore with no production impact.
+
+**A tested restore playbook running in parallel.** This is the load-bearing condition. The reason we could afford to spend two hours experimenting with surgical was that we had the parachute open the entire time. Without a tested restore that we trusted, surgical would have been the only option, and "only option" is not the position you want to be in mid-incident.
+
+Conditions where I would not reach for surgical: prod incident with no recent restore drill, a resource type that doesn't support import, a stack so small that restore is just trivially faster, or a team that hasn't done the pattern once before in a low-stakes setting. The reps in dev are what make the prod option available later.
+
+## Where AWS documents this in halves
+
+Resource import shipped in [November 2019](https://aws.amazon.com/blogs/aws/new-import-existing-resources-into-a-cloudformation-stack/). The retain-on-delete pattern is foundational to CloudFormation and pre-dates import by years. The two halves are well-documented in isolation.
+
+What doesn't exist is a single AWS runbook that joins them. The [canonical re:Post article](https://repost.aws/knowledge-center/cloudformation-stack-delete-failed) for DELETE_FAILED recovery walks you through `--retain-resources` and the `FORCE_DELETE_STACK` deletion mode (added in [May 2024](https://aws.amazon.com/blogs/aws/aws-weekly-roundup-llamaindex-support-for-amazon-neptune-force-aws-cloudformation-stack-deletion-and-more-may-27-2024)). It does not mention resource import as the natural completion step.
+
+The [Cloud Operations blog from March 2020](https://aws.amazon.com/blogs/mt/remediate-drift-via-resource-import-with-aws-cloudformation/) by Blanco and Nakkeeran does describe the abandon-and-reimport sequence for stateful resources, calling it "the safest way to ensure that your templates continue to reflect the most accurate, up-to-date state over time". The framing is drift remediation, not stuck-stack rescue. A reader looking up "how do I recover from DELETE_FAILED" doesn't find their way into that piece.
+
+The composition (retain the nested-stack constructs around the data, clean up the broken husk, create a same-named minimal replacement, adopt the surviving children under it, redeploy on top) is the obvious move once you've seen it. It's also not obvious before, because each piece lives in a different document.
+
+## Reach for it
+
+Most engineers haven't seen this done. The pattern composes pieces that live in different AWS documents, and the composition itself isn't in any single runbook. That's where the operational knowledge gap actually sits. CloudFormation has shipped the building blocks for surgical recovery for years, and AWS has never written the runbook that puts them in order.
+
+Reach for the surgical pattern when the conditions allow it: a tested restore playbook to run in parallel, an environment where iteration is safe, and a clear-headed view that the goal is data state preservation, not template purity. Hardcode the ARNs. Skip the Outputs. Re-stitch later. Run the backup the entire time.
+
+Two hours, with the parachute open, beats four to five with no upside.
