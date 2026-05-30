@@ -1,0 +1,57 @@
+---
+title: 'AI Memory Is Cosmetic'
+excerpt: 'Every few weeks a tool I use ships a "memory" feature. I turn them on. Then I read how they work, and every one is the same thing: a notebook, not a brain. Here is the difference, and why I am building the smallest real version of the alternative.'
+publishDate: 2026-06-09
+tags:
+  - ai
+  - continual-learning
+  - fine-tuning
+  - architecture
+  - opinion
+draft: true
+---
+
+Every few weeks a tool I use ships a "memory" feature. Persistent context. Long-term recall. Your AI finally remembers you. I turn most of them on. Then I read how they actually work, and every single one is the same thing underneath: text, retrieved and stuffed back into the prompt. The model has not learned anything. It has been handed a notebook.
+
+I have built versions of this myself. RAG over our documentation. A rules file the agent reads at the start of every session. A vector store of past tickets. They are useful and I ship them. But none of them change the model. Close the session and the model is exactly as ignorant as it was before it started. We have been calling that memory. It is not memory. It is a notebook the model opens, reads, and closes.
+
+## What memory would actually be
+
+A junior engineer who joins your team does not re-read the onboarding doc before every task. For the first week they do. Six months in, the conventions are in their hands, not on their screen. That is the line between being reminded and having learned. Today's AI can be reminded of anything and learns nothing, because the weights freeze the moment training ends. Every session after that is an amnesiac reboot that re-reads its notes.
+
+## The spectrum
+
+It helps to stop treating this as a binary, notebook versus brain, and put it on a spectrum. Four zones:
+
+| Zone                     | What it is                          | Examples                            | The metaphor                                       |
+| ------------------------ | ----------------------------------- | ----------------------------------- | -------------------------------------------------- |
+| 1. Ephemeral context     | Retrieved at query time, gone after | RAG, MCP, tool use                  | A notebook you open, use, close                    |
+| 2. Persistent context    | Reloaded every session              | rules files, skills, system prompts | A notebook you read every morning                  |
+| 3. Offline weight change | Trained in, then static             | LoRA, fine-tuning                   | Studying for an exam. You retain it, then it fades |
+| 4. Online weight change  | Learns during inference             | Titans, Test-Time Training          | Actually learning from experience, in real time    |
+
+Almost everything sold as AI memory lives in zones 1 and 2. RAG, MCP servers, the memory features, the rules files. All notebooks. Genuinely useful notebooks. The problem is when a zone 1 tool is marketed as if it solved a zone 4 problem. RAG does not teach the model anything. An MCP server does not give it memory. Calling them memory sets a false expectation and points engineering effort in the wrong direction.
+
+The most interesting work sits in the middle. A LoRA adapter is real weight modification. Typically 10 to 50MB, and in a multi-adapter serving stack you can switch between pre-loaded adapters per request with almost no latency, reconfigurable per user or per task. That is closer to a changeable identity than a notebook, even if it is not yet learning on the fly.
+
+## Why the confusion is everywhere
+
+The ecosystem keeps shipping protocols that promise to fix this with more plumbing. The largest directories index north of twenty thousand MCP servers now. Most are a zone 1 notebook with extra steps, an auth surface, and a token bill before you type anything. A new protocol does not move you up the spectrum. It cannot. The freeze is in the architecture, not the integration layer. (Some MCPs are genuinely worth it. Playwright, a few of the AWS ones. The argument is not "never," it is "most of these solve a problem that does not need a new protocol.")
+
+## What zone 4 actually looks like
+
+_Skip to the last section if you just want the point._
+
+Real zone 4 exists in research. Google's Titans adds a neural memory module that updates its own weights at test time, using prediction error as the signal for what to remember. Test-Time Training reframes language modelling itself as continual learning and compresses the context it reads into layers that change during inference. These are models that rewrite part of themselves as they run.
+
+The honest part is why this is hard. New learning tends to destroy old knowledge, a problem called catastrophic forgetting. Computing gradients during inference is expensive, so the working examples run at single-digit-billion parameter scale, not frontier scale. And there is no reliable way yet to confirm the model learned something correct rather than reinforcing an error. Production-grade zone 4 is a multi-year horizon, not next quarter.
+
+## So I am building the smallest real version
+
+You cannot wait for Titans to ship to understand the problem. You can build the smallest honest version of it. So that is what I am doing this quarter.
+
+I am building a pipeline that fine-tunes an open model, Qwen3.5-9B, on my own session data, with an eval harness that measures what actually transferred into the weights and what got forgotten. One user. Real held-out tasks. Blind A/B against the base model. It is zone 3, built to understand what zone 4 will need.
+
+The eval harness comes first, before any training, because a weak eval dooms everything after it. I will publish the harness so anyone can repoint it at their own data. Then the honest results, and they will be honest: if the adapter wins on my tasks but forgets general capability, that is the result and it ships as written. In a field this saturated with demos, the mixed-results writeup is the most useful artifact I can produce.
+
+I will write it up as I go, starting with the harness. Follow along if you want to watch someone find the exact line where the notebook ends and learning begins.
