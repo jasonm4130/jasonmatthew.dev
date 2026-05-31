@@ -1,0 +1,109 @@
+---
+title: "107 Sub-Agents, All on Opus: Guarding Claude Code's Most Expensive Default"
+excerpt: "A single deep-research workflow spawned 107 sub-agents. Every one inherited Opus 4.8, because the fan-out passed no per-agent model. That one run cost about $89. Here's the PreToolUse hook I built so it can't happen silently again."
+publishDate: 2026-06-02
+tags:
+  - claude-code
+  - ai-engineering
+  - agents
+  - cost-control
+draft: false
+---
+
+I pointed a deep-research workflow at a hard question and let it fan out as wide as it wanted. 107 sub-agents. It was the end of the week, my usage limits were about to reset, and I wanted to see what an unconstrained fan-out actually does. Finding the sharp edges is the whole point of a test like that.
+
+Here is the edge it found: every one of those 107 workers ran on Opus 4.8. Not because I asked, but because I did not say otherwise. The fan-out inherited the main-loop model, exactly the way the tool is documented to behave. 107 workers (web searches, page fetches, claim verifiers, most of them jobs a well-prompted Haiku would have nailed) each billed at frontier rates. That run cost about $89 in model spend. Tiered down to Haiku it would have been about $18.
+
+Run that fan-out on purpose and $89 is the price of a good test. Run it by accident and it is a number you find at the end of the month. Either way the fix is the same: a guardrail that makes the cheap path the default path, so the expensive one is a choice you make instead of a default you miss. So I built one. This is the failure mode, why discipline does not solve it, and the 60-line hook that does.
+
+## The Default That Costs You
+
+Claude Code's `Workflow` tool lets you orchestrate sub-agents programmatically: fan out with `parallel()`, pipeline work through stages, loop until a budget runs dry. Each worker is spawned with an `agent()` call, and each `agent()` call takes an optional `model`.
+
+The tool's own guidance is explicit about that option:
+
+> Default to omitting it. The agent inherits the main-loop model (the resolved session model), which is almost always correct.
+
+For a 1 to 3 agent workflow, that guidance is right. The orchestrator is on Opus because you are doing something hard, and a couple of helper agents on Opus is fine.
+
+It stops being right the moment you fan out. A `parallel()` over 100 items with no per-agent `model` runs 100 Opus agents. A `pipeline()` with three stages triples it. A loop-until-budget keeps spawning Opus workers until the budget you were trying to protect is gone. The expensive default is invisible: nothing in the script says "Opus," so nothing reminds you that every worker is one.
+
+Opus 4.8 is $5 per million input tokens and $25 per million output. Haiku 4.5 is roughly a fifth of that, and on focused, well-scoped sub-tasks the quality difference is negligible. The pattern that works is old news: keep the orchestrator smart, route the grunt work cheap. The problem is not the pattern. The problem is that the platform defaults against it, quietly, at exactly the moment the cost multiplies.
+
+## This Is a Known Sharp Edge
+
+I want to be clear that I did not discover this. It is an open, active discussion:
+
+- [anthropics/claude-code #26179](https://github.com/anthropics/claude-code/issues/26179): "Subagents should default to Sonnet, not inherit Opus."
+- [anthropics/claude-code #43869](https://github.com/anthropics/claude-code/issues/43869): "Subagent model routing is broken, all mechanisms resolve to parent model (Opus)."
+- [github/copilot-cli #2939](https://github.com/github/copilot-cli/issues/2939): the same request, on the other CLI.
+
+There is a whole genre of "why three agents cost ten times one" writing already. So the observation is not new. What struck me is that the proposed fixes fall into two buckets, and both have a hole:
+
+1. **Discipline.** "Remember to set the model on your workers." Advice, not a mechanism.
+2. **A platform change.** "Anthropic should flip the default." Maybe they will. Until then, every fan-out I write is exposed.
+
+There is a third option nobody seemed to be taking: enforce it myself, at the boundary, before the spend happens.
+
+## Discipline Does Not Survive a .map()
+
+Here is why "just remember" fails. This is the shape of a real fan-out:
+
+```js
+const results = await parallel(items.map((item) => () => agent(`Research ${item}`)));
+```
+
+There is no number in that code. You cannot look at it and feel the cost, because the agent count lives in `items.length`, which might be 5 or might be 500. The Opus default is one omitted argument away, and the omission is the recommended style. You will get it right when you are fresh and thinking about cost. You will get it wrong at 11pm when you are thinking about the research question and `items` happens to be long.
+
+Anything that depends on me remembering, every time, under fatigue, is not a control. It is a hope. The right place to put the check is in the artifact, not in my head.
+
+## The Guard
+
+So I wrote `workflow-model-guard`: a single stateless `PreToolUse` hook, matched to the `Workflow` tool. No state, no flag files, no services. On every `Workflow` call it reads the inline script and asks two questions.
+
+**Is this expensive?** A static scan for the signals that mean real fan-out:
+
+```js
+const agentCount = (script.match(/\bagent\s*\(/g) || []).length;
+const fanout = script.includes('parallel(') || script.includes('pipeline(');
+const loopy = /\bwhile\s*\(/.test(script) || /\bfor\s*\(/.test(script) || script.includes('budget.remaining');
+
+const expensive = agentCount >= 4 || fanout || (loopy && agentCount >= 1);
+```
+
+`agentCount` is a deliberate lower bound. A `.map()` over a list means the real spawn count is higher than the literal `agent(` calls, so the presence of fan-out or a loop is the stronger signal, not the count.
+
+**Did the author think about model tiers?** If the script contains any `model:` override at all, it passes. The author has clearly weighed the question. And if all-Opus is genuinely what you want, a `// model-guard:ack` comment asserts that intent and clears the guard for good.
+
+If a script is expensive and sets no model tiers, the hook denies the call and hands the reason back to Claude:
+
+```
+workflow-model-guard: this workflow has parallel/pipeline fan-out and no
+per-agent model: override. Every spawned agent defaults to the main-loop
+model (Opus 4.8), which burns usage limits fast. Add model:'claude-sonnet-4-6'
+(or 'claude-haiku-4-5') to worker agents that don't need Opus. If Opus is
+genuinely required for all of them, add a `// model-guard:ack` comment and re-run.
+```
+
+That deny is self-clearing. Claude reads the reason, revises the script to tier its workers, and re-runs. The moment a `model:` appears, the guard goes silent. Small workflows (one or two plain `agent()` calls, no fan-out, no loop) never trip it, so it does not fight the tool's "omit by default" guidance where that guidance is correct. It only speaks up where the default gets expensive.
+
+## Hooks as Policy, Not Reminders
+
+The piece I keep coming back to is not the regex. It is what a `PreToolUse` hook actually is: a place to put a policy that runs at the boundary, before an irreversible action, that I do not have to remember.
+
+Most hook examples are notifications. Tell me when the build finishes, log what changed. This is a different use: the hook is a gate. It inspects the thing about to happen, and when the thing is expensive and avoidable, it stops it and explains why, in language the agent on the other side can act on. The cost control is not a habit I maintain. It is a property of the system.
+
+That generalises well past model selection. Any default that is right at small scale and wrong at large scale, where the wrong version is silent and the cost is real, is a candidate for the same treatment.
+
+## The Numbers
+
+Untiered against tiered, from my own workflow runs:
+
+| Run                 | Sub-agents | Models                     | Notes                                                                   |
+| ------------------- | ---------- | -------------------------- | ----------------------------------------------------------------------- |
+| Untiered (the test) | 107        | 100% Opus 4.8              | One deep-research fan-out, no per-agent model. ~$89.                    |
+| Tiered              | 21         | Haiku + Sonnet, trace Opus | Same kind of work, models matched to the task. A fraction of the spend. |
+
+Same workflow shape. The only difference is that the workers got the model the work needed instead of the model the session happened to be running.
+
+The guard is one `.mjs` file, Node stdlib only, with a test suite. It ships in my [claude-skills marketplace](https://github.com/jasonm4130/claude-skills/tree/main/plugins/workflow-model-guard). If you run Claude Code workflows that fan out, it will save you from a default you cannot see until the bill arrives.
