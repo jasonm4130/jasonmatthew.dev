@@ -1,6 +1,6 @@
 ---
-title: "Progress That Lets You Stay: Building My Wife's Lifting App From My Phone"
-excerpt: 'My wife lifts to keep a habit, not to chase a max. Her app demanded a heavier bar every session and treated anything else as failure. So I built her a progression where hitting your reps at the same weight is a good session, the first version over a lunch break on my phone.'
+title: 'Home-Cooked Software: I Built My Wife the App the Market Was Never Going to Make'
+excerpt: 'The barrier to building software fell from days to hours. So I built my wife a barbell tracker that does the one thing no commercial app would ship for her: let a good session be the same weight. Here is the old idea that explains why, and the honest version of what actually changed.'
 publishDate: 2026-06-16
 tags:
   - side-projects
@@ -10,19 +10,35 @@ tags:
 draft: false
 ---
 
-My wife lifts to build a habit. She is not chasing a one-rep max or a number on a leaderboard. She wants to show up, do the session, feel capable, and come back. Getting stronger is a nice side effect of consistency, not the reason she walks into the garage.
+My wife lifts to build a habit. She is not chasing a one-rep max or a number on a leaderboard. She wants to show up, do the session, feel capable, and come back. She was running a beginner barbell program through the official app, and the program is built on linear progression: add weight every single session. That works for a while, and then it gets hard, fast. The bar is heavier than last time, every time. Miss the jump and the app treats it as a failure to recover from.
 
-She was running a Starting Strength novice program through the official app, and the program is built on linear progression: add weight every single session. That works for a while, and then it gets hard, fast. The bar is heavier than last time, every time. Miss the jump and the app treats it as a failure to recover from. For someone whose actual goal is to keep the habit alive, that is exhausting in exactly the wrong way. The thing meant to keep her going was the thing making her want to stop.
+For someone whose goal is to keep the habit alive, that is exhausting in exactly the wrong way. The app had one definition of a good session, heavier than the last one, and no setting let it be anything else. So I built her one that could. It is a barbell tracker called Ledger, it runs at [ledger.jasonmatthew.dev](https://ledger.jasonmatthew.dev), the source is [on GitHub](https://github.com/jasonm4130/ss-webapp), and its one real feature is that a good session can be the same weight.
 
-The app had one definition of a good session: heavier than the last one. That was its creator's definition, baked in. It was not hers. And there was no setting, no mode, no toggle that let a good session be "I showed up and hit my reps at a weight I could handle."
+This post is not really about that app. It is about why the app she had was never going to do this, why I could build the replacement in a couple of evenings, and why that second fact is a bigger deal than it sounds.
 
-A year ago that is where it ends. Live with the app and dread the jumps, or pay for a different one and hope it has the mode you want. Instead I built her the mode. The app is called Ledger, it runs at [ledger.jasonmatthew.dev](https://ledger.jasonmatthew.dev), and the source is [on GitHub](https://github.com/jasonm4130/ss-webapp). This is the idea at the centre of it, the two pieces I am proud of under the hood, and the honest story of how long it took.
+## The Idea Is Old. Only the Price Changed.
 
-## A Good Session Can Be the Same Weight
+The instinct is to call this an AI story. It mostly is not. The idea that you should build software for a specific person instead of buying something general has a name and a lineage, and the lineage is twenty years deep.
 
-Linear progression has two outcomes. You add the weight, or you failed to. There is no third result, and the missing one is the only one she wanted: stay here, and that still counts.
+Clay Shirky named it in 2004. He called it [situated software](https://gwern.net/doc/technology/2004-03-30-shirky-situatedsoftware.html): "software designed in and for a particular social situation or context." He set it against what he called the Web School, "where scalability, generality, and completeness were the key virtues." His argument then is almost word for word the argument now. Software was not built for tiny groups because of three scarcities: "the expense of adequate hardware, the rarity of programming talent, and the sparse distribution of potential users." Remove the scarcities and building for a dozen people stops being absurd.
 
-So the progression she runs has a hold band. You do your work sets, the last is "as many reps as possible," and the reps decide what happens next. But the middle of the range does nothing on purpose:
+Robin Sloan put it more plainly in 2020: ["An app can be a home-cooked meal."](https://www.robinsloan.com/notes/home-cooked-app/) He built a messaging app for four people, himself and his parents and his sister, and never shipped it to anyone else. His point about what that buys you has stuck with me: "it won't change unless we want it to change. There will be no sudden redesign, no flood of ads, no pivot to chase a userbase inscrutable to us." Maggie Appleton revived the frame in 2024 and called the person who does this a [barefoot developer](https://maggieappleton.com/home-cooked-software), someone embedded in a community with just enough skill to build for it. Geoffrey Litt and the team at Ink & Switch carry the same thread into the LLM era under the banner of [malleable software](https://www.inkandswitch.com/essay/malleable-software/).
+
+So the idea is not mine and it is not new. What changed is the price. Shirky watched the scarcities erode over decades. The build cost did not hit zero in 2004, it just stopped being prohibitive. What is happening now is the same curve, steeper. The thing that used to take days takes hours. That is the whole event.
+
+## Why the Market Was Never Going to Build It
+
+Here is the economic shape of it, and it is the part worth slowing down on.
+
+The barbell app she had is good software. It is not lazy or badly made. It encodes one specific philosophy of training, the heavier-every-session model, because it has to serve a hundred thousand people and that model is the one most of them signed up for. Appleton's line is the sharp version: ["Industrial software can only target the biggest problems for the most people, ideally wealthy people with disposable income."](https://maggieappleton.com/home-cooked-software) A feature that says "let a good session be the same weight" serves the lifter who is optimising for showing up rather than for load. That is a real person. She is just not the median person, and the median is who the product is for.
+
+So the feature was never withheld out of malice. It was withheld by arithmetic. Building and maintaining it costs engineering time, and engineering time only pays back across a large enough audience. The long tail of "things that fit exactly one person" stayed unbuilt because no one could justify the cost of building it for one person. That is the calculus. And it inverts the moment the cost of building approaches the cost of an evening. Appleton again, on what makes home-cooked software possible at all: "This kind of software doesn't even need to make a profit; it just has to operate at a very low cost."
+
+This is the reframe I want to land. It is not "AI lets you add features." It is that an entire category of software, the category that fits one person perfectly, was economically impossible and is now merely a Tuesday. You stop adopting the generic system that fits a thousand people approximately and start building the one that fits you exactly, because for the first time you can.
+
+## The Achievable-Session Feature, Concretely
+
+The feature is a progression with a hold band. You do your work sets, the last is as many reps as possible, and the reps decide what happens next. The middle of the range does nothing, on purpose:
 
 ```ts
 /**
@@ -40,13 +56,11 @@ export function topSetDeltaKg(amrapReps: number, floor: number, ceiling: number)
 }
 ```
 
-The line that matters is the middle one, the one that returns zero. Hit your reps and the weight holds. You can sit at a weight you can do for as many sessions as you like, and every one of them is a pass. The bar climbs only when you clear the top of the band comfortably, which means progress arrives when it is already easy, not as a demand you have to rise to. If a session goes badly twice in a row, it steps the weight back down so a hard week does not turn into a wall.
+The line that matters is the one that returns zero. Linear progression has two outcomes, heavier or failed. The hold band adds the third one she needed: stay here, and it still counts. The bar climbs only when she clears the top of the band comfortably, so progress arrives when it is already easy instead of as a demand. She does not know what a hold band is and she does not need to. She knows the app stopped making her dread the next session.
 
-It is not a sophisticated idea. It is the difference between a tool that says "do more or you failed" and one that says "you showed up and did the work, the weight will wait for you." That second sentence is the whole product, for her.
+## It Was a One-Line Change, And That Is the Whole Point
 
-## Why Giving Her a Different Goal Was a One-Line Change
-
-Here is what made this a side project and not a rewrite. Every lift in Ledger carries a `method`, and a method is a small self-contained module behind one interface:
+What let me build this in evenings instead of weeks was a boundary. Every lift carries a `method`, and a method is a small module behind one interface:
 
 ```ts
 interface MethodModule<S> {
@@ -55,11 +69,7 @@ interface MethodModule<S> {
   prescribe(state: S, lift: Lift): Prescription;
   advance(state: S, completed: SetResult[], ctx: AdvanceCtx, lift: Lift): { newState: S; event?: ProgressionEvent };
 }
-```
 
-`prescribe` decides what goes on the bar. `advance` reads the set you logged and returns the next state. Both are pure functions, no database, no React. Methods are looked up by `kind` through a registry:
-
-```ts
 const REGISTRY = {
   linear: linearModule,
   manual: manualModule,
@@ -67,17 +77,13 @@ const REGISTRY = {
 };
 ```
 
-A "method" is really a definition of what progress means. Linear means heavier every time. The hold-band method means progress is optional and earned gently. Adding the second definition was one new module, one arm on a union type, and one line in that registry. No database migration. Each method's state lives inside `lift.method.state` as an opaque blob, so a new way of thinking about progress ships its own shape without touching the schema. There is a regression test that fails if any method writes back to the old top-level fields, because a clean boundary is only clean if you defend it.
+A method is really a definition of what progress means. Linear means heavier every time. The hold-band method means progress is optional and earned gently. Adding the second definition was one new module, one arm on a union type, and one line in that registry. No database migration. The lesson outlasted the code: the app she had was opinionated about progress because progress was hardwired into it. Make it pluggable and the tool stops insisting your goal is the same as its author's.
 
-Three definitions of progress ship today: linear, manual log-only, and the weekly AMRAP hold band she uses. The structure means a fourth is an afternoon, not a project. The lesson sat with me longer than the code: the app was opinionated about progress because progress was hardwired. Make it pluggable and the app stops insisting your goal is the same as its author's.
+## The Part That Is Genuinely Hard
 
-## The Timer That Survives the Tab Closing
+The most interesting piece technically is the rest timer, and it is also where the "anyone can build this now" story needs an honest edit.
 
-The piece I find most interesting technically is the rest timer, because the obvious way to build it is wrong, and the wrong way fails worst for exactly the person this app is for.
-
-A rest timer is a countdown. The naive version is a `setTimeout` in the page that fires a notification at zero. On a phone that fails right when you need it: you start your rest, lock the screen or switch apps, the browser throttles or kills the timer, and the notification never comes. If your whole goal is to get through the session without friction, a timer that quietly dies between sets is friction of the worst kind. The clock cannot live in a tab the user is about to walk away from.
-
-So it does not. When you start a rest, the app posts your push subscription and the duration to a Worker, which hands them to a Durable Object keyed by your subscription endpoint:
+The naive rest timer is a `setTimeout` in the page. On a phone it fails right when you need it: you start your rest, lock the screen, the browser throttles or kills the timer, and the notification never comes. The clock cannot live in a tab the user is about to walk away from. So it does not. When she starts a rest, the app posts her push subscription and the duration to a Cloudflare Worker, which hands them to a Durable Object keyed by that subscription:
 
 ```ts
 export class RestTimerDO extends DurableObject<Env> {
@@ -95,16 +101,16 @@ export class RestTimerDO extends DurableObject<Env> {
 }
 ```
 
-The clock is now server-side. The Durable Object alarm fires whether the tab is open, backgrounded, or closed. When it fires it sends a payload-less Web Push that wakes the service worker, which shows "Rest complete." Keying the object off the push endpoint means every device gets its own timer with no accounts and no shared state, and if the endpoint is dead (a 404 or 410) the object drops it so it never retries a subscription that is gone.
+The clock is server-side now. The Durable Object alarm fires whether the tab is open, backgrounded, or closed, then sends a payload-less Web Push that wakes the service worker. The VAPID authentication is hand-rolled against the spec with Web Crypto, no push library, about sixty lines. I knew the `setTimeout` would die before I wrote it, knew the alarm belonged in a Durable Object, knew what a payload-less push was for. That knowledge was load-bearing, and a language model did not supply it.
 
-There is no third-party push library in here. The VAPID authentication is hand-rolled against the spec with Web Crypto: build the ES256 JWT, sign it with the private key, send the tickle. About sixty lines. Doing it by hand was the part I most wanted to understand, and getting it working on a free tier with no backend database anywhere in the system is genuinely satisfying. Her training data lives in IndexedDB on her phone. The only server-side state is a timer that exists for the length of one rest.
+This is the honest counterpoint, and it is best made by the people most optimistic about the idea. Appleton, whose whole talk is a case for home-cooked software, is blunt about the limit: language models will happily write your frontend, but ["user authentication and logging in would be a whole different thing"](https://www.localfirst.fm/13/transcript), and on security, multiplayer, and real deployment, "the developer experience is not quite there yet." The evidence backs the caution. A [randomised trial from METR](https://arxiv.org/pdf/2507.09089) found that early-2025 AI tools actually slowed experienced developers by around 19% on their own mature codebases, even though those developers felt faster. Read that carefully and it is not an argument against the personal-software case. It is the strongest argument for it. AI helps most on small, greenfield, single-user tools and least on large systems with years of accumulated context. A barbell tracker for one person is the first thing. That is precisely why this worked and why I am not claiming it generalises to everything.
 
-## Mostly From My Phone, And How Long It Actually Took
+Even Karpathy, who coined the term for the giddy version of this, scoped it honestly. Vibe coding, he [wrote](https://x.com/karpathy/status/1886192184808149383), is "not too bad for throwaway weekend projects." The trick is knowing which of your projects is a throwaway weekend project and which one your wife is going to open every session for the next year. The second kind still needs an engineer. It just needs far fewer engineer-hours than it used to.
 
-I want to be honest about the build, because the honest version is the better story.
+## Build the Thing That Fits You
 
-The first usable version came together over a lunch break, a lot of it typed into Claude Code on my phone. That part is true and it still surprises me: standing at a counter, describing what she needed, watching working code come back. But "an afternoon" would be a lie, and the git history would catch me out. Ledger is a couple of evenings on top of that lunch. It has over a hundred tests, a dark theme, a setup wizard, kg and lb handling with plate-loading math, backup and restore, and the progression engine above. The polish is where most of the time went, and the polish is the point. Anyone can get a prototype in an hour now. The distance from prototype to "my wife uses this every session" is still real work, and AI compresses that distance without erasing it.
+The first usable version of Ledger came together over a lunch break, a lot of it typed into Claude Code on my phone. The rest was a couple of evenings: over a hundred tests, a dark theme, unit handling, plate maths, backups, the progression engine. The prototype was an hour. The thing she actually uses was the evenings, and the evenings are where the engineering went.
 
-That is the actual democratisation, and it is narrower and more human than the no-code utopia version. The app she had was not missing a feature. It was holding an opinion: that progress means more, always, and that wanting a session to simply be achievable is not a goal worth supporting. Plenty of software is like that. It encodes its maker's definition of done and quietly asks you to adopt it. What changed is not that I avoided knowing things, I still had to know what would actually keep her coming back and why the timer belonged in a Durable Object. What changed is that the distance from "her goal is different from this tool's" to "the tool fits her goal" collapsed to a couple of evenings.
+That gap, between prototype and a tool someone relies on, is real and AI has not closed it. What it has done is move the whole curve down far enough that building for an audience of one finally clears the bar. The app the market was never going to make my wife took me two evenings to make her, not because I am special but because the price of going from "her goal is different from this tool's" to "the tool fits her goal" fell through the floor.
 
-She does not know what a hold band is, and she does not need to. She knows the app stopped making her dread the next session. That was the only spec that mattered.
+The generic system that fits a thousand people approximately used to be your only option, because the bespoke one that fits you exactly was too expensive to exist. That constraint is lifting. The interesting question is no longer whether you can build the thing that works for you. It is increasingly just whether you will.
