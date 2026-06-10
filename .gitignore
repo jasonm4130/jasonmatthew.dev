@@ -30,3 +30,5 @@ graphify-out/
 
 # Local Claude Code settings (per-user)
 .claude/settings.local.json
+
+.fallow/
