@@ -1,6 +1,6 @@
 ---
-title: "The Feature They Wouldn't Sell Me: Building My Wife's Lifting App From My Phone"
-excerpt: "My wife wanted to leave linear progression early. The Starting Strength app won't let you. So I built the autoregulation it withholds, with a rest timer that survives the tab closing, the first version over a lunch break on my phone."
+title: "Progress That Lets You Stay: Building My Wife's Lifting App From My Phone"
+excerpt: 'My wife lifts to keep a habit, not to chase a max. Her app demanded a heavier bar every session and treated anything else as failure. So I built her a progression where hitting your reps at the same weight is a good session, the first version over a lunch break on my phone.'
 publishDate: 2026-06-16
 tags:
   - side-projects
@@ -10,25 +10,25 @@ tags:
 draft: false
 ---
 
-My wife lifts. She was running a Starting Strength novice program through the official app, and she hit the wall every novice hits: linear progression stops working. The weight you added last session is the weight you fail this session. The textbook answer is to stop adding load every workout and switch to something that reacts to how the session actually went.
+My wife lifts to build a habit. She is not chasing a one-rep max or a number on a leaderboard. She wants to show up, do the session, feel capable, and come back. Getting stronger is a nice side effect of consistency, not the reason she walks into the garage.
 
-The app would not let her do that. It is built around the linear model and holds you there. The one thing she needed, the ability to leave linear progression when her body was done with it, was the one thing the product had decided not to give her.
+She was running a Starting Strength novice program through the official app, and the program is built on linear progression: add weight every single session. That works for a while, and then it gets hard, fast. The bar is heavier than last time, every time. Miss the jump and the app treats it as a failure to recover from. For someone whose actual goal is to keep the habit alive, that is exhausting in exactly the wrong way. The thing meant to keep her going was the thing making her want to stop.
 
-That is the part worth sitting with. The gap was not technical. Reacting to a set's reps and adjusting next week's weight is arithmetic. The gap was a product decision, made by someone else, that did not account for her. A year ago that is where it would have ended: live with the app, or pay for a different one and hope it fits better.
+The app had one definition of a good session: heavier than the last one. That was its creator's definition, baked in. It was not hers. And there was no setting, no mode, no toggle that let a good session be "I showed up and hit my reps at a weight I could handle."
 
-It did not end there. I built her the feature instead. The app is called Ledger, it runs at [ledger.jasonmatthew.dev](https://ledger.jasonmatthew.dev), and the source is [on GitHub](https://github.com/jasonm4130/ss-webapp). This is what it does, the two pieces I am actually proud of, and the honest story of how long it took.
+A year ago that is where it ends. Live with the app and dread the jumps, or pay for a different one and hope it has the mode you want. Instead I built her the mode. The app is called Ledger, it runs at [ledger.jasonmatthew.dev](https://ledger.jasonmatthew.dev), and the source is [on GitHub](https://github.com/jasonm4130/ss-webapp). This is the idea at the centre of it, the two pieces I am proud of under the hood, and the honest story of how long it took.
 
-## The Autoregulation They Withhold
+## A Good Session Can Be the Same Weight
 
-The feature she wanted is a weekly AMRAP progression. You do your work sets, the last one is "as many reps as possible," and the reps you hit decide next week's load. No fixed jump every session. The set tells the program what to do.
+Linear progression has two outcomes. You add the weight, or you failed to. There is no third result, and the missing one is the only one she wanted: stay here, and that still counts.
 
-The whole engine is one small pure function with a three-zone hold band:
+So the progression she runs has a hold band. You do your work sets, the last is "as many reps as possible," and the reps decide what happens next. But the middle of the range does nothing on purpose:
 
 ```ts
 /**
  *  reps < floor            -> decrease (-2.5, or -5 when well short)
- *  floor <= reps < ceiling -> hold (you hit your sets, weight stays)
- *  reps >= ceiling         -> increase, larger the further over (+2.5 / +5 / +7.5)
+ *  floor <= reps < ceiling -> hold: you hit your sets, the weight stays
+ *  reps >= ceiling         -> increase, and only when you clear it comfortably
  */
 export function topSetDeltaKg(amrapReps: number, floor: number, ceiling: number): number {
   if (amrapReps < floor) return amrapReps - floor <= -3 ? -5 : -2.5;
@@ -40,13 +40,13 @@ export function topSetDeltaKg(amrapReps: number, floor: number, ceiling: number)
 }
 ```
 
-That is the thing the paid app would not do. Hit the top of the band and the weight climbs, more when you crush it. Land in the middle and it holds you there until you earn the next jump. Fall short twice and it deloads. The program follows the lifter instead of the calendar. A repeated short session also trips a stall counter that shrinks the top set, so a bad week does not compound.
+The line that matters is the middle one, the one that returns zero. Hit your reps and the weight holds. You can sit at a weight you can do for as many sessions as you like, and every one of them is a pass. The bar climbs only when you clear the top of the band comfortably, which means progress arrives when it is already easy, not as a demand you have to rise to. If a session goes badly twice in a row, it steps the weight back down so a hard week does not turn into a wall.
 
-It is not a clever idea. It is a known training method. The point is that it was withheld, and withheld things used to mean you were stuck.
+It is not a sophisticated idea. It is the difference between a tool that says "do more or you failed" and one that says "you showed up and did the work, the weight will wait for you." That second sentence is the whole product, for her.
 
-## Why Adding It Was a One-Line Change
+## Why Giving Her a Different Goal Was a One-Line Change
 
-Here is the part that made this a side project and not a rewrite. Every lift in Ledger carries a `method`, and a method is a small self-contained module behind a single interface:
+Here is what made this a side project and not a rewrite. Every lift in Ledger carries a `method`, and a method is a small self-contained module behind one interface:
 
 ```ts
 interface MethodModule<S> {
@@ -57,7 +57,7 @@ interface MethodModule<S> {
 }
 ```
 
-`prescribe` decides what to put on the bar. `advance` reads the set you logged and returns the next state. Both are pure functions, no database, no React. Methods are looked up by `kind` through a registry:
+`prescribe` decides what goes on the bar. `advance` reads the set you logged and returns the next state. Both are pure functions, no database, no React. Methods are looked up by `kind` through a registry:
 
 ```ts
 const REGISTRY = {
@@ -67,15 +67,15 @@ const REGISTRY = {
 };
 ```
 
-Adding the autoregulation she needed was one new module, one arm on a union type, and one line in that registry. No database migration. The progression state lives inside `lift.method.state` as an opaque blob, so a new method ships its own shape without touching the schema. There is even a regression test that fails if any method writes back to the old top-level fields, because the cost of a clean boundary is that you have to defend it.
+A "method" is really a definition of what progress means. Linear means heavier every time. The hold-band method means progress is optional and earned gently. Adding the second definition was one new module, one arm on a union type, and one line in that registry. No database migration. Each method's state lives inside `lift.method.state` as an opaque blob, so a new way of thinking about progress ships its own shape without touching the schema. There is a regression test that fails if any method writes back to the old top-level fields, because a clean boundary is only clean if you defend it.
 
-Three methods ship today: linear, manual log-only, and the weekly AMRAP. The structure means the fourth is an afternoon, not a project.
+Three definitions of progress ship today: linear, manual log-only, and the weekly AMRAP hold band she uses. The structure means a fourth is an afternoon, not a project. The lesson sat with me longer than the code: the app was opinionated about progress because progress was hardwired. Make it pluggable and the app stops insisting your goal is the same as its author's.
 
 ## The Timer That Survives the Tab Closing
 
-The piece I find most interesting is the rest timer, because the obvious way to build it is wrong.
+The piece I find most interesting technically is the rest timer, because the obvious way to build it is wrong, and the wrong way fails worst for exactly the person this app is for.
 
-A rest timer is a countdown. The naive version is a `setTimeout` in the page that fires a notification when it hits zero. On a phone that fails exactly when you need it: you start your rest, lock the screen or switch apps, the browser throttles or kills the timer, and the notification never comes. The clock cannot live in a tab the user is about to walk away from.
+A rest timer is a countdown. The naive version is a `setTimeout` in the page that fires a notification at zero. On a phone that fails right when you need it: you start your rest, lock the screen or switch apps, the browser throttles or kills the timer, and the notification never comes. If your whole goal is to get through the session without friction, a timer that quietly dies between sets is friction of the worst kind. The clock cannot live in a tab the user is about to walk away from.
 
 So it does not. When you start a rest, the app posts your push subscription and the duration to a Worker, which hands them to a Durable Object keyed by your subscription endpoint:
 
@@ -95,16 +95,16 @@ export class RestTimerDO extends DurableObject<Env> {
 }
 ```
 
-The clock is now server-side. The Durable Object alarm fires whether the tab is open, backgrounded, or closed. When it fires it sends a payload-less Web Push that wakes the service worker, which shows "Rest complete." Keying the object off the push endpoint means every device gets its own timer with no accounts and no shared state, and if the push endpoint is dead (a 404 or 410) the object drops it so it never retries a subscription that is gone.
+The clock is now server-side. The Durable Object alarm fires whether the tab is open, backgrounded, or closed. When it fires it sends a payload-less Web Push that wakes the service worker, which shows "Rest complete." Keying the object off the push endpoint means every device gets its own timer with no accounts and no shared state, and if the endpoint is dead (a 404 or 410) the object drops it so it never retries a subscription that is gone.
 
-There is no third-party push library in here. The VAPID authentication is hand-rolled against the spec with Web Crypto: build the ES256 JWT, sign it with the private key, send the tickle. About sixty lines. Doing it by hand was the part I most wanted to understand, and it is the kind of thing that is genuinely satisfying to get working on a free tier with no backend database anywhere in the system. Your training data lives in IndexedDB on your phone. The only server-side state is a timer that exists for the length of one rest.
+There is no third-party push library in here. The VAPID authentication is hand-rolled against the spec with Web Crypto: build the ES256 JWT, sign it with the private key, send the tickle. About sixty lines. Doing it by hand was the part I most wanted to understand, and getting it working on a free tier with no backend database anywhere in the system is genuinely satisfying. Her training data lives in IndexedDB on her phone. The only server-side state is a timer that exists for the length of one rest.
 
 ## Mostly From My Phone, And How Long It Actually Took
 
 I want to be honest about the build, because the honest version is the better story.
 
-The first usable version came together over a lunch break, a lot of it typed into Claude Code on my phone. That part is true and it still surprises me: standing at a counter, describing the feature, watching working code come back. But "an afternoon" would be a lie, and the git history would catch me out. Ledger is a couple of evenings on top of that lunch. It has over a hundred tests, a dark theme, a setup wizard, kg and lb handling with plate-loading math, backup and restore, and the progression engine above. The polish is where most of the time went, and the polish is the point. Anyone can get a prototype in an hour now. The distance from prototype to "my wife uses this every session" is still real work, and AI compresses that distance without erasing it.
+The first usable version came together over a lunch break, a lot of it typed into Claude Code on my phone. That part is true and it still surprises me: standing at a counter, describing what she needed, watching working code come back. But "an afternoon" would be a lie, and the git history would catch me out. Ledger is a couple of evenings on top of that lunch. It has over a hundred tests, a dark theme, a setup wizard, kg and lb handling with plate-loading math, backup and restore, and the progression engine above. The polish is where most of the time went, and the polish is the point. Anyone can get a prototype in an hour now. The distance from prototype to "my wife uses this every session" is still real work, and AI compresses that distance without erasing it.
 
-That is the actual democratisation, and it is narrower and more useful than the no-code utopia version. I did not avoid knowing things. I still had to know what autoregulation should do, why the timer belonged in a Durable Object, what a clean method boundary buys you. The knowledge was load-bearing. What collapsed was the distance between having the knowledge and shipping the thing. The feature a company decided not to sell my wife took me two evenings to give her, because the cost of going from "I know how this should work" to "it works on her phone" fell through the floor.
+That is the actual democratisation, and it is narrower and more human than the no-code utopia version. The app she had was not missing a feature. It was holding an opinion: that progress means more, always, and that wanting a session to simply be achievable is not a goal worth supporting. Plenty of software is like that. It encodes its maker's definition of done and quietly asks you to adopt it. What changed is not that I avoided knowing things, I still had to know what would actually keep her coming back and why the timer belonged in a Durable Object. What changed is that the distance from "her goal is different from this tool's" to "the tool fits her goal" collapsed to a couple of evenings.
 
-The next person's frustration with the next product does not have to end at the app's edge anymore. That is the part I keep thinking about. Not that software is free, but that the things you were quietly told you could not have are, increasingly, things you can just build.
+She does not know what a hold band is, and she does not need to. She knows the app stopped making her dread the next session. That was the only spec that mattered.
