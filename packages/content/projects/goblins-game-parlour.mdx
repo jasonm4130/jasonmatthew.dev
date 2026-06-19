@@ -1,0 +1,80 @@
+---
+title: The Goblin's Game Parlour
+description: A Cloudflare-native RAG app that answers tabletop rules questions from the actual rulebook, with every ruling grounded in the text and cited so you can check it. Hybrid retrieval, cross-encoder reranking, and a prompt-injection eval, all on Workers AI.
+publishDate: 2026-06-18
+technologies:
+  - Cloudflare Workers
+  - Agents SDK
+  - Durable Objects
+  - Vectorize
+  - D1 (FTS5)
+  - Workers AI
+  - ElevenLabs
+  - React 19
+  - TypeScript
+featured: true
+sortOrder: 2
+liveUrl: https://games.jasonmatthew.dev
+githubUrl: https://github.com/jasonm4130/games-games-games
+---
+
+<img
+  src="/images/projects/goblins-parlour-hero.png"
+  alt="The Goblin's Game Parlour: the game catalogue, where you pick a tabletop game to ask the Rules Goblin about"
+/>
+
+## The Problem
+
+Every board game night has the same argument. Someone plays a card, someone else says "you can't do that," and the rulebook comes out. Twenty minutes later you've found the relevant paragraph, half the table has lost interest, and you still aren't sure you read it right.
+
+The obvious move is to ask an LLM. But an LLM will make up a rule that was never in the book, and a made-up rule you both believe is worse than no answer at all.
+
+## The Solution
+
+The Goblin's Game Parlour answers rules questions from the _actual rulebook_ and shows you the passage it relied on. Pick a game, ask the Rules Goblin, and every ruling comes back grounded in retrieved text with a citation you can open to read the source rule. If the answer isn't in the book, the Goblin tells you that instead of making one up.
+
+The goblin is set dressing. The actual work is retrieval: getting the right passage in front of the model so the answer is grounded in the book and not in the model's imagination.
+
+## How It Works
+
+Ingestion happens offline, because a Worker can't parse a large PDF within its limits. A rulebook PDF is converted to clean markdown with [Docling](https://github.com/docling-project/docling), split into **heading-bounded chunks** so a fact never shares a chunk with unrelated material, embedded with `bge-m3`, and written to both Vectorize (the vectors) and D1 (the chunk text plus an FTS5 mirror).
+
+At query time, everything runs in the Worker:
+
+- **Two retrieval legs.** A dense vector search (Vectorize) and a lexical BM25 search (D1 FTS5) run in parallel. The vector search catches semantic matches, and the keyword search catches the exact terms the embeddings miss.
+- **Fuse, rerank, gate.** The two result sets are combined with Reciprocal Rank Fusion, re-ranked by a cross-encoder (`bge-reranker-base`), and gated by a score floor so weak matches don't make it into the prompt.
+- **Grounded generation.** Llama 3.3 70B (Workers AI) answers _only_ from the passages it was handed, and the citations anchor back to the rulebook's section heading so "where does it say that?" is one click.
+
+The whole thing is Cloudflare-native: Workers, the Agents SDK, Durable Objects, Vectorize, D1, and Workers AI, with the React front-end served from the same Worker.
+
+## Interesting Technical Decisions
+
+### Hybrid retrieval beats either leg alone
+
+Pure vector search is great at "what's the rule about trading?" and bad at exact terms: game-specific jargon, card names, and keywords the embedding model has never seen. Plain keyword search has the opposite problem. Running both and fusing the results with RRF, then reranking the merged set with a cross-encoder, gives the recall of semantic search without losing the precision of matching the exact word the rulebook uses.
+
+### Heading-bounded chunking
+
+The biggest lever on answer quality turned out to be the chunks, not the model. Splitting on a fixed token count routinely glues the end of one rule onto the start of an unrelated one, and the model gets handed a chunk that's only half-right. Chunking on the document's own heading structure keeps each rule whole, so a citation points at one coherent passage instead of a ragged window.
+
+### Per-session isolation via Durable Objects
+
+Each browser session is its own Durable Object instance, and retrieval is scoped to the selected game. Two people asking about two different games at the same time never see each other's context. The isolation comes from the architecture, so it isn't something I have to remember to enforce in application code.
+
+### Testing the prompt-injection defence
+
+A rulebook is user-supplied text, and "ignore your instructions" can live inside a PDF as easily as inside a chat box. The system prompt is hardened against injection, and that hardening is exercised by an LLM-judged eval (`pnpm inject-eval`) that runs against the real prompt rather than a toy version of it. A separate eval harness scores retrieval and generation against a gold set, so when I change something I can tell whether answers got better or worse instead of guessing.
+
+### Stopping the voice from becoming a free TTS API
+
+The goblin can read a ruling aloud in an ElevenLabs voice. That's a paid API sitting behind a public app with no login, which makes it an obvious target: someone can hammer it to run up the bill, or try to turn it into their own free text-to-speech service.
+
+The synthesis never touches the browser. The ElevenLabs key is a Worker secret, and TTS isn't a public route at all; it's a callable on the agent, reachable only over the session's WebSocket, and it will only voice text the server itself produced (looked up by message id), so there's no way to hand it arbitrary text to read. Three guardrails sit at different scopes on top of that: a per-IP burst limit that returns a 429 before the request reaches the agent, a per-session rate limit, and a global daily budget breaker held in one D1 row that caps voiced rulings per day. The counter increments before the upstream call, so a request that's already over the limit never spends a credit.
+
+## What I took from it
+
+I build RAG systems at work, so "reranking and fusion matter" wasn't the lesson. What the project pinned down was _where_ they earn their keep. Fusion is what rescues the question whose exact term the embedding never learned; the cross-encoder rerank and a score floor are what stop a thin, loosely related passage from turning into a confident wrong ruling. Watching those two failure modes show up on real rulebooks made the usual "just use hybrid retrieval" advice concrete in a way it hadn't been before.
+
+The part I didn't expect to enjoy was how far you can get on Cloudflare alone. Vectorize for the vectors, D1's FTS5 for the keyword leg, a reranker and the LLM on Workers AI, and the agent on the Agents SDK: a complete, cited RAG system with no external vector database, no separate inference provider, and nothing to keep running between requests. A couple of years ago that stack didn't exist. It does now, and it's quick: on the live demo the first words of a cited ruling arrive in about a second, and a full answer finishes streaming within a few seconds. It's also cheap enough to leave a public demo online without watching the meter.
+
+The voice was the other half of the fun. Wiring up ElevenLabs was straightforward; the interesting problem was protecting that endpoint, and it's the part of the build I enjoyed most.
