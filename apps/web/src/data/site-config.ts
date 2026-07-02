@@ -41,7 +41,7 @@ const siteConfig: SiteConfig = {
   socialLinks: [
     { platform: 'github', href: 'https://github.com/jasonm4130' },
     { platform: 'linkedin', href: 'https://www.linkedin.com/in/jasonm4130/' },
-    { platform: 'x', href: 'https://twitter.com/jasonm4130' },
+    { platform: 'x', href: 'https://x.com/jasonm4130' },
   ],
   postsPerPage: 8,
   projectsPerPage: 8,
