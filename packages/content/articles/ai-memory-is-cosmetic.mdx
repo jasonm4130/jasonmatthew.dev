@@ -1,14 +1,13 @@
 ---
 title: 'AI Memory Is Cosmetic'
 excerpt: 'Every few weeks a tool I use ships a "memory" feature. I turn them on. Then I read how they work, and every one is the same thing: a notebook, not a brain. Here is the difference, and why I am building the smallest real version of the alternative.'
-publishDate: 2026-06-09
+publishDate: 2026-07-07
 tags:
   - ai
   - continual-learning
   - fine-tuning
   - architecture
   - opinion
-draft: true
 ---
 
 Every few weeks a tool I use ships a "memory" feature. Persistent context. Long-term recall. Your AI finally remembers you. I turn most of them on. Then I read how they actually work, and every single one is the same thing underneath: text, retrieved and stuffed back into the prompt. The model has not learned anything. It has been handed a notebook.
@@ -48,10 +47,10 @@ The honest part is why this is hard. New learning tends to destroy old knowledge
 
 ## So I am building the smallest real version
 
-You cannot wait for Titans to ship to understand the problem. You can build the smallest honest version of it. So that is what I am doing this quarter.
+You cannot wait for Titans to ship to understand the problem. You can build the smallest honest version of it. So that is what I am building.
 
 I am building a pipeline that fine-tunes an open model, Qwen3.5-9B, on my own session data, with an eval harness that measures what actually transferred into the weights and what got forgotten. One user. Real held-out tasks. Blind A/B against the base model. It is zone 3, built to understand what zone 4 will need.
 
 The eval harness comes first, before any training, because a weak eval dooms everything after it. I will publish the harness so anyone can repoint it at their own data. Then the honest results, and they will be honest: if the adapter wins on my tasks but forgets general capability, that is the result and it ships as written. In a field this saturated with demos, the mixed-results writeup is the most useful artifact I can produce.
 
-I will write it up as I go, starting with the harness. Follow along if you want to watch someone find the exact line where the notebook ends and learning begins.
+I will write it up as I go. Follow along if you want to watch someone find the exact line where the notebook ends and learning begins.
