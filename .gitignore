@@ -16,10 +16,17 @@ dist
 # OS
 .DS_Store
 
-# Claude Code
-.claude/
+# Claude Code (rules, skills, and shared settings are tracked; the rest is local)
+.claude/*
+!.claude/rules/
+!.claude/skills/
+!.claude/settings.json
 .superpowers/
 docs/superpowers/
+
+# Tooling caches
+.playwright-mcp/
+.sdd/
 
 # Editor
 .vscode/*
