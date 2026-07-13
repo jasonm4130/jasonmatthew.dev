@@ -1,0 +1,25 @@
+flowchart LR
+    classDef external fill:#fafafa,stroke:#888888,stroke-dasharray:4 3,color:#111111
+    classDef accent fill:#fafafa,stroke:#e8553d,stroke-width:2px,color:#111111
+
+    Browser["Visitor browser<br/>554 B gzipped tracker"]:::external
+    Viewer["Dashboard viewer"]:::external
+
+    subgraph CF["One Cloudflare Worker + bindings"]
+        direction TB
+        W["Worker · Hono<br/>collector /e + dashboard SSR"]
+        WAE[("Analytics Engine<br/>raw events · 90-day window")]
+        DO["SiteLive Durable Object<br/>live visitors · sole rollup writer"]:::accent
+        D1[("D1<br/>rollup_daily · exact counts")]
+        KV[("KV<br/>dashboard cache · daily salt")]
+    end
+
+    Browser -- "event beacon" --> W
+    Viewer -- "dashboard · /live WebSocket" --> W
+    W -- "raw event write" --> WAE
+    W -- "async fan-out" --> DO
+    W -. "live WebSocket proxy" .-> DO
+    DO -- "15 s alarm flush<br/>additive deltas" --> D1
+    W -- "finalized windows" --> D1
+    W -- "today's partial window<br/>(sampled, badged)" --> WAE
+    W <--> KV

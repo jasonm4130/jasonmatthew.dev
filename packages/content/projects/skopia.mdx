@@ -1,0 +1,83 @@
+---
+title: Skopia
+description: Privacy-first web analytics you self-host on your own Cloudflare account. Cookieless visitor identity from a daily-rotating HMAC, exact rollups written by a Durable Object, and a 554-byte tracker, all on the free tier.
+publishDate: 2026-07-14
+technologies:
+  - Cloudflare Workers
+  - Durable Objects
+  - Workers Analytics Engine
+  - D1
+  - KV
+  - Hono
+  - TypeScript
+featured: true
+sortOrder: 2
+liveUrl: https://skopia.dev
+githubUrl: https://github.com/jasonm4130/skopia
+---
+
+## The Problem
+
+I run eleven personal sites, and I wanted to know whether anyone visits them. That's the whole requirement, and every existing answer attaches a string to it.
+
+Google Analytics is free, but the price is a cookie banner on a personal blog and my visitors' data feeding someone else's ad machine. Plausible got the product right, but self-hosting it means running ClickHouse and Postgres on a server I have to keep alive, and the hosted version is a subscription per site. Cloudflare's own free Web Analytics is the closest fit, except it samples at 10%, caps every list at 15 items, and has no UTM tracking, no custom events, and no live view.
+
+What I actually wanted didn't exist: exact numbers, no cookies, no servers, running in the Cloudflare account I already have.
+
+## The Solution
+
+Skopia is Plausible's analytics without Plausible's ops. You deploy it to your own Cloudflare account, where the free tier comfortably covers a personal fleet. There's no cookie and no localStorage: visitor identity is an HMAC of the visitor's IP and user agent under a salt that rotates daily, truncated to 16 hex characters. The raw IP is never stored, and because the salt changes at midnight, identities can't be joined across days even by me. The tracker script is 554 bytes gzipped.
+
+It's AGPL with every feature included: funnels, UTMs, custom events, live view. No open-core tier withholding the useful parts.
+
+It's also not a demo: Skopia has been counting every site I run for the past three weeks, including the pageview you're generating on this site right now.
+
+## How It Works
+
+import Diagram from '@components/Diagram.astro';
+
+<Diagram
+  name="skopia-architecture"
+  alt="Skopia architecture diagram showing the visitor browser sending events to a Cloudflare Worker, which writes raw events to Workers Analytics Engine and fans out to a SiteLive Durable Object, which flushes exact rollups to D1 on an alarm. The dashboard reads finalized windows from D1 through KV and today's partial window from Analytics Engine."
+  caption="One Worker, five Cloudflare primitives, each doing exactly one job."
+/>
+
+An event arrives at the collector route, passes bot heuristics, and gets enriched from `request.cf` (country, colo, user agent), so the client sends zero extra bytes. The raw event is written synchronously to Workers Analytics Engine, which acts as the 90-day raw store. Then the Worker fans out asynchronously to that site's `SiteLive` Durable Object.
+
+The Durable Object does two jobs. It keeps the live-visitor map that the dashboard's WebSocket subscribes to (using the Hibernation API, so an idle site costs nothing), and it is the _sole writer_ of exact daily rollups into D1, flushing additive deltas on a 15-second alarm.
+
+The dashboard is server-rendered by the same Worker: finalized windows come from D1 through a KV cache, and only today's still-moving window falls back to Analytics Engine, where sampled rows are badged as sampled instead of pretending to be exact.
+
+## Interesting Technical Decisions
+
+### The rollup pipeline replaced itself
+
+Version one was the obvious design: a cron Worker polls Analytics Engine every five minutes and upserts aggregates into D1. It worked, and it was also 99.6% of all my D1 writes. Two weeks in, the Durable Object became the sole rollup writer and the cron was retired: roughly 250× fewer D1 writes for the same numbers.
+
+The part I'd defend in a design review is how the cutover happened: both paths ran in parallel writing to separate tables, and the switch flipped only after a full settled day matched exactly. The old cron code is still in the repo, deliberately, as the rollback path.
+
+### The 10-second nap that ate my pageviews
+
+That parity check earned its keep before the cutover. On real traffic, the Durable Object's shadow rollup was capturing between 23% and 47% of pageviews on some sites, and 0% on others, while visitor counts looked almost right. That is exactly the kind of wrongness you never catch by eyeballing a dashboard.
+
+The root cause: pending pageview deltas lived in the DO's RAM, and a hibernating Durable Object goes to sleep after about **10 seconds** of inactivity, faster than my 15-second flush alarm. Busy sites generated enough traffic to stay awake long enough to flush. A lone pageview on a quiet site woke the DO, wrote its delta into memory, and the DO was asleep again before the alarm ever fired. The delta simply evaporated.
+
+The fix persists the entire flush state as a single durable key on every event and rehydrates it on cold start. I costed the alternative (write-through to storage per dimension) at roughly ten times more in storage operations at scale. Getting durability at one write per event was the design constraint that shaped the whole rollup format.
+
+### Nine bugs you can only meet in production
+
+With local tests green, a single dogfooding sweep across real deployments surfaced nine launch blockers in one day. The best of them: Workers' WebCrypto hard-caps PBKDF2 at 100,000 iterations, and my auth code ran 210,000, so every single login returned a 500. Also in the haul: the CSP middleware crashing the WebSocket upgrade handshake, and a rollup bug that made self-hosted sites report visitors equal to pageviews.
+
+The PBKDF2 ceiling came back a week later as a real production outage. The durable fix embeds the iteration count in each stored hash, so verification survives any future change to the runtime's limits, and degrades to a 401 instead of throwing a 500.
+
+### An analytics tool has to keep its own hands clean
+
+Midway through hardening I caught my own dashboard leaking visitor IPs to Google Fonts and jsDelivr. A privacy tool that phones third parties is a contradiction, so now it's a build gate: a check script fails `pnpm ci` if any third-party host appears in the built output. Fonts are self-hosted, the map library is vendored, and the tracker has an enforced size budget with the same treatment.
+
+The public demo follows the same philosophy of honesty: it's skopia.dev's own real traffic, not seeded numbers. Share links are server-rendered from cache rather than opening WebSockets, because one hot Durable Object can't safely fan out to a front page's worth of sockets. Load-tested at 300 requests with 30-way concurrency: all 200s, p95 of 226ms.
+
+## What I took from it
+
+The MVP took one Sunday. Spec at 11am, hardened and renamed by just after 9pm. But the honest version of the story is that making it _trustworthy_ took three more weeks: the parity gate, the hibernation bug, the production-only failures. The test suite went from 191 on launch day to 283 today, and the most valuable ones are a regression class I didn't know I needed: tests that only exercise a cold-started instance, because that's where the data loss lived.
+
+The transferable lesson: exactness on serverless is a design problem, not a scale problem. Analytics Engine hands you sampling and calls it good enough; Durable Objects will silently drop your in-memory state on a 10-second nap. You can still get exact numbers out of that platform, but only if you treat "where does state survive?" as the first question instead of the last one.
