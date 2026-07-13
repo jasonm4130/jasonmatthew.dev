@@ -59,6 +59,12 @@ pnpm -F @jasonmatthew/web preview  # Preview production build
 - Dates in ISO 8601 format (YYYY-MM-DD)
 - Tags are lowercase, hyphenated (e.g., `engineering-management`)
 
+## Voice Check
+
+- Invoke the `voice-check` skill before shipping ANY public-facing text (articles, projects, social copy, README/bio text)
+- Tier-1 lint: `node scripts/voice-lint.mjs [--social] [--platform x|linkedin] <files>` — exits 1 on BLOCK findings (em-dash, banned lexicon, marketing/influencer phrasing; social mode adds hashtag/emoji/280-weighted checks). Tests: `node --test scripts/voice-lint.test.mjs`
+- A PostToolUse hook (`.claude/settings.json`) runs the lint automatically on every Edit/Write to `packages/content/**/*.mdx` and feeds BLOCK findings back — fix by rewriting, never by exempting
+
 ## graphify
 
 This project has a graphify knowledge graph at graphify-out/.
