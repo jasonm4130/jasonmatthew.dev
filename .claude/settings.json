@@ -12,11 +12,22 @@
       "Bash(npx pagefind*)",
       "Bash(ls *)"
     ],
-    "deny": [
-      "Bash(rm -rf *)"
-    ]
+    "deny": ["Bash(rm -rf *)"]
   },
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // .tool_response.filePath // empty'); case \"$f\" in */packages/content/*.mdx) out=$(node \"$CLAUDE_PROJECT_DIR/scripts/voice-lint.mjs\" \"$f\") || { printf '%s\\n' \"voice-lint BLOCK findings in $f (rewrite per .claude/skills/voice-check/SKILL.md; never exempt):\" \"$out\" >&2; exit 2; } ;; esac",
+            "timeout": 30,
+            "statusMessage": "voice-lint"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
