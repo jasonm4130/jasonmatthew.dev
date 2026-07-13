@@ -1,0 +1,68 @@
+---
+title: 'An Eval Harness You Can Point at Your Own RAG'
+excerpt: 'My RAG system ranked an unrelated rent rule above the actual Jail rule for "how do I get out of prison". The fix was a gold set, five metrics, and one secret-gated route, small enough to copy.'
+publishDate: 2026-07-21
+tags:
+  - ai
+  - rag
+  - evals
+  - cloudflare
+draft: true
+---
+
+Ask my board-game RAG system "how do I get out of prison" and, for a while, it would confidently hand the model the wrong rule. The correct Jail passage scored 0.555 on cosine similarity. An unrelated rule about collecting rent scored 0.583. Pure embedding distance ranked the wrong chunk higher, and everything downstream (the reranker gate, the answer, the citation) inherited that mistake.
+
+I only knew this because I happened to be looking. That's the uncomfortable state most RAG systems live in: every retrieval change is vibes, checked against the three questions you always try. So the same day I hit the Jail bug, I built an eval harness. The first version took a few hours. It has decided every retrieval change since, and it's small enough that you can build the equivalent for your own system by Friday.
+
+## The anatomy
+
+Four pieces, none of them a framework.
+
+**1. Eval routes live in the production Worker, behind a secret.** The harness calls `POST /api/eval/retrieve` and `POST /api/eval/answer` on the deployed system, gated by a header checked against a secret. A mismatch returns 404 (not 403), so the surface is invisible unless you know it's there. The important decision is what these routes call: the _real_ production `retrieve()` function, not a reimplementation. The rejected alternative was a script that replicates retrieval in Node, and the reason to reject it is that a copy silently drifts from production the first time someone tunes a parameter in one place and not the other. The one production seam added for the eval's benefit is a `mode: "dense" | "hybrid"` option: inert in production, but it lets the harness A/B the retrieval legs through the same code path users hit.
+
+**2. Gold sets are JSON files a human has actually read.** Each row is a question plus the evidence that answers it:
+
+```json
+{
+  "game": "monopoly",
+  "query": "How can a player escape Jail?",
+  "expectedTextIncludes": ["throwing doubles", "Get Out of Jail Free"],
+  "category": "turn"
+}
+```
+
+Note what's _not_ there: chunk IDs. Expected evidence is a text substring, resolved to live chunk IDs at eval time with a read-only database lookup. That one decision means re-ingesting a rulebook (which changes every chunk ID) doesn't invalidate the gold set.
+
+There are three sets, because questions fail in three different ways: a 40-question catalogue set (later 42) for core retrieval, a 60-question set written in natural player language that deliberately avoids rulebook vocabulary, and a 12-question _unanswerable_ set: strategy and opinion questions the rulebook can't answer, to measure whether the system refuses when it should.
+
+**3. The runner is a script and the report is `console.table`.** No dashboard, no eval SaaS. A Node script loops the gold set against both retrieval modes, prints per-question rows and aggregates, and the numbers that matter get hand-copied into an ADR as the durable record. That sounds primitive; it has been completely sufficient.
+
+**4. The metrics are ~150 lines of pure functions, and they have their own tests.** Hit-rate@k, recall@k, precision@k, MRR, nDCG for retrieval; citation validity, token overlap, and an LLM-judged faithfulness score for generation. Two details earn their mention. The nDCG implementation has a dedup guard with a test asserting a duplicated ID can't push the score above 1.0, a bug class anticipated before it happened. And the faithfulness judge is the same model family as one of the systems being judged, which is a real conflict of interest. The code comments say, in effect, _trust the delta between models, not the absolute number_.
+
+## What the numbers actually decided
+
+This is the part that justifies the harness: every one of these was a real decision, made by measurement instead of argument.
+
+**Hybrid retrieval stayed, with evidence.** Dense-only retrieval scored 92.5% hit-rate@5 against the catalogue set; hybrid (BM25 + reciprocal rank fusion) scored 95.0%. Not a landslide. But now it's a number instead of a belief, and when someone asks why the system runs two retrieval legs there's an ADR with a table in it.
+
+**A model swap died in an afternoon.** Llama 3.3 70B answered 39 of 40 gold questions with 97.4% citation validity. The candidate replacement answered 22 of 40: it returned an _empty completion_ on roughly 45% of grounded prompts, confirmed at the raw API level to rule out an integration bug. Without the harness that model swap probably ships, because on the three questions you try by hand, it looks fine.
+
+**The biggest win was deleting most of a threshold.** The reranker gate had a minimum-score floor of 0.05, and a calibration probe (re-running the live reranker over the candidate windows for 102 gold questions) showed the in-scope and out-of-scope score distributions overlap end to end. Genuine answer chunks scored as low as 0.0007; irrelevant chunks reached 0.997. No threshold cleanly separates them, and at 0.05 the gate was silently discarding the correct chunk on about 19% of answerable questions before the model ever saw it. Lowering the floor to 0.01 took the answer rate on answerable questions from 84.3% to 93.1%, with the refusal rate on unanswerable questions unchanged.
+
+**And one validated fix didn't ship.** The obvious upgrade, a separate LLM call that judges "can these passages answer this question?", scored a healthy 89.2% balanced accuracy standalone. Then a head-to-head baseline against the production pipeline showed it matched the existing inline judge's refusal rate exactly. Redundant. The lesson generalises: a standalone eval number means nothing until it's A/B'd against the thing already running.
+
+## The ways a harness lies to you
+
+Everything above is the success story. These are the failures, which are more useful.
+
+**The gold set was contaminated at birth.** The first generator sampled chunks ordered by length (over-testing long chunks) and asked the LLM to write a question for each, and the LLM wrote questions echoing the chunk's own vocabulary. Retrieval scores came out inflated because the questions were accidentally keyword searches for their own answers. The fix: random sampling, an explicit paraphrase-don't-copy instruction, and every generated row flagged for human review. The runner hard-stops if any row hasn't been curated.
+
+**The answered-vs-refused classifier was fooled by hedging.** It matched phrases, and an answer that cited a rule _and_ caveated it landed in the wrong bucket. Classifying on the presence of citation markers fixed it.
+
+**The harness itself rots.** After a monorepo restructure, three things broke silently: a CLI dependency moved workspaces, an API response shape change crashed the faithfulness parser, and an auth token expired mid-run. None of it surfaced until I ran the harness again. An eval you don't run on every change isn't an eval: it's a museum piece that reports whatever was true the last time someone dusted it.
+
+## Build it before you think you need it
+
+The through-line: the harness was born the same day as the bug that justified it, and the first version was hours, not weeks. Since then, every retrieval change (new chunking, new embeddings, reranker changes) has had to clear the same gold sets before it ships.
+
+If you have a RAG system in production and no harness, the starting kit is smaller than it feels: one secret-gated route that calls your real retrieval function, forty questions with expected evidence written as text (not IDs), five standard metrics, and `console.table`. You will find at least one thing you don't like. Mine was a prison rule outranked by rent.
