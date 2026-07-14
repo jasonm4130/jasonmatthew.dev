@@ -1,0 +1,42 @@
+# Mirror published articles to dev.to with a canonical_url pointing home.
+#
+# Manual dispatch ONLY, deliberately. A high-authority dev.to copy can outrank the
+# canonical original on a low-authority personal domain — Google treats rel=canonical
+# as "a hint, not a rule" — so mirroring stays a decision, not a default. Move it to a
+# schedule only once there is evidence the canonical is holding.
+#
+# See docs/distribution-and-syndication.md
+name: Syndicate to dev.to
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Actually mirror (unchecked = dry run)'
+        type: boolean
+        default: false
+      delay_days:
+        description: 'Skip articles published within N days (lets the original get indexed first)'
+        type: string
+        default: '5'
+
+jobs:
+  syndicate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Syndicate
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          SYNDICATE_DELAY_DAYS: ${{ inputs.delay_days }}
+        run: node scripts/syndicate-devto.mjs ${{ inputs.publish && '--publish' || '' }}
