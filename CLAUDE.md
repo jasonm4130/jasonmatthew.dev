@@ -75,3 +75,7 @@ Rules:
 - If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
 - For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
 - After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
+
+## Content operations
+
+Article planning, scheduling, pipeline state, and multi-channel distribution are managed **out of this repo** by a private content-ops workspace (local: `~/Work/Git/content-ops`). This repo holds only the published site and its MDX articles. Do not add content calendars, scheduling state, or distribution tooling here — create and track those in content-ops. New articles are drafted via content-ops, which opens PRs here.
