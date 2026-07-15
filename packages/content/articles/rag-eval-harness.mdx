@@ -1,6 +1,6 @@
 ---
 title: 'An Eval Harness You Can Point at Your Own RAG'
-excerpt: 'My RAG system ranked an unrelated rent rule above the actual Jail rule for "how do I get out of prison". The fix was a gold set, five metrics, and one secret-gated route, small enough to copy.'
+excerpt: 'My RAG system ranked an unrelated rent rule above the actual Jail rule for "how do I get out of prison". The fix was a gold set, five metrics, and one secret-gated route, small enough to copy. Then it printed me a number I believed for six weeks and should not have.'
 publishDate: 2026-07-21
 tags:
   - ai
@@ -12,7 +12,9 @@ draft: true
 
 Ask my board-game RAG system "how do I get out of prison" and, for a while, it would confidently hand the model the wrong rule. The correct Jail passage scored 0.555 on cosine similarity. An unrelated rule about collecting rent scored 0.583. Pure embedding distance ranked the wrong chunk higher, and everything downstream (the reranker gate, the answer, the citation) inherited that mistake.
 
-I only knew this because I happened to be looking. That's the uncomfortable state most RAG systems live in: every retrieval change is vibes, checked against the three questions you always try. So the same day I hit the Jail bug, I built an eval harness. The first version took a few hours. It has decided every retrieval change since, and it's small enough that you can build the equivalent for your own system by Friday.
+I only knew this because I happened to be looking. That's the uncomfortable state most RAG systems live in: every retrieval change is vibes, checked against the three questions you always try. So the same day I hit the Jail bug, I built an eval harness. The first version took a few hours. It has gated every retrieval change since, and it's small enough that you can build the equivalent for your own system by Friday.
+
+It also, twice, told me something confidently wrong, and I believed it both times. That half of the story is further down, and it's the half I'd read first.
 
 ## The anatomy
 
@@ -37,17 +39,21 @@ There are three sets, because questions fail in three different ways: a 40-quest
 
 **3. The runner is a script and the report is `console.table`.** No dashboard, no eval SaaS. A Node script loops the gold set against both retrieval modes, prints per-question rows and aggregates, and the numbers that matter get hand-copied into an ADR as the durable record. That sounds primitive; it has been completely sufficient.
 
-**4. The metrics are ~150 lines of pure functions, and they have their own tests.** Hit-rate@k, recall@k, precision@k, MRR, nDCG for retrieval; citation validity, token overlap, and an LLM-judged faithfulness score for generation. Two details earn their mention. The nDCG implementation has a dedup guard with a test asserting a duplicated ID can't push the score above 1.0, a bug class anticipated before it happened. And the faithfulness judge is the same model family as one of the systems being judged, which is a real conflict of interest. The code comments say, in effect, _trust the delta between models, not the absolute number_.
+**4. The metrics are ~150 lines of pure functions, and they have their own tests.** Hit-rate@k, recall@k, precision@k, MRR, nDCG for retrieval; citation validity, token overlap, and an LLM-judged faithfulness score for generation. Two details earn their mention. The nDCG implementation has a dedup guard with a test asserting a duplicated ID can't push the score above 1.0, a bug class anticipated before it happened. And the faithfulness judge is the same model family as one of the systems it grades, which is a real conflict of interest. I left a code comment explaining how I'd handled that. The comment was wrong, and I'll come back to it.
 
 ## What the numbers actually decided
 
-This is the part that justifies the harness: every one of these was a real decision, made by measurement instead of argument.
+Three real decisions came out of this. They are not equally well supported, and working out which was which took me longer than building the harness did.
 
-**Hybrid retrieval stayed, with evidence.** Dense-only retrieval scored 92.5% hit-rate@5 against the catalogue set; hybrid (BM25 + reciprocal rank fusion) scored 95.0%. Not a landslide. But now it's a number instead of a belief, and when someone asks why the system runs two retrieval legs there's an ADR with a table in it.
+**A model swap died in an afternoon.** Llama 3.3 70B answered 39 of 40 gold questions with 97.4% citation validity. The candidate replacement answered 22 of 40: it returned an _empty completion_ on roughly 45% of grounded prompts, confirmed at the raw API level to rule out an integration bug. That's 17 questions of daylight. Without the harness that swap probably ships, because on the three questions you try by hand, it looks fine.
 
-**A model swap died in an afternoon.** Llama 3.3 70B answered 39 of 40 gold questions with 97.4% citation validity. The candidate replacement answered 22 of 40: it returned an _empty completion_ on roughly 45% of grounded prompts, confirmed at the raw API level to rule out an integration bug. Without the harness that model swap probably ships, because on the three questions you try by hand, it looks fine.
+Notice what actually decided it. Did the model answer, and did its citations point at chunks that exist. Both are flat assertions with no judgment in them. The biggest call the harness ever made was made by the dumbest code in it.
 
-**The biggest win was deleting most of a threshold.** The reranker gate had a minimum-score floor of 0.05, and a calibration probe (re-running the live reranker over the candidate windows for 102 gold questions) showed the in-scope and out-of-scope score distributions overlap end to end. Genuine answer chunks scored as low as 0.0007; irrelevant chunks reached 0.997. No threshold cleanly separates them, and at 0.05 the gate was silently discarding the correct chunk on about 19% of answerable questions before the model ever saw it. Lowering the floor to 0.01 took the answer rate on answerable questions from 84.3% to 93.1%, with the refusal rate on unanswerable questions unchanged.
+**The biggest win was deleting most of a threshold.** The reranker gate had a minimum-score floor of 0.05, and a calibration probe (re-running the live reranker over the candidate windows for 102 gold questions) showed the in-scope and out-of-scope score distributions overlap end to end. Genuine answer chunks scored as low as 0.0007; irrelevant chunks reached 0.997. No threshold cleanly separates them, and at 0.05 the gate was silently discarding the correct chunk on about 19% of answerable questions before the model ever saw it. Lowering the floor to 0.01 took the answer rate on answerable questions from 84.3% to 93.1%, a swing of 9 questions in 102.
+
+What makes that one trustworthy isn't the size of the delta. It's that I found the cause before I measured the effect. The calibration probe said the floor was eating the gold chunk on 19% of answerable questions, which predicts a lift of roughly that size, and then a lift of roughly that size showed up. A number that confirms a mechanism you already located beats a bigger number that arrives on its own.
+
+(I also wrote that the refusal rate on unanswerable questions held steady. The unanswerable set is 12 questions. What I can honestly claim is that I can't detect a change that small with 12 questions, which is a different sentence and a worse one.)
 
 **And one validated fix didn't ship.** The obvious upgrade, a separate LLM call that judges "can these passages answer this question?", scored a healthy 89.2% balanced accuracy standalone. Then a head-to-head baseline against the production pipeline showed it matched the existing inline judge's refusal rate exactly. Redundant. The lesson generalises: a standalone eval number means nothing until it's A/B'd against the thing already running.
 
@@ -55,14 +61,34 @@ This is the part that justifies the harness: every one of these was a real decis
 
 Everything above is the success story. These are the failures, which are more useful.
 
+**It prints a number to one decimal place whether or not it knows anything.** There was a fourth win in the section above until last week. Hybrid retrieval (BM25 + reciprocal rank fusion) scored 95.0% hit-rate@5 against the catalogue set. Dense-only scored 92.5%. I wrote that hybrid "stayed, with evidence", and that the gap was "a number instead of a belief".
+
+It was a belief. On 40 questions, 95.0% and 92.5% are 38 right and 37 right. The entire case for running two retrieval legs in production was one question. Recall@20 came out flat identical between the two legs, 97.5% against 97.5%. Run a paired significance test on a one-question difference and it returns p = 1.0, which is as far from significant as arithmetic goes. Anthropic's own paper on eval statistics reckons an eval wants [1,000+ questions to have good signalling ability](https://arxiv.org/abs/2411.00640); reliably detecting a genuine 2.5-point lift at this pass rate would take somewhere around 1,400 questions per arm. I had 40.
+
+The worst part is that I already knew. The ADR I wrote at the time says the lexical leg "moves one borderline exact-term answer into the top-5", and that a parameter sweep on 40 single-answer questions "would be noise". That's the correct read. It's written down, in June, in my own repo. Six weeks later I sat down to write this post and quietly promoted it to evidence.
+
+Hybrid did stay, and I still think keeping it is right. It was never worse than dense on any metric, and there's a plausible mechanism for why a lexical leg helps on exact-term questions. That's a decision made on priors, under uncertainty. Engineers make those all day and should. Measurement is a different thing, and the harness handed me a number precise enough to let me confuse the two.
+
+The lie isn't in any of the numbers. Every one of them is correct. The lie is that a harness which caught a 17-question catastrophe cannot adjudicate a 1-question difference, and it formats them both to one decimal place.
+
+**The mitigation I wrote for my own LLM judge was backwards.** The faithfulness judge shares a model family with one of the systems it grades. I spotted the conflict of interest, felt pleased with myself, and left a code comment saying to trust the delta between models rather than the absolute number.
+
+Read that again. Self-preference bias means a judge scores its own family higher than humans do, and it's causally tied to the model recognising its own output ([Panickssery et al., NeurIPS 2024](https://arxiv.org/abs/2404.13076)). It inflates one arm of a two-model comparison. It doesn't cancel out of the delta. It collects there. The one quantity I told myself to trust is precisely the one the bias eats. Spotting a bias and handling it are separate jobs, and a confident code comment is an excellent way to stop doing the second one.
+
+**Nothing is held out.** Every question in all three gold sets is known to the person tuning retrieval against them, and that person is me. I've moved exactly one parameter on the strength of these numbers, so the room for overfitting is small. But "small" is a guess, the structure that permits it is real, and a gold set you both write and optimise against stops being a measurement the moment you forget that.
+
 **The gold set was contaminated at birth.** The first generator sampled chunks ordered by length (over-testing long chunks) and asked the LLM to write a question for each, and the LLM wrote questions echoing the chunk's own vocabulary. Retrieval scores came out inflated because the questions were accidentally keyword searches for their own answers. The fix: random sampling, an explicit paraphrase-don't-copy instruction, and every generated row flagged for human review. The runner hard-stops if any row hasn't been curated.
 
 **The answered-vs-refused classifier was fooled by hedging.** It matched phrases, and an answer that cited a rule _and_ caveated it landed in the wrong bucket. Classifying on the presence of citation markers fixed it.
 
 **The harness itself rots.** After a monorepo restructure, three things broke silently: a CLI dependency moved workspaces, an API response shape change crashed the faithfulness parser, and an auth token expired mid-run. None of it surfaced until I ran the harness again. An eval you don't run on every change isn't an eval: it's a museum piece that reports whatever was true the last time someone dusted it.
 
-## Build it before you think you need it
+## Build it before you think you need it, then make it show its working
 
-The through-line: the harness was born the same day as the bug that justified it, and the first version was hours, not weeks. Since then, every retrieval change (new chunking, new embeddings, reranker changes) has had to clear the same gold sets before it ships.
+The through-line: the harness was born the same day as the bug that justified it, and the first version was hours, not weeks. That order matters more than I gave it credit for. I didn't sit down and imagine what might go wrong. A real thing went wrong, and I built the smallest instrument that could see it. Every gold set since has grown the same way, out of a failure I actually watched happen, which turns out to be the one part of this I got right by accident.
 
-If you have a RAG system in production and no harness, the starting kit is smaller than it feels: one secret-gated route that calls your real retrieval function, forty questions with expected evidence written as text (not IDs), five standard metrics, and `console.table`. You will find at least one thing you don't like. Mine was a prison rule outranked by rent.
+If you have a RAG system in production and no harness, the starting kit is smaller than it feels: one secret-gated route that calls your real retrieval function, 40 questions with expected evidence written as text (not IDs), five standard metrics, and `console.table`. Build that. It will catch the disasters, and early on the disasters are most of what you've got.
+
+Then add the part mine was missing. Make it report how sure it is, not just what it saw. An error bar next to 95.0% would have killed a sentence I'd already disproved in my own ADR six weeks earlier. Without one, a harness will take your priors, format them to one decimal place, and hand them back as evidence. The number will be true. It will still be a belief.
+
+You'll find at least one thing you don't like. Mine was a prison rule outranked by rent. The second thing was me.
