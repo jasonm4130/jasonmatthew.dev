@@ -1,0 +1,94 @@
+---
+title: "You'd Never Ship 'It Feels Faster'"
+excerpt: 'Nobody accepts "I optimised the query, it feels faster." Everybody accepts "I improved the prompt, the output looks better." Same claim, same evidence, which is none. Here is what the second one costs, using my own production system as the crime scene.'
+publishDate: 2026-07-17
+tags:
+  - ai
+  - evals
+  - engineering
+  - opinion
+draft: true
+---
+
+An engineer tells you they optimised a slow query and it feels faster now. You ask for the benchmark. What was the p95 before, what is it after, how many runs. Nobody would let that ship on a feeling, and nobody would be offended at being asked.
+
+The same engineer tells you they improved a prompt and the output looks better now. The room nods. It goes out.
+
+It's the same claim, backed by the same amount of evidence, which is none. I have been trying to explain this to people for months and mostly failing, so here is the version with my own production system as the crime scene.
+
+## The bad reason this feels acceptable
+
+The model is stochastic. Same prompt, same temperature, different answer. From that, people conclude that measurement is impossible, and if measurement is impossible then vibes are all there is, so vibes it is.
+
+The conclusion doesn't follow. You don't need a deterministic model. You need a deterministic grader over a stochastic system. The thing under test stays random; the measurement stops being random. Every engineer already accepts this everywhere else. Nobody judges a flaky test by running it once.
+
+I'd love to claim that framing. Someone got there first: an eval engineer, [writes Tian Pan](https://tianpan.co/blog/2026-04-28-eval-bottleneck-staffing-ratio-rate-limiting-reagent), is building "a measurement apparatus for a stochastic system whose outputs are not specifiable in advance," and until you have one, "the new model feels smarter" is unfalsifiable.
+
+## The advice I would have given you last week, which is wrong
+
+I would have told you: write the eval first, it's TDD with the serial numbers filed off. A prompt with no eval is a function with no test.
+
+That's wrong, and the person who convinced me is the one most people cite for the opposite. Asked directly whether teams should practise eval-driven development, [Hamel Husain says](https://hamel.dev/blog/posts/evals-faq/should-i-practice-eval-driven-development.html) "generally no," that it "creates more problems than it solves," because unlike normal software "you can't anticipate what will break."
+
+You can't write the assertion first, because you don't know what good looks like until you have stared at a few hundred outputs. Shreya Shankar's group [named the trap](https://doi.org/10.1145/3654777.3676450): criteria drift. You need criteria to grade outputs, and grading outputs is how you work out your criteria. Chicken, egg, and a lot of teams stuck between them.
+
+So don't start from an imagined failure. Start from one you watched happen.
+
+Mine: I asked my board-game rules assistant how a player gets out of jail in Monopoly, and it confidently handed the model a rule about collecting rent. The correct passage scored 0.555 on cosine similarity. The rent rule scored 0.583. I built the eval harness that afternoon, and every gold question in it since has come from something that actually broke. Not one came from imagining what might.
+
+## Grade with the dumbest thing that works
+
+There's a ladder, and you climb it only as far as you have to.
+
+1. **Programmatic assertions.** Does the JSON parse. Does the code compile. Is the number right. Does the citation marker point at a passage that exists. Cheap, fast, and they never lie to you.
+2. **Property invariants.** Things that must hold whatever the wording: every extracted date appears in the source, the answer never names a competitor, output is under 200 words.
+3. **LLM-as-judge.** Only for quality that is truly subjective. And then you have to validate the judge itself, which is real work most teams skip.
+4. **Humans.** Expensive, and the ground truth the layer above is calibrated against.
+
+Take the cheapest rung that answers your question. This sounds like penny-pinching. It is the opposite, and here is what convinced me.
+
+The most valuable thing my harness has ever done was kill a model swap. A cheaper model with a bigger context window looked fine on the three questions I tried by hand. Against the gold set it answered 22 of 40, where the incumbent answered 39 of 40. It was returning an empty completion on roughly 45% of grounded prompts. Confirmed at the raw API level, so it wasn't an integration bug. That model was hours from shipping.
+
+Now look at what caught it. Did the model return an answer, and did its citation markers point at passages that exist. Two assertions off the bottom rung of the ladder, with no judgment in them anywhere. A junior could have written both before lunch.
+
+The sophisticated LLM judge in the same harness decided nothing at all. It couldn't be trusted anyway, for reasons I'm coming to.
+
+## A number is not evidence
+
+My harness told me hybrid retrieval beat dense-only: 95.0% hit-rate against 92.5%. I wrote that up, in a post I nearly published, as "a number instead of a belief."
+
+It was a belief. On 40 questions, 95.0% and 92.5% are 38 right and 37 right. The whole case for running two retrieval legs in production was one question. Run a paired significance test on that and it returns p = 1.0, which is as far from significant as arithmetic goes.
+
+Anthropic published [a paper on exactly this](https://arxiv.org/abs/2411.00640). New evals, it says, should carry 1,000 or more questions to have good signalling ability, and you should report a confidence interval next to every score. To reliably detect a real 2.5-point lift at my pass rate, I'd have needed somewhere around 1,400 questions per arm. I had 40. "80% pass on 20 cases" is noise wearing a lab coat.
+
+A bigger gold set helps. What helps more is a harness that reports how sure it is. An error bar printed next to 95.0% would have killed the sentence I wrote, and it would have killed it in June, in my own repo, before anyone read it.
+
+## Your eval will lie to you in ways you are too clever to catch
+
+Both of these happened after I thought I was doing this properly. That's what makes them worth your time.
+
+**I spotted a real bias and wrote a mitigation that pointed the wrong way.** The faithfulness judge in my harness shares a model family with a system it grades. I noticed the conflict of interest, felt pleased with myself, and left a code comment: trust the delta between models, not the absolute number.
+
+That's backwards. Self-preference bias means a judge scores its own family higher than humans do, and it's [causally tied to the model recognising its own output](https://arxiv.org/abs/2404.13076). It inflates one arm of a two-model comparison. It doesn't wash out of the delta. It collects there. I had identified a real problem and written down the single worst place to look for it.
+
+**And a fix I was proud of made the eval blind.** My gold questions were originally written by an LLM reading each source passage, and it was echoing that passage's vocabulary, so the questions were accidentally keyword searches for their own answers. Scores came out inflated. I fixed it: sample chunks at random, and instruct the generator to paraphrase, to avoid the rulebook's distinctive terms and rare words. That's the right fix and I'd make it again.
+
+BM25 is a lexical matcher. Its entire job is exact-term queries. My gold set now systematically excludes them.
+
+I only found out because I finally added those error bars. Dense and hybrid came back identical, on all 5 metrics, across all 42 questions. Not close. Identical. Two different retrieval algorithms do not agree to the decimal by chance, and a bare point estimate would have shown me a shrug where an interval showed me an anomaly. The eval had been structurally incapable of measuring a feature I ship in production, and the thing that blinded it was a fix I was proud of. Two correct decisions, in direct conflict, and nobody noticed for a month.
+
+That's the part I'd most like engineers to take seriously. The eval is not a thing you build and then trust. It is another system, with its own bugs, and yours will be subtler than mine.
+
+## What to do on Monday
+
+Keep a failure file.
+
+Every time the thing screws up in real use, paste the input into a JSON file. That's your gold set, growing for free, out of real failures instead of imagined ones. Ten real failures beat a hundred synthetic ones, and you don't have to guess what good looks like, because your users keep showing you what bad looks like.
+
+When you have 20 of them, write the dumbest assertion that catches each one. Run them before you ship a prompt change. Print an interval, not just a mean.
+
+That's the whole discipline. No platform, no dashboard, no vendor invoice. My entire harness is a Node script, about 150 lines of pure functions with their own unit tests, and `console.table`. It has caught a bad model, a bad threshold, and, eventually, itself.
+
+Do it because otherwise you will spend six weeks tuning a system against a number that was never there.
+
+So the next time someone tells you the new prompt looks better, ask them the only question that matters. How would you know if it had made things worse?
