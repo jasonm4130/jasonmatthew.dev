@@ -27,6 +27,13 @@ test('em-dash and banned words inside ~~~ fenced code are exempt', () => {
   assert.ok(!rules(f).includes('banned-word'), JSON.stringify(f));
 });
 
+test('longer fences wrap shorter inner fences without leaking prose', () => {
+  const tilde = lintText('Prose.\n\n~~~~md\n~~~\nleverage\n~~~~\n\nMore.');
+  assert.ok(!rules(tilde).includes('banned-word'), JSON.stringify(tilde));
+  const backtick = lintText('Prose.\n\n````md\n```\nleverage\n````\n\nMore.');
+  assert.ok(!rules(backtick).includes('banned-word'), JSON.stringify(backtick));
+});
+
 test('CRLF frontmatter is masked (its content is not linted)', () => {
   const f = lintText('---\r\ntitle: A — B\r\nexcerpt: hi\r\n---\r\n\r\nClean prose.\r\n');
   assert.ok(!rules(f).includes('em-dash'), JSON.stringify(f));

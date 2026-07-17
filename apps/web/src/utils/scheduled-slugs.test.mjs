@@ -19,8 +19,23 @@ test('parseFrontmatter reads quoted publishDate and CRLF', () => {
   assert.equal(publishDate.getTime(), new Date('2026-08-01T00:00:00Z').getTime());
 });
 
+test('parseFrontmatter preserves a timestamped publishDate (matches Zod coercion)', () => {
+  const { publishDate } = parseFrontmatter("---\npublishDate: '2026-08-01T23:59:00Z'\n---\nx");
+  assert.equal(publishDate.toISOString(), '2026-08-01T23:59:00.000Z');
+});
+
 test('isFutureDated: non-draft future post is scheduled', () => {
   assert.equal(isFutureDated(FUTURE, NOW), true);
+});
+
+test('isFutureDated respects intraday time (build earlier the same day)', () => {
+  const fm = { draft: false, publishDate: new Date('2026-08-01T23:59:00Z') };
+  const buildEarlier = new Date('2026-08-01T00:00:00Z').getTime();
+  assert.equal(isFutureDated(fm, buildEarlier), true);
+});
+
+test('blogSlugFromUrl decodes percent-encoded slugs to match content ids', () => {
+  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/blog/caf%C3%A9/'), 'café');
 });
 
 test('isFutureDated: past-dated non-draft is not scheduled', () => {

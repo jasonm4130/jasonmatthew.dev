@@ -132,8 +132,9 @@ function maskNonProse(text) {
   let masked = text;
   const blank = (m) => m.replace(/[^\n]/g, ' ');
   masked = masked.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, blank); // frontmatter (LF or CRLF)
-  masked = masked.replace(/```[\s\S]*?```/g, blank); // fenced code (backtick)
-  masked = masked.replace(/~~~[\s\S]*?~~~/g, blank); // fenced code (tilde)
+  // Fenced code: 3+ backticks or tildes open a fence, closed by a line of the same
+  // character. Matching the opening run (\1) lets a longer fence wrap shorter ones.
+  masked = masked.replace(/^([`~]{3,})[^\n]*\n[\s\S]*?^\1[`~]*[ \t]*$/gm, blank);
   masked = masked.replace(/`[^`\n]*`/g, blank); // inline code
   masked = masked.replace(URL_RE, blank); // URLs
   masked = masked.replace(/^import .*$/gm, blank); // MDX imports

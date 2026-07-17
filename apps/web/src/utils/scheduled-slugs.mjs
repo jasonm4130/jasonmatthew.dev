@@ -20,8 +20,15 @@ export function parseFrontmatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   const fm = m ? m[1] : '';
   const draft = /^draft:\s*true\b/im.test(fm);
-  const dateM = fm.match(/^publishDate:\s*['"]?(\d{4}-\d{2}-\d{2})/m);
-  const publishDate = dateM ? new Date(`${dateM[1]}T00:00:00Z`) : null;
+  const dateM = fm.match(/^publishDate:\s*(.+?)\s*$/m);
+  let publishDate = null;
+  if (dateM) {
+    // Match Zod's z.coerce.date(): hand the whole value to Date so any time
+    // component is kept (a bare YYYY-MM-DD parses as UTC midnight, same as Zod).
+    const value = dateM[1].replace(/^(['"])([\s\S]*)\1$/, '$2');
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) publishDate = d;
+  }
   return { draft, publishDate };
 }
 
@@ -49,7 +56,13 @@ export function blogSlugFromUrl(url) {
     path = String(url);
   }
   const m = path.match(/^\/blog\/(.+?)\/?$/);
-  return m ? m[1] : null;
+  if (!m) return null;
+  // Content ids are decoded (e.g. "café"); the URL path is percent-encoded.
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return m[1];
+  }
 }
 
 /**
