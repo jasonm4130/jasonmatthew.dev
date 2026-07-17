@@ -11,10 +11,11 @@ const { src, alt, width, height } = Astro.props;
 
 <figure>
   <video
-    autoplay
     loop
     muted
     playsinline
+    controls
+    data-autoplay
     width={width}
     height={height}
     aria-label={alt}
@@ -23,3 +24,16 @@ const { src, alt, width, height } = Astro.props;
     <source src={src} type="video/mp4" />
   </video>
 </figure>
+
+<script>
+  // Autoplay the demo only for visitors who have not requested reduced motion
+  // (WCAG 2.2.2). With JS disabled the video simply does not autoplay; the native
+  // controls still let anyone play, pause or stop it.
+  function playDemoVideos() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll<HTMLVideoElement>('video[data-autoplay]').forEach((v) => {
+      v.play().catch(() => {});
+    });
+  }
+  document.addEventListener('astro:page-load', playDemoVideos);
+</script>

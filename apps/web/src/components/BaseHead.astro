@@ -17,10 +17,15 @@ function resolveOgImage(pathname: string, image?: { src: string }) {
 
   let ogPath = '/og/default.png';
   const cleanPath = pathname.replace(/\/$/, '');
+  // Only individual posts/projects have a per-slug OG image. Pagination pages
+  // (/blog/2/, /projects/2/) have numeric slugs with no such image — fall back to
+  // the default instead of advertising a broken social card.
   if (cleanPath.startsWith('/blog/')) {
-    ogPath = `/og/blog/${cleanPath.replace('/blog/', '')}.png`;
+    const slug = cleanPath.slice('/blog/'.length);
+    if (slug && !/^\d+$/.test(slug)) ogPath = `/og/blog/${slug}.png`;
   } else if (cleanPath.startsWith('/projects/')) {
-    ogPath = `/og/projects/${cleanPath.replace('/projects/', '')}.png`;
+    const slug = cleanPath.slice('/projects/'.length);
+    if (slug && !/^\d+$/.test(slug)) ogPath = `/og/projects/${slug}.png`;
   }
   return new URL(ogPath, Astro.site).toString();
 }
@@ -37,6 +42,17 @@ const resolvedImage = resolveOgImage(Astro.url.pathname, image);
 
 <title>{resolvedTitle}</title>
 <meta name="description" content={description} />
+
+<!-- No-JS fallback: scroll-reveal elements are opacity:0 until the IntersectionObserver
+     runs, so without JS the homepage sections and preview cards would be blank. -->
+<noscript>
+  <style>
+    .reveal {
+      opacity: 1;
+      translate: none;
+    }
+  </style>
+</noscript>
 
 <!-- Open Graph -->
 <meta property="og:type" content={pageType} />
