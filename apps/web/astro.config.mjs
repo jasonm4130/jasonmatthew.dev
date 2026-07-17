@@ -6,7 +6,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import { fileURLToPath } from 'node:url';
 import remarkRewriteDraftLinks from './src/plugins/remark-rewrite-draft-links.mjs';
-import { futureDatedSlugs, blogSlugFromUrl } from './src/utils/scheduled-slugs.mjs';
+import { futureDatedSlugs, blogSlugFromUrl } from './src/utils/article-publish.mjs';
 
 // Scheduled posts (draft:false but future-dated) keep a live /blog/<slug>/ page
 // for OG-image generation + in-situ review, but must stay out of the sitemap.

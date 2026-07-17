@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseFrontmatter, isFutureDated, blogSlugFromUrl } from './scheduled-slugs.mjs';
+import { parseFrontmatter, isFutureDated, isPublished, blogSlugFromUrl } from './article-publish.mjs';
 
 // Fixed reference points (Date.now() is not used in tests).
 const NOW = new Date('2026-07-18T00:00:00Z').getTime();
@@ -22,6 +22,24 @@ test('parseFrontmatter reads quoted publishDate and CRLF', () => {
 test('parseFrontmatter preserves a timestamped publishDate (matches Zod coercion)', () => {
   const { publishDate } = parseFrontmatter("---\npublishDate: '2026-08-01T23:59:00Z'\n---\nx");
   assert.equal(publishDate.toISOString(), '2026-08-01T23:59:00.000Z');
+});
+
+test('parseFrontmatter ignores a YAML inline comment on publishDate', () => {
+  const { publishDate } = parseFrontmatter('---\npublishDate: 2026-08-01 # scheduled\n---\nx');
+  assert.equal(publishDate.getTime(), new Date('2026-08-01T00:00:00Z').getTime());
+});
+
+test('isPublished: draft is never published', () => {
+  assert.equal(isPublished({ draft: true, publishDate: new Date('2020-01-01') }, NOW), false);
+});
+
+test('isPublished: past date is published, future date is not', () => {
+  assert.equal(isPublished(PAST, NOW), true);
+  assert.equal(isPublished(FUTURE, NOW), false);
+});
+
+test('isPublished: a non-draft with no date is published', () => {
+  assert.equal(isPublished({ draft: false, publishDate: null }, NOW), true);
 });
 
 test('isFutureDated: non-draft future post is scheduled', () => {
