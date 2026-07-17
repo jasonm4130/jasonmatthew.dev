@@ -6,10 +6,10 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-/*.js
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.css
+# Only content-hashed bundles are safe to cache immutably. Unversioned public
+# files (e.g. /theme-toggle.js) must stay revalidatable, or a returning visitor
+# can retain a stale copy for up to a year after a deploy.
+/_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
 /og-default.jpg
