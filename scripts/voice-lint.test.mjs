@@ -21,6 +21,18 @@ test('em-dash inside inline code is exempt', () => {
   assert.ok(!rules(f).includes('em-dash'));
 });
 
+test('em-dash and banned words inside ~~~ fenced code are exempt', () => {
+  const f = lintText('Some prose.\n\n~~~js\nconst a = "x — y"; // leverage\n~~~\n\nMore prose.');
+  assert.ok(!rules(f).includes('em-dash'), JSON.stringify(f));
+  assert.ok(!rules(f).includes('banned-word'), JSON.stringify(f));
+});
+
+test('CRLF frontmatter is masked (its content is not linted)', () => {
+  const f = lintText('---\r\ntitle: A — B\r\nexcerpt: hi\r\n---\r\n\r\nClean prose.\r\n');
+  assert.ok(!rules(f).includes('em-dash'), JSON.stringify(f));
+  assert.ok(!rules(f).includes('double-hyphen'), JSON.stringify(f));
+});
+
 test('banned lexicon: genuinely, delve, leverage, tapestry', () => {
   const f = lintText('I genuinely wanted to delve into the tapestry and leverage it.');
   const found = block(f)

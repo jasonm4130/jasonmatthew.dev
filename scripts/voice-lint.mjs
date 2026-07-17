@@ -131,8 +131,9 @@ export function xWeightedLength(text) {
 function maskNonProse(text) {
   let masked = text;
   const blank = (m) => m.replace(/[^\n]/g, ' ');
-  masked = masked.replace(/^---\n[\s\S]*?\n---\n/, blank); // frontmatter
-  masked = masked.replace(/```[\s\S]*?```/g, blank); // fenced code
+  masked = masked.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, blank); // frontmatter (LF or CRLF)
+  masked = masked.replace(/```[\s\S]*?```/g, blank); // fenced code (backtick)
+  masked = masked.replace(/~~~[\s\S]*?~~~/g, blank); // fenced code (tilde)
   masked = masked.replace(/`[^`\n]*`/g, blank); // inline code
   masked = masked.replace(URL_RE, blank); // URLs
   masked = masked.replace(/^import .*$/gm, blank); // MDX imports
