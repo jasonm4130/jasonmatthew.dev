@@ -6,6 +6,11 @@ import FormattedDate from '@components/FormattedDate.astro';
 import { isNotDraft } from '@utils/data-utils';
 
 export const getStaticPaths = (async () => {
+  // Intentional: individual post pages use isNotDraft (not isPublished), so a
+  // draft:false post with a future publishDate gets a live /blog/<slug>/ URL for
+  // OG-image generation and in-situ review before launch. Listings, RSS, tags and
+  // the homepage all gate on the date via isPublished, and astro.config.mjs keeps
+  // these pre-publish pages out of the sitemap. See src/utils/data-utils.ts.
   const posts = await getCollection('blog', isNotDraft);
   return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
 }) satisfies GetStaticPaths;

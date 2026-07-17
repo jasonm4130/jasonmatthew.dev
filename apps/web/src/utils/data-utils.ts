@@ -1,5 +1,10 @@
 import type { CollectionEntry } from 'astro:content';
 
+// Used only by blog/[id].astro: it deliberately renders every non-draft post,
+// including future-dated ones, so a scheduled post gets a live URL for OG-image
+// generation + in-situ review before its publishDate. Everything user-facing
+// (listings, RSS, tags, homepage) uses isPublished instead, and the sitemap
+// filter in astro.config.mjs excludes the future-dated ones.
 export function isNotDraft({ data }: { data: { draft?: boolean } }) {
   return !data.draft;
 }
@@ -10,9 +15,7 @@ export function isNotDraft({ data }: { data: { draft?: boolean } }) {
 const BRISBANE_OFFSET_MS = 10 * 60 * 60 * 1000;
 
 export function isPublished({ data }: { data: { draft?: boolean; publishDate: Date } }) {
-  return (
-    !data.draft && (import.meta.env.DEV || data.publishDate.getTime() <= Date.now() + BRISBANE_OFFSET_MS)
-  );
+  return !data.draft && (import.meta.env.DEV || data.publishDate.getTime() <= Date.now() + BRISBANE_OFFSET_MS);
 }
 
 export function sortItemsByDateDesc(itemA: { data: { publishDate: Date } }, itemB: { data: { publishDate: Date } }) {

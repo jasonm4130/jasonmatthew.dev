@@ -4,14 +4,29 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import { fileURLToPath } from 'node:url';
 import remarkRewriteDraftLinks from './src/plugins/remark-rewrite-draft-links.mjs';
+import { futureDatedSlugs, blogSlugFromUrl } from './src/utils/scheduled-slugs.mjs';
+
+// Scheduled posts (draft:false but future-dated) keep a live /blog/<slug>/ page
+// for OG-image generation + in-situ review, but must stay out of the sitemap.
+const articlesDir = fileURLToPath(new URL('../../packages/content/articles', import.meta.url));
+const scheduledSlugs = futureDatedSlugs(articlesDir);
 
 export default defineConfig({
   site: 'https://jasonmatthew.dev',
   vite: {
     plugins: [tailwindcss()],
   },
-  integrations: [mdx(), sitemap()],
+  integrations: [
+    mdx(),
+    sitemap({
+      filter: (page) => {
+        const slug = blogSlugFromUrl(page);
+        return !(slug && scheduledSlugs.has(slug));
+      },
+    }),
+  ],
   image: {
     layout: 'constrained',
     responsiveStyles: false,
