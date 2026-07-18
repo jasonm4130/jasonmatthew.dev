@@ -12,11 +12,16 @@ interface Props extends HTMLAttributes<'a'> {
 }
 
 const { href, date, title, kind, class: className, ...rest } = Astro.props;
+
+// Shared-element View Transition: name the title from its slug so it morphs into the
+// article's <h1> (same name) on navigation. Unique per row → unique per page.
+const slug = href.split(/[?#]/)[0].replace(/\/$/, '').split('/').pop();
+const titleTransition = slug ? `title-${slug}` : undefined;
 ---
 
 <a class:list={['wrow', className]} href={href} {...rest}>
   <span class="wd">{date}</span>
-  <span class="wt">{title}</span>
+  <span class="wt" transition:name={titleTransition}>{title}</span>
   {kind && <span class="wk">{kindLabel(kind)}</span>}
 </a>
 
@@ -47,7 +52,7 @@ const { href, date, title, kind, class: className, ...rest } = Astro.props;
     font-size: 1.02rem;
     color: var(--ink);
     line-height: 1.45;
-    transition: color 0.18s ease;
+    transition: color var(--dur-2) var(--ease-standard);
   }
 
   .wrow:hover .wt {

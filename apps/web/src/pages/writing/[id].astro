@@ -109,7 +109,7 @@ function host(url: string): string {
             {primaryThread && <Fragment>{primaryThread.title} · </Fragment>}
             <span class="kind">{kind}</span>
           </div>
-          <h1 class="a-title">{post.data.title}</h1>
+          <h1 class="a-title" transition:name={`title-${post.id}`}>{post.data.title}</h1>
           <p class="a-stand">{post.data.excerpt}</p>
           <div class="a-meta">
             <span><FormattedDate date={post.data.publishDate} /></span>

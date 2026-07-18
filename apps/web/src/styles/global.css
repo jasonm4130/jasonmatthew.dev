@@ -27,6 +27,15 @@
      article code frames (Expressive Code) + inline `code`; Neon stays UI mono */
   --font-mono-code: var(--font-mono-krypton);
 
+  /* motion — one scale, theme-independent. Enters/reveals use --ease-out; in-place
+     state changes use --ease-standard. Capped at 300ms (the Kowalski/Apple/Material
+     "alive but not slow" band) so nothing lags the reading. */
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 300ms;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
   /* notebook palette — light */
   --paper: #f4efe4;
   --ink: #100d06;
@@ -487,15 +496,37 @@
   color: var(--ink);
 }
 
+/* Crafted underline: a persistent faint coral rule keeps links discoverable at rest
+   (they share the body ink colour), while a full-strength coral underline draws in
+   from the left on hover. Two stacked background gradients, animated via background-size
+   (matches .nav-link-underline and follows line-wraps) — no reflow, no layout cost. */
 .art-prose :where(a) {
   color: var(--ink);
   text-decoration: none;
-  border-bottom: 1px solid var(--coral);
-  transition: color 0.18s ease;
+  background-image:
+    linear-gradient(var(--coral), var(--coral)),
+    linear-gradient(
+      color-mix(in srgb, var(--coral) 42%, var(--paper)),
+      color-mix(in srgb, var(--coral) 42%, var(--paper))
+    );
+  background-repeat: no-repeat;
+  background-position:
+    0 100%,
+    0 100%;
+  background-size:
+    0% 1.5px,
+    100% 1px;
+  padding-bottom: 1px;
+  transition:
+    color var(--dur-2) var(--ease-standard),
+    background-size var(--dur-2) var(--ease-out);
 }
 
 .art-prose :where(a):hover {
   color: var(--coral);
+  background-size:
+    100% 1.5px,
+    100% 1px;
 }
 
 .art-prose :where(h2) {
@@ -841,6 +872,11 @@
 @media (prefers-reduced-motion: reduce) {
   .progbar {
     display: none;
+  }
+
+  /* Underline still resolves, just instantly (no left-to-right draw). */
+  .art-prose :where(a) {
+    transition: none;
   }
 }
 

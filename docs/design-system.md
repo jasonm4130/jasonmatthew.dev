@@ -124,3 +124,32 @@ becomes a rich card (title, live dot when the target has a `liveUrl`, descriptio
 external links pass through as plain cards; links to missing or unpublished entries are
 omitted at render time and **fail the build** at the content-graph gate. Author related
 links freely — the gate keeps them honest.
+
+## Motion
+
+Motion is rationed and shares one vocabulary. Durations and easings live as tokens on
+`:root` in `global.css` (theme-independent — motion doesn't change between light/dark):
+
+| Token             | Value                            | Use                                    |
+| ----------------- | -------------------------------- | -------------------------------------- |
+| `--dur-1`         | 120ms                            | micro (colour shifts)                  |
+| `--dur-2`         | 180ms                            | standard (link underline, row hover)   |
+| `--dur-3`         | 300ms                            | the longest a UI transition should run |
+| `--ease-out`      | `cubic-bezier(0.33, 1, 0.68, 1)` | enters / draws-in (decelerate)         |
+| `--ease-standard` | `cubic-bezier(0.4, 0, 0.2, 1)`   | symmetric state changes                |
+
+Two named interactions build on them:
+
+- **Travelling title** — a writing-list row title and the article `<h1>` it links to
+  share a `view-transition-name` (`title-<slug>`, from the row's href / `post.id`), so
+  Astro's `ClientRouter` morphs the title from list to header on navigation instead of a
+  hard cut. Names are unique per page; the two ends are the same typeface (Libre
+  Baskerville), so it reads as one title growing, not a font swap.
+- **Crafted link underline** (`.art-prose a`) — a persistent faint-coral hairline
+  (`background-size: 100% 1px`) plus a coral layer that draws in left-to-right on hover
+  (`0% → 100% 1.5px`) over `--dur-2 --ease-out`, text turning coral. Replaces a static
+  `border-bottom`.
+
+Every motion path has a `@media (prefers-reduced-motion: reduce)` guard: transitions
+drop to `none` (colour still changes), hover indents don't translate, and the
+`ClientRouter` skips the view-transition animation.
