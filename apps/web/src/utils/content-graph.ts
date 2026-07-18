@@ -31,13 +31,14 @@ export interface GraphEntry {
 }
 
 /** Maps an internal article or project href to its target collection + id, or null
- * for external / unrecognised hrefs (left unvalidated). Articles are matched under
- * BOTH `/blog/` (the current route) and `/writing/` (the post-rename route): the
- * branch migrates /blog -> /writing in a later stage, so the gate must catch a dead
- * article link written in either form during that transition — otherwise a
- * `/blog/<missing>` related link would slip through as "external" and never fail. */
+ * for external / unrecognised hrefs (left unvalidated). Articles live at `/blog/`
+ * — the only article route in this revision. The gate validates against the ACTIVE
+ * route set on purpose: a `/blog/<missing>` link fails closed, and a not-yet-routable
+ * `/writing/<id>` link is NOT quietly accepted (it would pass the graph check but
+ * 404). The /blog -> /writing rename in a later stage swaps this prefix and the
+ * related records together, so the parser always matches what actually routes. */
 export function parseInternalHref(href: string): { collection: 'blog' | 'projects'; id: string } | null {
-  const m = href.match(/^\/(blog|writing|projects)\/([^/?#]+)\/?$/);
+  const m = href.match(/^\/(blog|projects)\/([^/?#]+)\/?$/);
   if (!m) return null;
   const id = decodeURIComponent(m[2]);
   return { collection: m[1] === 'projects' ? 'projects' : 'blog', id };

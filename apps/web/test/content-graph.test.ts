@@ -53,7 +53,7 @@ describe('validateContentGraph', () => {
     expect(() => validateContentGraph(missingBlog, SLUGS)).toThrow(/no such entry/);
 
     const unpublished = [
-      entry({ id: 'a', related: [{ label: 'x', href: '/writing/b' }] }),
+      entry({ id: 'a', related: [{ label: 'x', href: '/blog/b' }] }),
       entry({ id: 'b', published: false }),
     ];
     expect(() => validateContentGraph(unpublished, SLUGS)).toThrow(/not published/);
@@ -64,7 +64,7 @@ describe('validateContentGraph', () => {
       entry({
         id: 'a',
         related: [
-          { label: 'x', href: '/writing/b' },
+          { label: 'x', href: '/blog/b' },
           { label: 'ext', href: 'https://example.com' },
         ],
       }),
@@ -75,16 +75,18 @@ describe('validateContentGraph', () => {
 });
 
 describe('parseInternalHref', () => {
-  it('maps both the current /blog/ and post-rename /writing/ article routes to blog', () => {
+  it('maps the current /blog/ article route to the blog collection', () => {
     expect(parseInternalHref('/blog/foo')).toEqual({ collection: 'blog', id: 'foo' });
-    expect(parseInternalHref('/writing/foo')).toEqual({ collection: 'blog', id: 'foo' });
   });
   it('maps /projects/<slug> to the projects collection', () => {
     expect(parseInternalHref('/projects/bar/')).toEqual({ collection: 'projects', id: 'bar' });
   });
-  it('returns null for non-entry and external hrefs', () => {
+  it('returns null for non-entry, external, and not-yet-routable hrefs', () => {
     expect(parseInternalHref('/now')).toBeNull();
-    expect(parseInternalHref('https://example.com/writing/x')).toBeNull();
+    expect(parseInternalHref('https://example.com/blog/x')).toBeNull();
+    // /writing/ has no route in this revision — must not validate as an article
+    // link (it would pass the graph check but 404). Added by the Stage C rename.
+    expect(parseInternalHref('/writing/foo')).toBeNull();
   });
 });
 
