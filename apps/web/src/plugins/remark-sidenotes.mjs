@@ -25,14 +25,27 @@ function collectDefinitions(node, defs) {
   }
 }
 
+/** Reduce one definition block to inline nodes. Container blocks (paragraph, etc.)
+ * contribute their inline children; leaf blocks carry a `value` and no `children`
+ * (`code`, `html`) — preserve that content inline rather than dropping it silently
+ * (a code block degrades to inline `code`). Footnotes are short prose by convention,
+ * so this is a graceful floor, not full block support. */
+function blockToInline(block) {
+  if (Array.isArray(block.children)) return block.children;
+  if (typeof block.value === 'string') {
+    return [{ type: block.type === 'code' ? 'inlineCode' : 'text', value: block.value }];
+  }
+  return [];
+}
+
 /** Flatten a definition's block children (usually one paragraph) to inline nodes,
- * joining separate blocks with a space. Footnotes are short prose by convention. */
+ * joining separate blocks with a space. */
 function inlineFromDefinition(blocks) {
   const out = [];
   for (const block of blocks) {
-    const kids = Array.isArray(block.children) ? block.children : [];
-    if (out.length && kids.length) out.push({ type: 'text', value: ' ' });
-    out.push(...kids);
+    const inline = blockToInline(block);
+    if (out.length && inline.length) out.push({ type: 'text', value: ' ' });
+    out.push(...inline);
   }
   return out;
 }

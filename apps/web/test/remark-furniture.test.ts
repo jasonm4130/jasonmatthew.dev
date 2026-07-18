@@ -78,6 +78,29 @@ describe('remark-sidenotes', () => {
     expect(collect(notes[1], (n) => n.type === 'emphasis')).toHaveLength(1);
   });
 
+  it('preserves a leaf block (code) in a footnote definition instead of silently dropping it', () => {
+    const tree = {
+      type: 'root',
+      children: [
+        paragraph([text('ref'), { type: 'footnoteReference', identifier: 'c' }]),
+        {
+          type: 'footnoteDefinition',
+          identifier: 'c',
+          label: 'c',
+          children: [paragraph([text('Intro.')]), { type: 'code', lang: 'js', value: 'const removed = true;' }],
+        },
+      ],
+    };
+    remarkSidenotes()(tree as any);
+    const note = collect(tree, byHName('span')).find((n) => hasClass(n, 'sidenote'));
+    // The intro prose survives...
+    expect(collect(note, (n) => n.type === 'text' && n.value === 'Intro.')).toHaveLength(1);
+    // ...and the code block's content is preserved inline, not dropped.
+    const code = collect(note, (n) => n.type === 'inlineCode');
+    expect(code).toHaveLength(1);
+    expect(code[0].value).toBe('const removed = true;');
+  });
+
   it('renders the reference even when its definition is missing (no empty gutter box)', () => {
     const tree = {
       type: 'root',

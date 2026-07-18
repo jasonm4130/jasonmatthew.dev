@@ -42,7 +42,12 @@ export default defineConfig({
     // stay in lockstep with global.css's tri-state.
     expressiveCode({
       themes: kryptonThemes,
-      themeCssSelector: (theme) => `:root[data-theme='${theme.name}']`,
+      // Return only the theme selector — Expressive Code scopes it under `:root`
+      // itself. Prefixing `:root` here doubles it (`:root:root…`) and, worse,
+      // corrupts the generated `@media (prefers-color-scheme: dark)` rule into an
+      // invalid selector the browser drops, breaking code-block theming for
+      // no-choice dark-OS visitors. Matches EC's default `[data-theme='…']`.
+      themeCssSelector: (theme) => `[data-theme='${theme.name}']`,
       useDarkModeMediaQuery: true,
       useThemedScrollbars: false,
       useThemedSelectionColors: false,
