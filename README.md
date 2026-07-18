@@ -16,16 +16,17 @@ OG images are generated at build time via Satori. No CMS. Content lives in MDX f
 
 ## Tech Stack
 
-| Layer     | Tech                                                                          |
-| --------- | ----------------------------------------------------------------------------- |
-| Framework | [Astro 5](https://astro.build) with TypeScript strict mode                    |
-| Styling   | [Tailwind CSS v4](https://tailwindcss.com) via `@tailwindcss/vite`            |
-| Content   | MDX with Zod-validated schemas                                                |
-| Fonts     | Sora (headings) + Libre Baskerville (body) + Monaspace Neon (code)            |
-| OG Images | [Satori](https://github.com/vercel/satori) + resvg-js (build-time generation) |
-| Deploy    | [Cloudflare Pages](https://pages.cloudflare.com) (static output)              |
-| Monorepo  | [Turborepo](https://turbo.build) + pnpm workspaces                            |
-| Quality   | ESLint, Prettier, Husky + lint-staged                                         |
+| Layer     | Tech                                                                                        |
+| --------- | ------------------------------------------------------------------------------------------- |
+| Framework | [Astro 5](https://astro.build) with TypeScript strict mode                                  |
+| Styling   | [Tailwind CSS v4](https://tailwindcss.com) via `@tailwindcss/vite`                          |
+| Content   | MDX with Zod-validated schemas                                                              |
+| Highlight | [Expressive Code](https://expressive-code.com) with a self-hosted Krypton theme             |
+| Fonts     | Sora (headings) + Libre Baskerville (body) + Monaspace Neon (UI) + Monaspace Krypton (code) |
+| OG Images | [Satori](https://github.com/vercel/satori) + resvg-js (build-time generation)               |
+| Deploy    | [Cloudflare Pages](https://pages.cloudflare.com) (static output)                            |
+| Monorepo  | [Turborepo](https://turbo.build) + pnpm workspaces                                          |
+| Quality   | ESLint, Prettier, Husky + lint-staged                                                       |
 
 ## Project Structure
 
