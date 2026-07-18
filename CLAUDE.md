@@ -100,9 +100,11 @@ the `data-theme` attribute, not a `.dark` class.
   `/projects/[id]/`). `BaseLayout` takes `width='wide'|'prose'`; wide pages render
   their own `.shell` + `.nb-grid` rail/body scaffolding (in `global.css`).
 - **Articles live at `/writing/`, not `/blog/`.** The rename is edge-enforced by
-  `apps/web/public/_redirects` (two 301 rules); every internal article href is
-  `/writing/<slug>`. The `/og/blog/…` OG-image asset dir and `/images/blog/…` content
-  images keep the `blog` path — they are asset conventions, not user-facing routes.
+  `apps/web/public/_redirects` (301s: `/blog`→`/writing`, `/blog/*`→`/writing/:splat`,
+  plus explicit `/blog/2`+`/projects/2` old-pagination pages → their index so removed
+  paginated URLs don't 404); every internal article href is `/writing/<slug>`. The
+  `/og/blog/…` OG-image asset dir and `/images/blog/…` content images keep the `blog`
+  path — they are asset conventions, not user-facing routes.
 
 ## Voice Check
 

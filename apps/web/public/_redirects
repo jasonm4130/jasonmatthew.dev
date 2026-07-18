@@ -1,2 +1,10 @@
-/blog     /writing         301
-/blog/*   /writing/:splat  301
+# Old /blog pagination pages (page size 8, 15 published → /blog/2/ existed) must land
+# on the /writing index, not the splat target /writing/2/ which 404s. List before /blog/*.
+/blog/2         /writing         301
+/blog/2/        /writing         301
+/blog           /writing         301
+/blog/*         /writing/:splat  301
+
+# Projects kept their route but lost pagination (9 published → /projects/2/ existed).
+/projects/2     /projects        301
+/projects/2/    /projects        301
