@@ -128,6 +128,35 @@ describe('remark-sidenotes', () => {
     expect(collect(note, (n) => n.type === 'text' && n.value === 'two')).toHaveLength(1);
   });
 
+  it('resolves a nested footnote reference inside a definition (no dangling link)', () => {
+    const tree = {
+      type: 'root',
+      children: [
+        paragraph([text('Ref.'), { type: 'footnoteReference', identifier: '1' }]),
+        {
+          type: 'footnoteDefinition',
+          identifier: '1',
+          label: '1',
+          children: [paragraph([text('Parent.'), { type: 'footnoteReference', identifier: '2' }])],
+        },
+        {
+          type: 'footnoteDefinition',
+          identifier: '2',
+          label: '2',
+          children: [paragraph([text('Child.')])],
+        },
+      ],
+    };
+    remarkSidenotes()(tree as any);
+    // No raw footnoteReference survives — a leftover one renders a dangling
+    // #user-content-fn-* link (its definition was already removed).
+    expect(collect(tree, (n) => n.type === 'footnoteReference')).toHaveLength(0);
+    // Both the parent and the nested child note are inlined as sidenotes.
+    const notes = collect(tree, byHName('span')).filter((n) => hasClass(n, 'sidenote'));
+    expect(notes).toHaveLength(2);
+    expect(collect(tree, (n) => n.type === 'text' && n.value === 'Child.')).toHaveLength(1);
+  });
+
   it('renders the reference even when its definition is missing (no empty gutter box)', () => {
     const tree = {
       type: 'root',

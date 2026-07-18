@@ -108,7 +108,13 @@ function replaceReferences(node, defs, order) {
       }
       if (defs.has(id)) {
         const inline = inlineFromDefinition(defs.get(id));
-        node.children.splice(i, 1, supNode(n), sidenoteNode(n, inline));
+        const note = sidenoteNode(n, inline);
+        node.children.splice(i, 1, supNode(n), note);
+        // A definition can itself reference another footnote; resolve those inside the
+        // just-inlined note (its definitions were already collected). Without this the
+        // nested reference survives as a dangling #user-content-fn-* link, since the
+        // outer loop steps past the inserted subtree.
+        replaceReferences(note, defs, order);
         i += 1; // step past the inserted sidenote
       } else {
         // Dangling reference (no definition): keep the marker, add no empty gutter box.
