@@ -273,7 +273,9 @@ pre.shiki {
 
 ::selection {
   background-color: var(--color-accent);
-  color: #fff;
+  /* paper-on-coral = the gated coral/paper ratio (AA in both themes), so
+     selected text stays legible — white on the bright dark coral was 3.19:1. */
+  color: var(--paper);
 }
 
 /* ─── Animation Keyframes ──────────────────────────────────── */

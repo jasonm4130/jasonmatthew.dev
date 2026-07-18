@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "globalDependencies": ["scripts/check-contrast.mjs"],
   "tasks": {
     "generate:og": {
       "inputs": ["scripts/**", "packages/content/**"],
