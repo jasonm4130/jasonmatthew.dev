@@ -24,7 +24,7 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
       <button
         id="mobile-menu-toggle"
         type="button"
-        class="hamburger sm:hidden"
+        class="hamburger"
         aria-label="Toggle menu"
         aria-expanded="false"
         aria-controls="mobile-menu"
@@ -116,6 +116,14 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
     background: none;
     border: 0;
     cursor: pointer;
+  }
+
+  /* Scoped `display: flex` above outweighs Tailwind's `sm:hidden` utility, so the
+     desktop hide must live here too (mirrors `.nav-links`' `hidden sm:flex`). */
+  @media (min-width: 640px) {
+    .hamburger {
+      display: none;
+    }
   }
 
   .mobile-menu-inner {

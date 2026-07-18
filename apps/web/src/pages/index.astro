@@ -323,11 +323,13 @@ const pieceCount = (n: number) => `${n} ${n === 1 ? 'piece' : 'pieces'}`;
     border-bottom: 1px solid var(--hair);
     text-decoration: none;
     color: inherit;
-    transition: padding-left 0.18s ease;
+    transition: transform 0.18s ease;
   }
 
+  /* translateX, not padding-left: padding on a grid shrinks the 1fr description
+     column, reflowing the text. A transform indents the whole row without reflow. */
   .proj-row:hover {
-    padding-left: 8px;
+    transform: translateX(8px);
   }
 
   .p-name {
@@ -384,11 +386,11 @@ const pieceCount = (n: number) => `${n} ${n === 1 ? 'piece' : 'pieces'}`;
     border-bottom: 1px solid var(--hair);
     text-decoration: none;
     color: inherit;
-    transition: padding-left 0.18s ease;
+    transition: transform 0.18s ease;
   }
 
   .ti-row:hover {
-    padding-left: 6px;
+    transform: translateX(6px);
   }
 
   .ti-l {
@@ -460,6 +462,12 @@ const pieceCount = (n: number) => `${n} ${n === 1 ? 'piece' : 'pieces'}`;
     .ti-row,
     .ti-name {
       transition: none;
+    }
+
+    /* No instant position jump on hover either — colour still changes. */
+    .proj-row:hover,
+    .ti-row:hover {
+      transform: none;
     }
   }
 </style>
