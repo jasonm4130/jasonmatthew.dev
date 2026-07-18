@@ -2,9 +2,6 @@
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
   "tasks": {
-    "//#check-contrast": {
-      "inputs": ["scripts/check-contrast.mjs", "apps/web/src/styles/global.css"]
-    },
     "generate:og": {
       "inputs": ["scripts/**", "packages/content/**"],
       "outputs": [
@@ -15,7 +12,7 @@
       ]
     },
     "build": {
-      "dependsOn": ["^build", "generate:og", "//#check-contrast"],
+      "dependsOn": ["^build", "generate:og"],
       "inputs": ["src/**", "public/**", "astro.config.*", "tsconfig.json", "package.json"],
       "outputs": ["dist/**", ".astro/**"]
     },

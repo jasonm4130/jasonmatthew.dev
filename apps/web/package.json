@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "pnpm -w run check-contrast && astro check && astro build",
     "deploy": "pnpm -w run check-contrast && astro check && astro build && wrangler deploy",
     "preview": "astro preview",
     "typecheck": "astro check",
