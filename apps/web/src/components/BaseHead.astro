@@ -18,11 +18,13 @@ function resolveOgImage(pathname: string, image?: { src: string }) {
 
   let ogPath = '/og/default.png';
   const cleanPath = pathname.replace(/\/$/, '');
-  // Only individual posts/projects have a per-slug OG image. Pagination pages
-  // (/blog/2/, /projects/2/) have numeric slugs with no such image — fall back to
-  // the default instead of advertising a broken social card.
-  if (cleanPath.startsWith('/blog/')) {
-    const slug = cleanPath.slice('/blog/'.length);
+  // Only individual posts/projects have a per-slug OG image. Pagination/index
+  // pages have no such image — fall back to the default instead of advertising a
+  // broken social card. Articles route at /writing/ (Stage C rename), but their
+  // pre-generated OG assets stay under /og/blog/<slug>.png — an internal asset
+  // convention keyed by the unchanged slug, deliberately not renamed with the route.
+  if (cleanPath.startsWith('/writing/')) {
+    const slug = cleanPath.slice('/writing/'.length);
     if (slug && !/^\d+$/.test(slug)) ogPath = `/og/blog/${slug}.png`;
   } else if (cleanPath.startsWith('/projects/')) {
     const slug = cleanPath.slice('/projects/'.length);

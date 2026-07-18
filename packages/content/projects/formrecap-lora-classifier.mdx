@@ -17,7 +17,7 @@ threads:
   - applied-ai
 related:
   - label: 'Fine-tuning Llama for form-abandonment'
-    href: /blog/fine-tuning-llama-form-abandonment-classification
+    href: /writing/fine-tuning-llama-form-abandonment-classification
 ---
 
 ## The Problem
@@ -50,7 +50,7 @@ Result: dual deployment. Modal hosts the larger Llama adapter for batch inferenc
 
 - Started with Unsloth for the 2x training speedup, dropped it after 3 hours fighting the torch × xformers × torchao version triangle and TRL 0.19 rejecting Unsloth's `<EOS_TOKEN>` proxy. Plain HuggingFace stack (transformers + PEFT + TRL + bitsandbytes) resolved first try and trained immediately. Boring technology applies to ML tooling too.
 - Hand-labelled 52 real test examples kept the eval honest. Synthetic-only test sets reward models that learn the synthesis distribution rather than the real one.
-- Full reproduction repo on GitHub. Full write-up with charts on the [blog](/blog/fine-tuning-llama-form-abandonment-classification).
+- Full reproduction repo on GitHub. Full write-up with charts on the [blog](/writing/fine-tuning-llama-form-abandonment-classification).
 
 ## Live Demo
 

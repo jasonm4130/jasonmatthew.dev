@@ -53,7 +53,7 @@ test('isFutureDated respects intraday time (build earlier the same day)', () => 
 });
 
 test('blogSlugFromUrl decodes percent-encoded slugs to match content ids', () => {
-  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/blog/caf%C3%A9/'), 'café');
+  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/writing/caf%C3%A9/'), 'café');
 });
 
 test('isFutureDated: past-dated non-draft is not scheduled', () => {
@@ -69,16 +69,18 @@ test('isFutureDated: missing publishDate is not scheduled', () => {
 });
 
 test('blogSlugFromUrl extracts a post slug', () => {
-  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/blog/rag-eval-harness/'), 'rag-eval-harness');
+  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/writing/rag-eval-harness/'), 'rag-eval-harness');
 });
 
-test('blogSlugFromUrl returns null for the blog index and non-blog URLs', () => {
-  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/blog/'), null);
+test('blogSlugFromUrl returns null for the writing index, legacy /blog/ and non-article URLs', () => {
+  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/writing/'), null);
   assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/projects/skopia/'), null);
+  // Legacy /blog/ no longer parses as an article route (edge-301'd to /writing/).
+  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/blog/rag-eval-harness/'), null);
 });
 
 test('blogSlugFromUrl returns the numeric slug for pagination pages', () => {
   // Pagination pages resolve to a numeric "slug"; the filter still works because
   // no real post is numeric, so these are never in the scheduled set.
-  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/blog/2/'), '2');
+  assert.equal(blogSlugFromUrl('https://jasonmatthew.dev/writing/2/'), '2');
 });

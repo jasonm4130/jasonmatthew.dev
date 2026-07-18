@@ -99,8 +99,9 @@ export function futureDatedSlugs(articlesDir, now = Date.now()) {
 }
 
 /**
- * Extract a decoded blog post slug from a full page URL, or null if the URL is
- * not an individual blog post (the /blog/ index and non-blog URLs return null).
+ * Extract a decoded article slug from a full page URL, or null if the URL is not
+ * an individual article (the /writing/ index and non-article URLs return null).
+ * Articles route at /writing/ since the Stage C rename (was /blog/).
  * @param {string} url
  * @returns {string | null}
  */
@@ -111,7 +112,7 @@ export function blogSlugFromUrl(url) {
   } catch {
     path = String(url);
   }
-  const m = path.match(/^\/blog\/(.+?)\/?$/);
+  const m = path.match(/^\/writing\/(.+?)\/?$/);
   if (!m) return null;
   // Content ids are decoded (e.g. "café"); the URL path is percent-encoded.
   try {

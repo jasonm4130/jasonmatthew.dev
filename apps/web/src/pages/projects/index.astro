@@ -1,0 +1,132 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHead from '@components/notebook/PageHead.astro';
+import RailNote from '@components/notebook/RailNote.astro';
+import Meta from '@components/notebook/Meta.astro';
+import { getContentGraph } from '@utils/content-graph-astro';
+
+const graph = await getContentGraph();
+const projects = graph.projects; // published, sortOrder order
+const liveCount = projects.filter((p) => p.liveUrl).length;
+---
+
+<BaseLayout
+  title="Work"
+  description="The things I've shipped: side projects, tools, and infrastructure I run in production."
+  width="wide"
+>
+  <div class="shell">
+    <div class="nb-grid">
+      <div class="nb-rail">
+        <RailNote marker="Work" annotation="Built and shipped." />
+      </div>
+      <div class="nb-body">
+        <PageHead
+          kicker="The notebook"
+          title="Work"
+          description="The things I've shipped: side projects, tools, and infrastructure I run in production. Live links and source where they exist."
+        >
+          <Meta class="work-meta">
+            <span class="sd">{projects.length}</span> projects &middot; <span class="sd">{liveCount}</span> live
+          </Meta>
+        </PageHead>
+      </div>
+
+      <div class="nb-rail">
+        <RailNote num="/01" label="Projects" annotation="The shipped record." />
+      </div>
+      <div class="nb-body">
+        {
+          projects.map((project) => (
+            <a href={project.href} class="proj-row">
+              <span class:list={['p-name', { live: !!project.liveUrl }]}>{project.title}</span>
+              <span class="p-desc">{project.summary}</span>
+              <span class="p-stack">{project.technologies.slice(0, 3).join(' · ')}</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .work-meta {
+    margin-top: 20px;
+  }
+
+  .proj-row {
+    display: grid;
+    grid-template-columns: 190px 1fr auto;
+    gap: 20px;
+    align-items: baseline;
+    padding: 15px 0;
+    border-top: 1px solid var(--hair);
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left 0.18s ease;
+  }
+
+  .proj-row:first-child {
+    border-top: 0;
+  }
+
+  .proj-row:hover {
+    padding-left: 8px;
+  }
+
+  .p-name {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.03rem;
+    letter-spacing: -0.012em;
+    line-height: 1.35;
+    color: var(--ink);
+    transition: color 0.18s ease;
+  }
+
+  .proj-row:hover .p-name {
+    color: var(--coral);
+  }
+
+  .p-name.live::before {
+    content: '●';
+    color: var(--coral);
+    font-size: 0.52em;
+    position: relative;
+    top: -0.28em;
+    margin-right: 7px;
+  }
+
+  .p-desc {
+    font-family: var(--font-serif);
+    font-size: 0.93rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .p-stack {
+    font-family: var(--font-mono);
+    font-size: 0.67rem;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 720px) {
+    .proj-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+
+    .p-stack {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .proj-row,
+    .p-name {
+      transition: none;
+    }
+  }
+</style>

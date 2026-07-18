@@ -1,53 +1,465 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import Hero from '@components/Hero.astro';
-import ProjectPreview from '@components/ProjectPreview.astro';
-import PostPreview from '@components/PostPreview.astro';
-import Button from '@components/Button.astro';
-import { isPublished, sortItemsByDateDesc, sortItemsBySortOrder } from '@utils/data-utils';
+import StreamRow from '@components/notebook/StreamRow.astro';
+import { getContentGraph, THREADS } from '@utils/content-graph-astro';
 
-const allProjects = await getCollection('projects', isPublished);
-const featuredProjects = allProjects.filter((p) => p.data.featured).sort(sortItemsBySortOrder);
+const graph = await getContentGraph();
+const posts = graph.articles; // published, newest first
+const recent = posts.slice(0, 6);
 
-const allPosts = await getCollection('blog', isPublished);
-const recentPosts = allPosts.sort(sortItemsByDateDesc).slice(0, 5);
+const foreground = THREADS.filter((t) => t.foreground);
+const threadArticles = (slug: string) => posts.filter((p) => p.threads.includes(slug));
+
+const featured = graph.projects.filter((p) => p.featured).slice(0, 4);
+
+const shortDate = (d: Date) => d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short' });
+const pieceCount = (n: number) => `${n} ${n === 1 ? 'piece' : 'pieces'}`;
 ---
 
-<BaseLayout>
-  <Hero />
+<BaseLayout width="wide">
+  <header class="shell mast">
+    <div class="kicker">AI-native builder &amp; writer</div>
+    <p class="identity">
+      I build production AI systems (retrieval, fine-tuning, agents on the edge) and write about the <span class="coral"
+        >engineering underneath the hype</span
+      >.
+    </p>
+    <div class="now">
+      <span class="lab">Now</span>
+      <span>Eval harnesses, and working out continual-learning for real-world RAG.</span>
+    </div>
+  </header>
 
-  {
-    featuredProjects.length > 0 && (
-      <section class="pb-16">
-        <h2 class="reveal font-600 mb-8 font-sans text-sm uppercase tracking-widest text-[var(--color-accent)]">
-          Featured Projects
-        </h2>
-        <div class="grid gap-6 sm:grid-cols-2">
-          {featuredProjects.map((project) => (
-            <ProjectPreview project={project} />
-          ))}
-        </div>
-        <div class="mt-8">
-          <Button href="/projects">All projects</Button>
-        </div>
-      </section>
-    )
-  }
+  <!-- Two foregrounded threads -->
+  <section class="shell sec">
+    <div class="sec-head">
+      <span class="lbl">Working threads</span>
+      <span class="rule"></span>
+      <span class="idx">the two I'm deepest in</span>
+    </div>
+    <div class="tgrid">
+      {
+        foreground.map((thread) => {
+          const latest = threadArticles(thread.slug).slice(0, 3);
+          return (
+            <a href={`/threads/${thread.slug}`} class="thread">
+              <span class="thread-top">
+                <span class="thread-name">{thread.title}</span>
+                <span class="thread-n">{pieceCount(threadArticles(thread.slug).length)}</span>
+              </span>
+              <p class="thread-desc">{thread.description}</p>
+              <div class="thread-pieces">
+                {latest.map((piece) => (
+                  <span class="tp">
+                    <span class="tp-d">{shortDate(piece.publishDate)}</span>
+                    <span class="tp-t">{piece.title}</span>
+                  </span>
+                ))}
+              </div>
+              <span class="thread-open">Open thread &rarr;</span>
+            </a>
+          );
+        })
+      }
+    </div>
+  </section>
 
-  {
-    recentPosts.length > 0 && (
-      <section class="pb-16">
-        <h2 class="reveal font-600 mb-8 font-sans text-sm uppercase tracking-widest text-[var(--color-accent)]">
-          Writing
-        </h2>
-        {recentPosts.map((post) => (
-          <PostPreview post={post} />
-        ))}
-        <div class="mt-8">
-          <Button href="/blog">All posts</Button>
-        </div>
-      </section>
-    )
-  }
+  <!-- The stream -->
+  <section class="shell sec">
+    <div class="sec-head">
+      <span class="lbl">Writing</span>
+      <span class="rule"></span>
+      <span class="idx">{posts.length} published</span>
+    </div>
+    {
+      recent.map((post) => (
+        <StreamRow href={post.href} date={shortDate(post.publishDate)} title={post.title} kind={post.kind} />
+      ))
+    }
+    <a href="/writing" class="more-link">The full archive &rarr;</a>
+  </section>
+
+  <!-- Shipped work -->
+  <section class="shell sec">
+    <div class="sec-head">
+      <span class="lbl">Shipped</span>
+      <span class="rule"></span>
+      <span class="idx">selected &middot; live &amp; open-source</span>
+    </div>
+    {
+      featured.map((project) => (
+        <a href={project.href} class="proj-row">
+          <span class:list={['p-name', { live: !!project.liveUrl }]}>{project.title}</span>
+          <span class="p-desc">{project.summary}</span>
+          <span class="p-stack">{project.technologies.slice(0, 3).join(' · ')}</span>
+        </a>
+      ))
+    }
+    <a href="/projects" class="more-link">All work &rarr;</a>
+  </section>
+
+  <!-- Threads index -->
+  <section class="shell sec">
+    <div class="sec-head">
+      <span class="lbl">All threads</span>
+      <span class="rule"></span>
+      <span class="idx">the notebook's index</span>
+    </div>
+    <div class="tindex">
+      {
+        THREADS.map((thread) => (
+          <a
+            href={`/threads/${thread.slug}`}
+            class:list={['ti-row', { demoted: !thread.foreground && thread.slug === 'leadership' }]}
+          >
+            <span class="ti-l">
+              <span class="ti-name">{thread.title}</span>
+              <span class="ti-desc">{thread.blurb}</span>
+            </span>
+            <span class="ti-n">{graph.threadCount(thread.slug)}</span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
 </BaseLayout>
+
+<style>
+  .mast {
+    padding: 72px 0 44px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.19em;
+    color: var(--muted);
+  }
+
+  .identity {
+    font-family: var(--font-serif);
+    font-size: clamp(1.5rem, 3.3vw, 2.05rem);
+    line-height: 1.42;
+    letter-spacing: -0.012em;
+    margin: 22px 0 0;
+    max-width: 33ch;
+    color: var(--ink);
+  }
+
+  .identity .coral {
+    color: var(--coral);
+  }
+
+  .now {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: 26px;
+    font-family: var(--font-mono);
+    font-size: 0.77rem;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .now .lab {
+    color: var(--coral);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.7rem;
+  }
+
+  .sec {
+    padding: 42px 0 4px;
+  }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .sec-head .lbl {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--coral);
+    white-space: nowrap;
+  }
+
+  .sec-head .rule {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    position: relative;
+    top: -4px;
+  }
+
+  .sec-head .idx {
+    font-family: var(--font-mono);
+    font-size: 0.71rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* Foregrounded thread cards */
+  .tgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 22px;
+  }
+
+  .thread {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 22px 22px 20px;
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color 0.18s ease,
+      background 0.18s ease;
+  }
+
+  .thread:hover {
+    border-color: var(--coral);
+  }
+
+  .thread-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .thread-name {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  .thread-n {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .thread-desc {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--body2);
+    margin: 12px 0 16px;
+  }
+
+  .thread-pieces {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+  }
+
+  .tp {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 12px;
+    align-items: baseline;
+  }
+
+  .tp-d {
+    font-family: var(--font-mono);
+    font-size: 0.69rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .tp-t {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.36;
+    letter-spacing: -0.005em;
+  }
+
+  .thread-open {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.84rem;
+    color: var(--coral);
+    margin-top: 17px;
+  }
+
+  .more-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--coral);
+    text-decoration: none;
+  }
+
+  /* Shipped work rows */
+  .proj-row {
+    display: grid;
+    grid-template-columns: 200px 1fr auto;
+    gap: 20px;
+    align-items: baseline;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--hair);
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left 0.18s ease;
+  }
+
+  .proj-row:hover {
+    padding-left: 8px;
+  }
+
+  .p-name {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.03rem;
+    letter-spacing: -0.012em;
+    line-height: 1.35;
+    color: var(--ink);
+    transition: color 0.18s ease;
+  }
+
+  .proj-row:hover .p-name {
+    color: var(--coral);
+  }
+
+  .p-name.live::before {
+    content: '●';
+    color: var(--coral);
+    font-size: 0.52em;
+    position: relative;
+    top: -0.28em;
+    margin-right: 7px;
+  }
+
+  .p-desc {
+    font-family: var(--font-serif);
+    font-size: 0.93rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .p-stack {
+    font-family: var(--font-mono);
+    font-size: 0.67rem;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+
+  /* Compact threads index */
+  .tindex {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 44px;
+    margin-top: 20px;
+  }
+
+  .ti-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--hair);
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left 0.18s ease;
+  }
+
+  .ti-row:hover {
+    padding-left: 6px;
+  }
+
+  .ti-l {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .ti-name {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.98rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    transition: color 0.18s ease;
+  }
+
+  .ti-row:hover .ti-name {
+    color: var(--coral);
+  }
+
+  .ti-desc {
+    font-family: var(--font-serif);
+    font-size: 0.82rem;
+    color: var(--faint);
+    line-height: 1.4;
+  }
+
+  .ti-n {
+    font-family: var(--font-mono);
+    font-size: 0.67rem;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+
+  .ti-row.demoted .ti-name {
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  @media (max-width: 720px) {
+    .mast {
+      padding: 48px 0 36px;
+    }
+
+    .tgrid,
+    .tindex {
+      grid-template-columns: 1fr;
+    }
+
+    .tindex {
+      gap: 0;
+    }
+
+    .proj-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+
+    .proj-row .p-stack {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .thread,
+    .proj-row,
+    .p-name,
+    .ti-row,
+    .ti-name {
+      transition: none;
+    }
+  }
+</style>

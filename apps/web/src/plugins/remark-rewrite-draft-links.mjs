@@ -8,7 +8,7 @@ function stripLinksToDrafts(node, articles, now, downgraded) {
   for (let i = 0; i < node.children.length; i++) {
     const child = node.children[i];
     if (child.type === 'link') {
-      const match = (child.url || '').match(/^\/blog\/([^/?#]+)/);
+      const match = (child.url || '').match(/^\/writing\/([^/?#]+)/);
       // Unknown slug (link to a missing post) is treated as unpublished, as before.
       const state = match ? articles.get(match[1]) : null;
       if (match && (!state || !isPublished(state, now))) {

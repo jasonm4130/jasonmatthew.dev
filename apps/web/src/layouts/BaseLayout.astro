@@ -9,9 +9,12 @@ interface Props {
   description?: string;
   image?: { src: string; alt?: string };
   pageType?: 'website' | 'article';
+  /** `wide` = notebook pages own their 1060px `.shell` + `.nb-grid`; `prose`
+   * (default) = the narrow reading column for article/project/static/tag pages. */
+  width?: 'wide' | 'prose';
 }
 
-const { title, description, image, pageType } = Astro.props;
+const { title, description, image, pageType, width = 'prose' } = Astro.props;
 ---
 
 <!doctype html>
@@ -29,9 +32,17 @@ const { title, description, image, pageType } = Astro.props;
     </a>
     <div class="flex min-h-screen flex-col bg-[var(--color-bg)]">
       <Nav />
-      <main id="main-content" class="mx-auto w-full max-w-3xl grow px-4 py-12 md:px-8">
-        <slot />
-      </main>
+      {
+        width === 'wide' ? (
+          <main id="main-content" class="grow">
+            <slot />
+          </main>
+        ) : (
+          <main id="main-content" class="mx-auto w-full max-w-3xl grow px-4 py-12 md:px-8">
+            <slot />
+          </main>
+        )
+      }
       <Footer />
     </div>
     <script>

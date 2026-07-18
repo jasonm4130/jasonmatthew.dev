@@ -47,18 +47,18 @@ describe('validateContentGraph', () => {
     const missing = [entry({ id: 'a', related: [{ label: 'x', href: '/projects/nope' }] })];
     expect(() => validateContentGraph(missing, SLUGS)).toThrow(/no such entry/);
 
-    // reverse-gap: a /blog/ article link to a missing post must fail closed too,
+    // reverse-gap: a /writing/ article link to a missing post must fail closed too,
     // not slip through as an "external" link (regression guard for the parser fix).
-    const missingBlog = [entry({ id: 'a', related: [{ label: 'x', href: '/blog/nope' }] })];
+    const missingBlog = [entry({ id: 'a', related: [{ label: 'x', href: '/writing/nope' }] })];
     expect(() => validateContentGraph(missingBlog, SLUGS)).toThrow(/no such entry/);
 
     // ...and the same must hold when a query/fragment is appended (they target the
     // same entry, so they can't be allowed to bypass the check).
-    const missingFrag = [entry({ id: 'a', related: [{ label: 'x', href: '/blog/nope#section' }] })];
+    const missingFrag = [entry({ id: 'a', related: [{ label: 'x', href: '/writing/nope#section' }] })];
     expect(() => validateContentGraph(missingFrag, SLUGS)).toThrow(/no such entry/);
 
     const unpublished = [
-      entry({ id: 'a', related: [{ label: 'x', href: '/blog/b' }] }),
+      entry({ id: 'a', related: [{ label: 'x', href: '/writing/b' }] }),
       entry({ id: 'b', published: false }),
     ];
     expect(() => validateContentGraph(unpublished, SLUGS)).toThrow(/not published/);
@@ -69,7 +69,7 @@ describe('validateContentGraph', () => {
       entry({
         id: 'a',
         related: [
-          { label: 'x', href: '/blog/b' },
+          { label: 'x', href: '/writing/b' },
           { label: 'ext', href: 'https://example.com' },
         ],
       }),
@@ -80,22 +80,22 @@ describe('validateContentGraph', () => {
 });
 
 describe('parseInternalHref', () => {
-  it('maps the current /blog/ article route to the blog collection', () => {
-    expect(parseInternalHref('/blog/foo')).toEqual({ collection: 'blog', id: 'foo' });
+  it('maps the /writing/ article route to the blog collection', () => {
+    expect(parseInternalHref('/writing/foo')).toEqual({ collection: 'blog', id: 'foo' });
   });
   it('resolves the entry even with a query or fragment appended', () => {
-    expect(parseInternalHref('/blog/foo#section')).toEqual({ collection: 'blog', id: 'foo' });
+    expect(parseInternalHref('/writing/foo#section')).toEqual({ collection: 'blog', id: 'foo' });
     expect(parseInternalHref('/projects/bar?ref=x')).toEqual({ collection: 'projects', id: 'bar' });
   });
   it('maps /projects/<slug> to the projects collection', () => {
     expect(parseInternalHref('/projects/bar/')).toEqual({ collection: 'projects', id: 'bar' });
   });
-  it('returns null for non-entry, external, and not-yet-routable hrefs', () => {
+  it('returns null for non-entry, external, and legacy /blog/ hrefs', () => {
     expect(parseInternalHref('/now')).toBeNull();
-    expect(parseInternalHref('https://example.com/blog/x')).toBeNull();
-    // /writing/ has no route in this revision — must not validate as an article
-    // link (it would pass the graph check but 404). Added by the Stage C rename.
-    expect(parseInternalHref('/writing/foo')).toBeNull();
+    expect(parseInternalHref('https://example.com/writing/x')).toBeNull();
+    // Legacy /blog/ no longer routes on-site (Stage C rename → /writing/); a stale
+    // in-content /blog/<id> link must fail the graph check, not resolve silently.
+    expect(parseInternalHref('/blog/foo')).toBeNull();
   });
 });
 

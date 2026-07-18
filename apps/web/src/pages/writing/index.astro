@@ -1,0 +1,80 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHead from '@components/notebook/PageHead.astro';
+import RailNote from '@components/notebook/RailNote.astro';
+import StreamRow from '@components/notebook/StreamRow.astro';
+import Meta from '@components/notebook/Meta.astro';
+import { getContentGraph, type ResolvedEntry } from '@utils/content-graph-astro';
+
+const graph = await getContentGraph();
+const posts = graph.articles; // published, newest first
+
+// Group into year buckets (posts are already newest-first, so each bucket is too).
+const byYear = new Map<number, ResolvedEntry[]>();
+for (const post of posts) {
+  const year = post.publishDate.getFullYear();
+  const bucket = byYear.get(year) ?? [];
+  bucket.push(post);
+  byYear.set(year, bucket);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+
+const threadCount = new Set(posts.flatMap((p) => p.threads)).size;
+const oldestYear = years.length ? years[years.length - 1] : new Date().getFullYear();
+const newestYear = years.length ? years[0] : oldestYear;
+const yearRange = oldestYear === newestYear ? `${oldestYear}` : `${oldestYear}–${newestYear}`;
+
+const shortDate = (d: Date) => d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short' });
+const railAnnotation = (year: number) =>
+  year === newestYear ? 'Most of it, so far.' : year === oldestYear ? 'Where it starts.' : '';
+---
+
+<BaseLayout title="Writing" description="Everything I've published, newest first." width="wide">
+  <div class="shell">
+    <div class="nb-grid">
+      <div class="nb-rail">
+        <RailNote marker="Writing" annotation="The record, newest first." />
+      </div>
+      <div class="nb-body">
+        <PageHead
+          kicker="The notebook"
+          title="Writing"
+          description="Everything I've published, newest first. Essays, incident write-ups, architecture notes and build logs. The complete record, not a curated few."
+        >
+          <Meta class="stream-meta">
+            <span class="sd">{posts.length}</span> pieces &middot; {yearRange} &middot;
+            <span class="sd">{threadCount}</span> threads
+          </Meta>
+        </PageHead>
+      </div>
+
+      {
+        years.map((year) => {
+          const bucket = byYear.get(year)!;
+          return (
+            <>
+              <div class="nb-rail">
+                <RailNote
+                  year={String(year)}
+                  label={`${bucket.length} ${bucket.length === 1 ? 'piece' : 'pieces'}`}
+                  annotation={railAnnotation(year)}
+                />
+              </div>
+              <div class="nb-body">
+                {bucket.map((post) => (
+                  <StreamRow href={post.href} date={shortDate(post.publishDate)} title={post.title} kind={post.kind} />
+                ))}
+              </div>
+            </>
+          );
+        })
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .stream-meta {
+    margin-top: 20px;
+  }
+</style>

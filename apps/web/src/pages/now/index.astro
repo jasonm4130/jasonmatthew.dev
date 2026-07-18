@@ -1,0 +1,63 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHead from '@components/notebook/PageHead.astro';
+import RailNote from '@components/notebook/RailNote.astro';
+import NowRow from '@components/notebook/NowRow.astro';
+
+// Manually maintained — updated when things change, not on a schedule.
+const updated = 'July 2026';
+---
+
+<BaseLayout
+  title="Now"
+  description="A snapshot of what has my attention right now. I update it when things change, not on a schedule."
+  width="wide"
+>
+  <div class="shell">
+    <div class="nb-grid">
+      <div class="nb-rail">
+        <RailNote marker="Now" annotation="What has my attention." />
+      </div>
+      <div class="nb-body">
+        <PageHead
+          kicker="The notebook"
+          title="Now"
+          description="A snapshot of what has my attention right now. I update it when things change, not on a schedule."
+        >
+          <div class="updated-line">Updated <span class="stamp">{updated}</span></div>
+        </PageHead>
+      </div>
+
+      <div class="nb-rail">
+        <RailNote marker="Current" annotation="The short list." />
+      </div>
+      <div class="nb-body">
+        <NowRow label="Building">Evals and continual learning for production AI, on the side.</NowRow>
+        <NowRow label="Writing">
+          Two pieces in flight: an eval harness you can point at your own RAG, and why 'it feels faster' isn't evidence.
+        </NowRow>
+        <NowRow label="Shipped">
+          Skopia: privacy-first web analytics you self-host on your own Cloudflare account.
+        </NowRow>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .updated-line {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 20px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--faint);
+  }
+
+  .updated-line .stamp {
+    color: var(--muted);
+  }
+</style>

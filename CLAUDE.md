@@ -91,6 +91,19 @@ the `data-theme` attribute, not a `.dark` class.
   `article-publish` node:test. `build` depends on `test` in `turbo.json`, and a
   `pr-checks` workflow runs it on PRs, so regressions can't ship silently.
 
+## Page types & routes
+
+- The notebook page types compose the primitives via the collection-backed adapter
+  `apps/web/src/utils/content-graph-astro.ts` (`getContentGraph()`): masthead home
+  (`/`), writing stream (`/writing/`, `/writing/[id]/`), threads index + per-thread
+  (`/threads/`, `/threads/[id]/`), `/now/`, and projects (`/projects/`,
+  `/projects/[id]/`). `BaseLayout` takes `width='wide'|'prose'`; wide pages render
+  their own `.shell` + `.nb-grid` rail/body scaffolding (in `global.css`).
+- **Articles live at `/writing/`, not `/blog/`.** The rename is edge-enforced by
+  `apps/web/public/_redirects` (two 301 rules); every internal article href is
+  `/writing/<slug>`. The `/og/blog/…` OG-image asset dir and `/images/blog/…` content
+  images keep the `blog` path — they are asset conventions, not user-facing routes.
+
 ## Voice Check
 
 - Invoke the `voice-check` skill before shipping ANY public-facing text (articles, projects, social copy, README/bio text)
