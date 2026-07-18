@@ -22,6 +22,10 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { post } = Astro.props as Props;
 const { Content, headings, remarkPluginFrontmatter } = await render(post);
 const minutesRead: number | undefined = remarkPluginFrontmatter?.minutesRead;
+// Reserve the Tufte sidenote gutter only when the article actually has footnotes —
+// remark-sidenotes flags this at build time. Without it the column narrows and centres
+// as a balanced unit instead of leaving an empty right margin.
+const hasSidenotes: boolean = remarkPluginFrontmatter?.hasSidenotes === true;
 const tocHeadings = headings.filter((h) => h.depth === 2);
 
 const graph = await getContentGraph();
@@ -68,7 +72,7 @@ function host(url: string): string {
   width="wide"
 >
   <div class="progbar" aria-hidden="true"></div>
-  <div class="art">
+  <div class:list={['art', hasSidenotes && 'has-notes']}>
     <div class="art-grid">
       <aside class="art-toc">
         <div class="toc-meta">

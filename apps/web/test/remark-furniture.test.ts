@@ -23,6 +23,14 @@ const byHName = (name: string) => (n: any) => n?.data?.hName === name;
 const hasClass = (n: any, cls: string) =>
   Array.isArray(n?.data?.hProperties?.className) && n.data.hProperties.className.includes(cls);
 
+/** Run the sidenotes transform with a VFile-like `file`, mutating `tree` and returning
+ * the file so tests can read the frontmatter flags the plugin writes (hasSidenotes). */
+function runSidenotes(tree: unknown): any {
+  const file: any = { data: {} };
+  remarkSidenotes()(tree as any, file);
+  return file;
+}
+
 describe('remark-sidenotes', () => {
   function fixture() {
     return {
@@ -52,7 +60,7 @@ describe('remark-sidenotes', () => {
 
   it('inlines footnote definitions as gutter sidenotes and removes the bottom section', () => {
     const tree = fixture();
-    remarkSidenotes()(tree as any);
+    runSidenotes(tree);
 
     // No GFM footnote nodes survive → mdast-util-to-hast generates no "Footnotes" section.
     expect(collect(tree, (n) => n.type === 'footnoteReference')).toHaveLength(0);
@@ -63,7 +71,7 @@ describe('remark-sidenotes', () => {
 
   it('emits a <sup class="sn-ref"> + <span class="sidenote"> pair per reference, renumbered 1..n', () => {
     const tree = fixture();
-    remarkSidenotes()(tree as any);
+    runSidenotes(tree);
 
     const refs = collect(tree, byHName('sup')).filter((n) => hasClass(n, 'sn-ref'));
     const notes = collect(tree, byHName('span')).filter((n) => hasClass(n, 'sidenote'));
@@ -91,7 +99,7 @@ describe('remark-sidenotes', () => {
         },
       ],
     };
-    remarkSidenotes()(tree as any);
+    runSidenotes(tree);
     const note = collect(tree, byHName('span')).find((n) => hasClass(n, 'sidenote'));
     // The intro prose survives...
     expect(collect(note, (n) => n.type === 'text' && n.value === 'Intro.')).toHaveLength(1);
@@ -118,7 +126,7 @@ describe('remark-sidenotes', () => {
         },
       ],
     };
-    remarkSidenotes()(tree as any);
+    runSidenotes(tree);
     const note = collect(tree, byHName('span')).find((n) => hasClass(n, 'sidenote'));
     // No block-level list nodes leak into the inline <span> (that HTML is invalid and
     // the browser would hoist it out of the gutter).
@@ -147,7 +155,7 @@ describe('remark-sidenotes', () => {
         },
       ],
     };
-    remarkSidenotes()(tree as any);
+    runSidenotes(tree);
     // No raw footnoteReference survives — a leftover one renders a dangling
     // #user-content-fn-* link (its definition was already removed).
     expect(collect(tree, (n) => n.type === 'footnoteReference')).toHaveLength(0);
@@ -162,9 +170,23 @@ describe('remark-sidenotes', () => {
       type: 'root',
       children: [paragraph([text('dangling'), { type: 'footnoteReference', identifier: 'x' }])],
     };
-    remarkSidenotes()(tree as any);
+    runSidenotes(tree);
     expect(collect(tree, byHName('sup')).filter((n) => hasClass(n, 'sn-ref'))).toHaveLength(1);
     expect(collect(tree, byHName('span')).filter((n) => hasClass(n, 'sidenote'))).toHaveLength(0);
+  });
+
+  it('flags hasSidenotes on the frontmatter only when a gutter note is actually emitted', () => {
+    // A real def+ref pair → the article reserves the Tufte gutter.
+    expect(runSidenotes(fixture()).data.astro.frontmatter.hasSidenotes).toBe(true);
+    // A dangling reference emits only the marker, no gutter box → no gutter needed.
+    const dangling = {
+      type: 'root',
+      children: [paragraph([text('x'), { type: 'footnoteReference', identifier: 'x' }])],
+    };
+    expect(runSidenotes(dangling).data.astro.frontmatter.hasSidenotes).toBe(false);
+    // No footnotes at all → no gutter.
+    const plain = { type: 'root', children: [paragraph([text('plain prose')])] };
+    expect(runSidenotes(plain).data.astro.frontmatter.hasSidenotes).toBe(false);
   });
 });
 

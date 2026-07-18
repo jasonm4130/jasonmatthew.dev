@@ -22,6 +22,12 @@ This is a reference for writing content, not a spec.
 3. **Sidenote gutter** (right, 236px) — where `[^n]` footnotes float as margin notes.
    On mobile the gutter collapses and sidenotes inline where referenced.
 
+The gutter is **reserved only when the article actually has footnotes** —
+`remark-sidenotes` sets a `hasSidenotes` frontmatter flag and the template adds
+`.has-notes` to `.art`. Without it, `.art` narrows (1080 → 844px) and the reading
+column centres as a balanced unit instead of leaving an empty right margin; the gutter
+returns automatically the moment an article uses `[^n]`.
+
 A pure-CSS reading-progress bar (`.progbar`, `animation-timeline: scroll()`) sits above
 the grid; it's removed under `prefers-reduced-motion`.
 

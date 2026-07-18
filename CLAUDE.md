@@ -109,7 +109,9 @@ the `data-theme` attribute, not a `.dark` class.
   their own `.shell` + `.nb-grid` rail/body scaffolding (in `global.css`).
 - **Article reading template** (`writing/[id].astro`, `width='wide'`): a three-zone
   notebook layout — sticky TOC rail (h2 scroll-spy) · serif `.art-prose` column
-  (numbered h2s, Expressive Code frames) · sidenote gutter — plus a pure-CSS
+  (numbered h2s, Expressive Code frames) · sidenote gutter (reserved only when the
+  article has `[^n]` footnotes — `remark-sidenotes` sets `hasSidenotes`; without it
+  `.art` narrows and centres) — plus a pure-CSS
   reading-progress bar, per-kind header, related-work cards, and thread/series footer
   nav (series nav is dormant until an article sets `series`/`seriesOrder`). The project
   template shares the voice via `.art-prose.case-narrow`. See `docs/design-system.md`.

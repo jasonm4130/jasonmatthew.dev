@@ -415,6 +415,18 @@
   padding-right: 236px;
 }
 
+/* No footnotes → no gutter to reserve. Drop the right inset and narrow `.art` by the
+   gutter width so the reading column (TOC + prose) stays a centred, balanced unit
+   rather than leaving an empty right margin. The gutter returns automatically the
+   moment an article uses `[^n]` (remark-sidenotes sets `has-notes`). */
+.art:not(.has-notes) {
+  max-width: 844px;
+}
+
+.art:not(.has-notes) :is(.art-head, .art-prose, .a-foot) {
+  padding-right: 0;
+}
+
 .a-kicker {
   font-family: var(--font-mono);
   font-size: 0.7rem;

@@ -127,9 +127,16 @@ function replaceReferences(node, defs, order) {
 }
 
 export default function remarkSidenotes() {
-  return (tree) => {
+  return (tree, file) => {
     const defs = new Map();
     collectDefinitions(tree, defs);
-    replaceReferences(tree, defs, new Map());
+    const order = new Map();
+    replaceReferences(tree, defs, order);
+    // A sidenote box is emitted only for a reference that has a matching definition;
+    // expose whether any were, so the article template reserves the Tufte gutter only
+    // when it's actually used (an empty gutter reads as dead space, not a feature).
+    file.data.astro ??= {};
+    file.data.astro.frontmatter ??= {};
+    file.data.astro.frontmatter.hasSidenotes = [...order.keys()].some((id) => defs.has(id));
   };
 }
