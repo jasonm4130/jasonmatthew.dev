@@ -47,6 +47,11 @@ describe('validateContentGraph', () => {
     const missing = [entry({ id: 'a', related: [{ label: 'x', href: '/projects/nope' }] })];
     expect(() => validateContentGraph(missing, SLUGS)).toThrow(/no such entry/);
 
+    // reverse-gap: a /blog/ article link to a missing post must fail closed too,
+    // not slip through as an "external" link (regression guard for the parser fix).
+    const missingBlog = [entry({ id: 'a', related: [{ label: 'x', href: '/blog/nope' }] })];
+    expect(() => validateContentGraph(missingBlog, SLUGS)).toThrow(/no such entry/);
+
     const unpublished = [
       entry({ id: 'a', related: [{ label: 'x', href: '/writing/b' }] }),
       entry({ id: 'b', published: false }),
@@ -70,7 +75,8 @@ describe('validateContentGraph', () => {
 });
 
 describe('parseInternalHref', () => {
-  it('maps /writing/<slug> to the blog collection', () => {
+  it('maps both the current /blog/ and post-rename /writing/ article routes to blog', () => {
+    expect(parseInternalHref('/blog/foo')).toEqual({ collection: 'blog', id: 'foo' });
     expect(parseInternalHref('/writing/foo')).toEqual({ collection: 'blog', id: 'foo' });
   });
   it('maps /projects/<slug> to the projects collection', () => {

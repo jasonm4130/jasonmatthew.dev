@@ -30,13 +30,17 @@ export interface GraphEntry {
   published: boolean;
 }
 
-/** Maps an internal `/writing/<slug>` or `/projects/<slug>` href to its target
- * collection + id, or null for external / unrecognised hrefs (left unvalidated). */
+/** Maps an internal article or project href to its target collection + id, or null
+ * for external / unrecognised hrefs (left unvalidated). Articles are matched under
+ * BOTH `/blog/` (the current route) and `/writing/` (the post-rename route): the
+ * branch migrates /blog -> /writing in a later stage, so the gate must catch a dead
+ * article link written in either form during that transition — otherwise a
+ * `/blog/<missing>` related link would slip through as "external" and never fail. */
 export function parseInternalHref(href: string): { collection: 'blog' | 'projects'; id: string } | null {
-  const m = href.match(/^\/(writing|projects)\/([^/?#]+)\/?$/);
+  const m = href.match(/^\/(blog|writing|projects)\/([^/?#]+)\/?$/);
   if (!m) return null;
   const id = decodeURIComponent(m[2]);
-  return { collection: m[1] === 'writing' ? 'blog' : 'projects', id };
+  return { collection: m[1] === 'projects' ? 'projects' : 'blog', id };
 }
 
 class ContentGraphError extends Error {
