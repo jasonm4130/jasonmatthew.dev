@@ -24,11 +24,11 @@ There's also a meta reason. I wrote a [blog post about side projects as a manage
 
 **Monorepo with Turborepo** — content lives in `packages/content/` as MDX with Zod-validated frontmatter schemas. The Astro site in `apps/web/` consumes it. This separation means content can be edited without touching the app, and the schemas catch broken frontmatter at build time.
 
-**Tailwind CSS v4** — the new CSS-first configuration with `@theme inline` and `@layer base`. Design tokens are CSS custom properties that swap between light and dark mode via a `.dark` class, which means Tailwind utilities can override base styles cleanly.
+**Tailwind CSS v4** — the new CSS-first configuration with `@theme inline` and `@layer base`. Design tokens are CSS custom properties that swap between light and dark via a `data-theme` attribute (with a `prefers-color-scheme` fallback when no theme is chosen), so Tailwind utilities and hand-written CSS read the same variables.
 
 **Accessibility from the start** — ESLint with `eslint-plugin-astro` and `jsx-a11y-recommended` rules, `focus-visible` outlines on all interactive elements, skip-to-content link, ARIA attributes on the mobile menu, and `prefers-color-scheme` support in the SVG favicon.
 
-**Asset generation with Playwright** — the OG image, favicon, and apple-touch-icon are generated programmatically from a script that renders HTML templates and screenshots them. No design tools required, fully reproducible.
+**Asset generation with Satori** — the OG image, favicon, and apple-touch-icon are generated programmatically with Satori + resvg-js, rendering HTML/JSX templates to SVG then PNG. No design tools required, fully reproducible.
 
 ## Pre-commit Quality
 
