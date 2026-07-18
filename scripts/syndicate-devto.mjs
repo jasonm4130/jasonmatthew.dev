@@ -50,7 +50,10 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const canonicalFor = (slug) => `${SITE}/blog/${slug}`;
+const canonicalFor = (slug) => `${SITE}/writing/${slug}`;
+// Posts syndicated before the /blog→/writing rename stored a /blog canonical_url.
+// Match it too so the archive isn't re-published as duplicates on dev.to.
+const legacyCanonicalFor = (slug) => `${SITE}/blog/${slug}`;
 const devtoTag = (t) => t.replace(/[^a-z0-9]/gi, '').toLowerCase();
 
 /** MDX that dev.to cannot render: imports and JSX component tags. */
@@ -107,7 +110,7 @@ async function main() {
       continue;
     }
     if (published > cutoff) continue; // too fresh: let the original get indexed first
-    if (existing.has(canonicalFor(slug))) continue; // already mirrored
+    if (existing.has(canonicalFor(slug)) || existing.has(legacyCanonicalFor(slug))) continue; // already mirrored (incl. pre-rename /blog canonical)
 
     const body = toPlainMarkdown(content, slug);
     if (body === null) continue;
