@@ -1,25 +1,39 @@
 (function () {
+  var STORAGE_KEY = 'theme';
+  var darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
   function getStoredTheme() {
-    return typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null;
+    return typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
   }
 
-  function getSystemTheme() {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  function systemTheme() {
+    return darkQuery.matches ? 'dark' : 'light';
   }
 
-  function getActiveTheme() {
-    return getStoredTheme() || getSystemTheme();
+  // The theme the page is actually showing: an explicit choice wins, otherwise
+  // the OS preference (which the CSS token media query is already honouring).
+  function effectiveTheme() {
+    return getStoredTheme() || systemTheme();
   }
 
-  function applyTheme(theme) {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+  // Reflect an explicit choice onto the attribute; when following the system,
+  // leave the attribute unset so the token media query drives the palette and a
+  // no-choice visitor tracks OS light/dark changes live.
+  function applyStoredPreference() {
+    var stored = getStoredTheme();
+    var root = document.documentElement;
+    if (stored === 'dark' || stored === 'light') {
+      root.setAttribute('data-theme', stored);
+    } else {
+      root.removeAttribute('data-theme');
+    }
   }
 
-  // Reflect the active theme to assistive tech: aria-pressed=true means dark is on.
+  // aria-pressed=true means dark is currently active.
   function reflectPressed() {
     var toggle = document.getElementById('theme-toggle');
     if (toggle) {
-      toggle.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')));
+      toggle.setAttribute('aria-pressed', String(effectiveTheme() === 'dark'));
     }
   }
 
@@ -28,10 +42,9 @@
     if (!toggle) return;
     reflectPressed();
     toggle.addEventListener('click', function () {
-      var isDark = document.documentElement.classList.contains('dark');
-      var next = isDark ? 'light' : 'dark';
-      localStorage.setItem('theme', next);
-      applyTheme(next);
+      var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(STORAGE_KEY, next);
+      document.documentElement.setAttribute('data-theme', next);
       reflectPressed();
       if (next === 'light') {
         toggle.classList.remove('glow');
@@ -41,21 +54,20 @@
     });
   }
 
-  // Apply immediately to prevent FOUC
-  applyTheme(getActiveTheme());
+  // Apply any stored preference before first paint (this head script is
+  // render-blocking); no stored choice → no attribute → follow the system.
+  applyStoredPreference();
 
-  // Listen for system theme changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-    if (!getStoredTheme()) {
-      applyTheme(e.matches ? 'dark' : 'light');
-      reflectPressed();
-    }
+  // While following the system, keep aria-pressed honest as the OS flips (the
+  // palette itself follows via CSS with no JS needed).
+  darkQuery.addEventListener('change', function () {
+    if (!getStoredTheme()) reflectPressed();
   });
 
   // Astro view transitions support
   document.addEventListener('astro:page-load', setupThemeToggle);
   document.addEventListener('astro:after-swap', function () {
-    applyTheme(getActiveTheme());
+    applyStoredPreference();
     reflectPressed();
   });
 })();

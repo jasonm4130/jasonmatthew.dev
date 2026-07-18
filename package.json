@@ -10,6 +10,7 @@
     "format": "prettier --write \"**/*.{js,mjs,ts,tsx,astro,md,mdx,json,css}\"",
     "format:check": "prettier --check \"**/*.{js,mjs,ts,tsx,astro,md,mdx,json,css}\"",
     "prepare": "husky",
+    "check-contrast": "node scripts/check-contrast.mjs",
     "generate:og": "node scripts/generate-og-images.mjs",
     "generate:diagrams": "node scripts/render-diagrams.mjs"
   },

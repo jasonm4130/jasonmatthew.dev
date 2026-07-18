@@ -35,10 +35,18 @@ pnpm -F @jasonmatthew/web preview  # Preview production build
 
 ## Design Tokens
 
-- Light: bg `#faf8f5`, fg `#111111`, accent `#e8553d`
-- Dark: bg `#121212`, fg `#f0f0f0`, accent `#e8553d`
-- Single accent colour (coral) used for links, highlights, interactive elements
-- Monochrome base with the coral as the only colour
+Annotated-notebook palette. Raw values live on `:root` / `[data-theme='dark']` in
+`apps/web/src/styles/global.css` (with a `@media (prefers-color-scheme: dark)` twin
+for no-choice visitors), re-exported to Tailwind via `@theme inline`. Theming is by
+the `data-theme` attribute, not a `.dark` class.
+
+- Light: paper `#f4efe4`, ink `#100d06`, coral `#b83c1c` (AA-safe on paper, 4.95:1)
+- Dark: paper `#191611`, ink `#ece6d9`, coral `#ee6547` (5.66:1 on dark paper)
+- Support tokens: `--body2`, `--muted`, `--faint`, `--hair`, `--border`, `--surface`
+- Back-compat aliases `--color-bg/-fg/-accent/-muted/-border/-surface` map onto the
+  notebook vars, so components need no changes when the palette shifts
+- Single coral accent per theme (links, highlights, interactive) on a monochrome base;
+  `scripts/check-contrast.mjs` fails the build if either coral drops below WCAG AA 4.5:1
 
 ## Code Standards
 

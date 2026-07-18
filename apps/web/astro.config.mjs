@@ -1,4 +1,4 @@
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
@@ -30,6 +30,42 @@ export default defineConfig({
   image: {
     layout: 'constrained',
     responsiveStyles: false,
+  },
+  // Self-host all three brand faces at build (copied to _astro/fonts) via the
+  // Fontsource provider — zero runtime third-party font requests, automatic
+  // preload links + metric-matched fallbacks for zero CLS. All SIL OFL 1.1.
+  // Still `experimental.fonts` in Astro 5.18; the `cssVariable`s are consumed
+  // by src/styles/global.css (--font-sans/-serif/-mono resolve to these).
+  experimental: {
+    fonts: [
+      {
+        provider: fontProviders.fontsource(),
+        name: 'Sora',
+        cssVariable: '--font-sora',
+        weights: [400, 600, 700],
+        styles: ['normal'],
+        subsets: ['latin'],
+        fallbacks: ['system-ui', 'sans-serif'],
+      },
+      {
+        provider: fontProviders.fontsource(),
+        name: 'Libre Baskerville',
+        cssVariable: '--font-libre',
+        weights: [400, 700],
+        styles: ['normal', 'italic'],
+        subsets: ['latin'],
+        fallbacks: ['Georgia', 'serif'],
+      },
+      {
+        provider: fontProviders.fontsource(),
+        name: 'Monaspace Neon',
+        cssVariable: '--font-mono-neon',
+        weights: [400, 700],
+        styles: ['normal'],
+        subsets: ['latin'],
+        fallbacks: ['ui-monospace', 'monospace'],
+      },
+    ],
   },
   markdown: {
     remarkPlugins: [remarkRewriteDraftLinks],

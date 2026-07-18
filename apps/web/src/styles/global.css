@@ -1,38 +1,107 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* `dark:` utilities resolve only on an explicit dark choice. System-dark for a
+   visitor with no saved choice is handled by the token media query below (which
+   repaints the palette), not by `dark:` utilities — the site is token-driven,
+   so no markup uses `dark:` anyway. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/* ─── Design Tokens ─────────────────────────────────────────── */
+/* ─── Design Tokens (annotated-notebook palette) ────────────── */
+/* Two-layer pattern: raw palette on :root / [data-theme='dark'] (plus a system
+   tri-state twin so a visitor with no saved choice tracks OS light/dark live),
+   then re-exported to Tailwind via `@theme inline` so utilities AND hand-authored
+   `var(--…)` CSS read the same variables. Light coral is AA-safe (#b83c1c on
+   paper = 4.95:1; dark #ee6547 on #191611 = 5.66:1); scripts/check-contrast.mjs
+   guards both at build. The two dark blocks MUST stay in sync. */
 
 :root {
-  --color-bg: #faf8f5;
-  --color-fg: #111111;
-  --color-accent: #e8553d;
-  --color-muted: #6b6b6b;
-  --color-border: #e0ddd8;
-  --color-surface: #f0ede8;
+  color-scheme: light dark;
+
+  /* fonts — resolve to the Astro Fonts API stacks (self-hosted, with
+     metric-matched fallbacks baked in by the fonts pipeline) */
+  --font-sans: var(--font-sora);
+  --font-serif: var(--font-libre);
+  --font-mono: var(--font-mono-neon);
+
+  /* notebook palette — light */
+  --paper: #f4efe4;
+  --ink: #100d06;
+  --coral: #b83c1c;
+  --body2: #332e25;
+  --muted: #635e54;
+  --faint: #8f8779;
+  --hair: rgba(198, 187, 166, 0.55);
+  --border: #e4ded0;
+  --surface: #ece5d6;
+
+  /* back-compat aliases — existing components read these; they follow the
+     notebook vars, so a single token edit repaints the whole site */
+  --color-bg: var(--paper);
+  --color-fg: var(--ink);
+  --color-accent: var(--coral);
+  --color-body2: var(--body2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-hair: var(--hair);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
 }
 
-.dark {
-  --color-bg: #121212;
-  --color-fg: #f0f0f0;
-  --color-accent: #e8553d;
-  --color-muted: #9a9a9a;
-  --color-border: #2a2a2a;
-  --color-surface: #1c1c1c;
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* notebook palette — dark (explicit choice) */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #191611;
+  --ink: #ece6d9;
+  --coral: #ee6547;
+  --body2: #d7d0c1;
+  --muted: #a89f8d;
+  --faint: #7d7565;
+  --hair: rgba(125, 115, 95, 0.32);
+  --border: #332e23;
+  --surface: #211d17;
+}
+
+/* notebook palette — dark (system preference, no explicit choice).
+   Values MUST match the [data-theme='dark'] block above. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #191611;
+    --ink: #ece6d9;
+    --coral: #ee6547;
+    --body2: #d7d0c1;
+    --muted: #a89f8d;
+    --faint: #7d7565;
+    --hair: rgba(125, 115, 95, 0.32);
+    --border: #332e23;
+    --surface: #211d17;
+  }
 }
 
 @theme inline {
-  --font-sans: 'Sora', system-ui, sans-serif;
-  --font-serif: 'Libre Baskerville', 'Georgia', serif;
-  --font-mono: 'Monaspace Neon', 'Fira Code', monospace;
-  --color-bg: var(--color-bg);
-  --color-fg: var(--color-fg);
-  --color-accent: var(--color-accent);
-  --color-muted: var(--color-muted);
-  --color-border: var(--color-border);
-  --color-surface: var(--color-surface);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  /* notebook semantic colours (utilities: bg-paper, text-ink, text-coral, …) */
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-coral: var(--coral);
+  --color-body2: var(--body2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-hair: var(--hair);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
+
+  /* back-compat colour utilities */
+  --color-bg: var(--paper);
+  --color-fg: var(--ink);
+  --color-accent: var(--coral);
 }
 
 /* ─── Responsive Images (Astro layout, TW4 compat) ─────────── */
@@ -178,13 +247,26 @@ pre.shiki {
   background-color: transparent;
 }
 
-.dark pre.shiki {
+/* Dark: explicit choice, or system-dark with no explicit choice — keep both
+   twins in sync with the token blocks above so code tracks the palette. */
+:root[data-theme='dark'] pre.shiki {
   background-color: var(--shiki-dark-bg, var(--color-surface)) !important;
 }
 
-.dark .shiki span {
+:root[data-theme='dark'] .shiki span {
   color: var(--shiki-dark);
   background-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) pre.shiki {
+    background-color: var(--shiki-dark-bg, var(--color-surface)) !important;
+  }
+
+  :root:not([data-theme='light']) .shiki span {
+    color: var(--shiki-dark);
+    background-color: transparent;
+  }
 }
 
 /* ─── Selection ─────────────────────────────────────────────── */
@@ -224,24 +306,32 @@ pre.shiki {
 
 /* ─── Lightbulb Toggle ─────────────────────────────────────── */
 
+/* Lit (coral-filled) bulb in light; hollow in dark — mirrors the token
+   tri-state so the icon matches the effective theme, system-dark included. */
 .bulb-fill {
-  fill: transparent;
+  fill: var(--coral);
   transition: fill 0.4s ease;
 }
 
-:root:not(.dark) .bulb-fill {
-  fill: var(--color-accent);
+:root[data-theme='dark'] .bulb-fill {
+  fill: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .bulb-fill {
+    fill: transparent;
+  }
 }
 
 @keyframes glowPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(232, 85, 61, 0.4);
+    box-shadow: 0 0 0 0 rgb(from var(--coral) r g b / 0.4);
   }
   50% {
-    box-shadow: 0 0 12px 4px rgba(232, 85, 61, 0.2);
+    box-shadow: 0 0 12px 4px rgb(from var(--coral) r g b / 0.2);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(232, 85, 61, 0);
+    box-shadow: 0 0 0 0 rgb(from var(--coral) r g b / 0);
   }
 }
 

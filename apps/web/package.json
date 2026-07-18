@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
-    "deploy": "astro check && astro build && wrangler deploy",
+    "deploy": "pnpm -w run check-contrast && astro check && astro build && wrangler deploy",
     "preview": "astro preview",
     "typecheck": "astro check",
     "lint": "eslint .",
