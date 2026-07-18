@@ -1,12 +1,17 @@
 import { defineConfig, fontProviders } from 'astro/config';
+import expressiveCode from 'astro-expressive-code';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import remarkDirective from 'remark-directive';
 import { fileURLToPath } from 'node:url';
 import remarkRewriteDraftLinks from './src/plugins/remark-rewrite-draft-links.mjs';
 import remarkReadingTime from './src/plugins/remark-reading-time.mjs';
+import remarkCallouts from './src/plugins/remark-callouts.mjs';
+import remarkSidenotes from './src/plugins/remark-sidenotes.mjs';
+import { kryptonThemes } from './src/lib/krypton-theme.ts';
 import { futureDatedSlugs, blogSlugFromUrl } from './src/utils/article-publish.mjs';
 import { readContentGraph } from './src/utils/content-graph-fs.mjs';
 import { validateContentGraph } from './src/utils/content-graph.ts';
@@ -30,6 +35,52 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   integrations: [
+    // Expressive Code MUST precede mdx() — it registers the code-block renderer the
+    // markdown pipeline then uses. Replaces plain Shiki site-wide with the warm
+    // "Krypton" theme; frames/copy/line-highlight/diff styled to the notebook system
+    // (single coral accent — no green/red diff). Themes switch via [data-theme=…] to
+    // stay in lockstep with global.css's tri-state.
+    expressiveCode({
+      themes: kryptonThemes,
+      themeCssSelector: (theme) => `:root[data-theme='${theme.name}']`,
+      useDarkModeMediaQuery: true,
+      useThemedScrollbars: false,
+      useThemedSelectionColors: false,
+      styleOverrides: {
+        borderRadius: '0',
+        borderColor: 'var(--border)',
+        borderWidth: '1px',
+        codeBackground: 'var(--code-bg)',
+        codeFontFamily: 'var(--font-mono-code)',
+        codeFontSize: '0.85rem',
+        codeLineHeight: '1.75',
+        uiFontFamily: 'var(--font-mono)',
+        frames: {
+          frameBoxShadowCssValue: 'none',
+          editorTabBarBackground: 'var(--code-bg)',
+          editorActiveTabBackground: 'var(--code-bg)',
+          editorActiveTabForeground: 'var(--muted)',
+          editorActiveTabBorderColor: 'transparent',
+          editorActiveTabIndicatorTopColor: 'transparent',
+          editorActiveTabIndicatorBottomColor: 'transparent',
+          editorTabBarBorderBottomColor: 'var(--border)',
+          terminalTitlebarBackground: 'var(--code-bg)',
+          terminalTitlebarForeground: 'var(--muted)',
+          terminalTitlebarBorderBottomColor: 'var(--border)',
+          tooltipSuccessBackground: 'var(--coral)',
+        },
+        textMarkers: {
+          markBackground: 'color-mix(in srgb, var(--coral) 9%, transparent)',
+          markBorderColor: 'var(--coral)',
+          insBackground: 'color-mix(in srgb, var(--coral) 9%, transparent)',
+          insBorderColor: 'var(--coral)',
+          insDiffIndicatorColor: 'var(--coral)',
+          delBackground: 'color-mix(in srgb, var(--faint) 12%, transparent)',
+          delBorderColor: 'var(--faint)',
+          delDiffIndicatorColor: 'var(--faint)',
+        },
+      },
+    }),
     mdx(),
     sitemap({
       filter: (page) => {
@@ -76,10 +127,24 @@ export default defineConfig({
         subsets: ['latin'],
         fallbacks: ['ui-monospace', 'monospace'],
       },
+      {
+        // The code face — Krypton, the "mechanical" Monaspace member. Same OFL 1.1
+        // family as Neon; used only by article/project code frames + inline `code`.
+        provider: fontProviders.fontsource(),
+        name: 'Monaspace Krypton',
+        cssVariable: '--font-mono-krypton',
+        weights: [400, 700],
+        styles: ['normal'],
+        subsets: ['latin'],
+        fallbacks: ['ui-monospace', 'monospace'],
+      },
     ],
   },
   markdown: {
-    remarkPlugins: [remarkRewriteDraftLinks, remarkReadingTime],
+    // Order matters: remark-directive parses `:::` syntax that remark-callouts then
+    // remaps; remark-sidenotes rewrites GFM footnotes into gutter margin notes;
+    // reading-time counts words last.
+    remarkPlugins: [remarkDirective, remarkCallouts, remarkRewriteDraftLinks, remarkSidenotes, remarkReadingTime],
     rehypePlugins: [
       rehypeSlug,
       [
@@ -96,11 +161,7 @@ export default defineConfig({
         },
       ],
     ],
-    shikiConfig: {
-      themes: {
-        light: 'github-light',
-        dark: 'github-dark',
-      },
-    },
+    // Code highlighting is owned by Expressive Code (integration above), not Shiki —
+    // no `shikiConfig` here.
   },
 });

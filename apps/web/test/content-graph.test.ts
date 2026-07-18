@@ -4,6 +4,7 @@ import {
   parseInternalHref,
   threadEntries,
   seriesEntries,
+  seriesAdjacent,
   type GraphEntry,
 } from '@utils/content-graph';
 
@@ -118,5 +119,30 @@ describe('threadEntries / seriesEntries', () => {
       entry({ id: 'hidden', series: 's', seriesOrder: 3, published: false }),
     ];
     expect(seriesEntries('s', series).map((e) => e.id)).toEqual(['one', 'two']);
+  });
+});
+
+describe('seriesAdjacent', () => {
+  const chapters = [
+    entry({ id: 'one', series: 's', seriesOrder: 1 }),
+    entry({ id: 'two', series: 's', seriesOrder: 2 }),
+    entry({ id: 'three', series: 's', seriesOrder: 3 }),
+  ];
+
+  it('returns the neighbouring chapters in reading order', () => {
+    const { prev, next } = seriesAdjacent('s', chapters[1], chapters);
+    expect(prev?.id).toBe('one');
+    expect(next?.id).toBe('three');
+  });
+
+  it('has no prev at the first chapter and no next at the last', () => {
+    expect(seriesAdjacent('s', chapters[0], chapters).prev).toBeUndefined();
+    expect(seriesAdjacent('s', chapters[0], chapters).next?.id).toBe('two');
+    expect(seriesAdjacent('s', chapters[2], chapters).next).toBeUndefined();
+  });
+
+  it('returns nothing for an entry that is not a published member of the series', () => {
+    const hidden = entry({ id: 'hidden', series: 's', seriesOrder: 4, published: false });
+    expect(seriesAdjacent('s', hidden, [...chapters, hidden])).toEqual({});
   });
 });

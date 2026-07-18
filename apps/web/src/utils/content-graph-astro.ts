@@ -11,7 +11,13 @@
 // renamed route is built for graph rendering.
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { isPublished } from './data-utils';
-import { validateContentGraph, type GraphEntry, type RelatedLink } from './content-graph';
+import {
+  validateContentGraph,
+  seriesEntries,
+  seriesAdjacent,
+  type GraphEntry,
+  type RelatedLink,
+} from './content-graph';
 import { THREAD_SLUGS, THREADS, getThread, type Thread } from '@data/threads';
 
 export interface ResolvedEntry extends GraphEntry {
@@ -87,6 +93,10 @@ export interface ContentGraph {
   crossThreads(entry: ResolvedEntry, currentSlug: string): Thread[];
   /** Published-member count per thread slug. */
   threadCount(slug: string): number;
+  /** Published chapters of a series, in seriesOrder (the article template's chapter list). */
+  seriesChapters(name: string): ResolvedEntry[];
+  /** Prev/next chapter around an entry within its series; empty if it has none. */
+  adjacentInSeries(entry: ResolvedEntry): { prev?: ResolvedEntry; next?: ResolvedEntry };
 }
 
 /** Read + resolve the whole content graph for page rendering. Throws (fail-closed)
@@ -118,6 +128,15 @@ export async function getContentGraph(): Promise<ContentGraph> {
     },
     threadCount(slug) {
       return all.filter((e) => e.published && e.threads.includes(slug)).length;
+    },
+    seriesChapters(name) {
+      // `all` entries are ResolvedEntry; seriesEntries preserves them, narrowing only
+      // the static type back to GraphEntry, so the generic keeps ResolvedEntry here.
+      return seriesEntries(name, all);
+    },
+    adjacentInSeries(entry) {
+      if (!entry.series) return {};
+      return seriesAdjacent(entry.series, entry, all);
     },
   };
 }

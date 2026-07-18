@@ -7,7 +7,7 @@ Personal portfolio and blog for Jason Matthew, Principal Engineer & Engineering 
 ## Monorepo Structure
 
 ```
-apps/web/          — Astro site (Tailwind v4, MDX, Shiki)
+apps/web/          — Astro site (Tailwind v4, MDX, Expressive Code)
 packages/content/  — MDX content (articles, projects, pages)
 ```
 
@@ -29,7 +29,10 @@ pnpm -F @jasonmatthew/web preview  # Preview production build
 - **Framework**: Astro 5 (Node 22+)
 - **Styling**: Tailwind CSS v4 via @tailwindcss/vite
 - **Content**: MDX with Zod-validated schemas
-- **Fonts**: Sora (headings) + Libre Baskerville (body) + Monaspace Neon (code)
+- **Fonts**: Sora (headings) + Libre Baskerville (body) + Monaspace Neon (UI/annotation
+  mono) + Monaspace Krypton (code) — all self-hosted via the Astro Fonts API
+- **Code highlighting**: Expressive Code (`astro-expressive-code`, registered before
+  `mdx()`) with the self-hosted Krypton theme in `apps/web/src/lib/krypton-theme.ts`
 - **Deploy**: Cloudflare Pages (static output)
 - **Monorepo**: Turborepo + pnpm workspaces
 
@@ -77,6 +80,11 @@ the `data-theme` attribute, not a `.dark` class.
   fails the build on an unknown thread slug, a gapped/duplicate `seriesOrder`, or a
   `related` link to a missing/unpublished entry — guarding Astro 5's silently
   undefined `reference()`. Every new surface reuses the `isPublished` invariant.
+- **Article prose furniture** (available in `packages/content/articles/*.mdx`):
+  `:::note[Label]` container directives render as a single mono+coral callout aside;
+  `[^n]` GFM footnotes render as Tufte margin notes in the article's sidenote gutter
+  (renumbered 1..n, no bottom footnotes section). Full authoring reference and Krypton
+  code-theme token roles in `docs/design-system.md`.
 
 ## Notebook components & tests
 
@@ -99,6 +107,12 @@ the `data-theme` attribute, not a `.dark` class.
   (`/threads/`, `/threads/[id]/`), `/now/`, and projects (`/projects/`,
   `/projects/[id]/`). `BaseLayout` takes `width='wide'|'prose'`; wide pages render
   their own `.shell` + `.nb-grid` rail/body scaffolding (in `global.css`).
+- **Article reading template** (`writing/[id].astro`, `width='wide'`): a three-zone
+  notebook layout — sticky TOC rail (h2 scroll-spy) · serif `.art-prose` column
+  (numbered h2s, Expressive Code frames) · sidenote gutter — plus a pure-CSS
+  reading-progress bar, per-kind header, related-work cards, and thread/series footer
+  nav (series nav is dormant until an article sets `series`/`seriesOrder`). The project
+  template shares the voice via `.art-prose.case-narrow`. See `docs/design-system.md`.
 - **Articles live at `/writing/`, not `/blog/`.** The rename is edge-enforced by
   `apps/web/public/_redirects` (301s: `/blog`→`/writing`, `/blog/*`→`/writing/:splat`,
   plus explicit `/blog/2`+`/projects/2` old-pagination pages → their index so removed

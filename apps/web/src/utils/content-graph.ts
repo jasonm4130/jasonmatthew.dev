@@ -134,9 +134,23 @@ export function threadEntries(slug: string, entries: GraphEntry[]): GraphEntry[]
   return entries.filter((e) => e.published && e.threads.includes(slug));
 }
 
-/** The published, order-sorted chapters of a series. */
-export function seriesEntries(name: string, entries: GraphEntry[]): GraphEntry[] {
+/** The published, order-sorted chapters of a series. Generic so callers passing a
+ * richer entry type (e.g. the adapter's ResolvedEntry) get it back unwidened. */
+export function seriesEntries<T extends GraphEntry>(name: string, entries: T[]): T[] {
   return entries
     .filter((e) => e.published && e.series === name)
     .sort((a, b) => (a.seriesOrder ?? 0) - (b.seriesOrder ?? 0));
+}
+
+/** The previous/next published chapters around `entry` within series `name`, for the
+ * article template's prev/next arrows. Empty when `entry` is not a published member. */
+export function seriesAdjacent<T extends GraphEntry>(
+  name: string,
+  entry: GraphEntry,
+  entries: T[],
+): { prev?: T; next?: T } {
+  const chapters = seriesEntries(name, entries);
+  const idx = chapters.findIndex((e) => e.collection === entry.collection && e.id === entry.id);
+  if (idx === -1) return {};
+  return { prev: chapters[idx - 1], next: chapters[idx + 1] };
 }
