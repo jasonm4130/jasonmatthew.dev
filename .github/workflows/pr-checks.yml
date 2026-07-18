@@ -15,7 +15,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Runs the notebook content-graph gate (via astro.config) + the component
-      # and publish-state suites, so a broken thread/series/related ref or a
-      # component regression fails the PR before it can merge to main.
-      - run: pnpm turbo test --filter=@jasonmatthew/web
+      # Full pre-merge gate: `turbo build` depends on `test`, so this runs the
+      # component + publish-state suites AND the content-graph gate, the contrast
+      # gate, `astro check`, and a production build. A broken thread/series/related
+      # ref, a typecheck error, or a build failure fails the PR here rather than
+      # surfacing only in the scheduled deployment.
+      - run: pnpm turbo build --filter=@jasonmatthew/web

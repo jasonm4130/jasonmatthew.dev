@@ -52,6 +52,11 @@ describe('validateContentGraph', () => {
     const missingBlog = [entry({ id: 'a', related: [{ label: 'x', href: '/blog/nope' }] })];
     expect(() => validateContentGraph(missingBlog, SLUGS)).toThrow(/no such entry/);
 
+    // ...and the same must hold when a query/fragment is appended (they target the
+    // same entry, so they can't be allowed to bypass the check).
+    const missingFrag = [entry({ id: 'a', related: [{ label: 'x', href: '/blog/nope#section' }] })];
+    expect(() => validateContentGraph(missingFrag, SLUGS)).toThrow(/no such entry/);
+
     const unpublished = [
       entry({ id: 'a', related: [{ label: 'x', href: '/blog/b' }] }),
       entry({ id: 'b', published: false }),
@@ -77,6 +82,10 @@ describe('validateContentGraph', () => {
 describe('parseInternalHref', () => {
   it('maps the current /blog/ article route to the blog collection', () => {
     expect(parseInternalHref('/blog/foo')).toEqual({ collection: 'blog', id: 'foo' });
+  });
+  it('resolves the entry even with a query or fragment appended', () => {
+    expect(parseInternalHref('/blog/foo#section')).toEqual({ collection: 'blog', id: 'foo' });
+    expect(parseInternalHref('/projects/bar?ref=x')).toEqual({ collection: 'projects', id: 'bar' });
   });
   it('maps /projects/<slug> to the projects collection', () => {
     expect(parseInternalHref('/projects/bar/')).toEqual({ collection: 'projects', id: 'bar' });

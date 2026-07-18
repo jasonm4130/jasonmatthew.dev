@@ -38,7 +38,11 @@ export interface GraphEntry {
  * 404). The /blog -> /writing rename in a later stage swaps this prefix and the
  * related records together, so the parser always matches what actually routes. */
 export function parseInternalHref(href: string): { collection: 'blog' | 'projects'; id: string } | null {
-  const m = href.match(/^\/(blog|projects)\/([^/?#]+)\/?$/);
+  // Strip a query/fragment first: `/blog/foo#section` and `/projects/foo?ref=x`
+  // still target the entry `foo`, so they must be validated, not waved through as
+  // "external" — the entry either exists or the whole link is dead.
+  const path = href.split(/[?#]/)[0];
+  const m = path.match(/^\/(blog|projects)\/([^/]+)\/?$/);
   if (!m) return null;
   const id = decodeURIComponent(m[2]);
   return { collection: m[1] === 'projects' ? 'projects' : 'blog', id };
