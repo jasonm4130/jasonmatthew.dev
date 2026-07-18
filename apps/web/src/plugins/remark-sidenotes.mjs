@@ -25,29 +25,51 @@ function collectDefinitions(node, defs) {
   }
 }
 
-/** Reduce one definition block to inline nodes. Container blocks (paragraph, etc.)
- * contribute their inline children; leaf blocks carry a `value` and no `children`
- * (`code`, `html`) — preserve that content inline rather than dropping it silently
- * (a code block degrades to inline `code`). Footnotes are short prose by convention,
- * so this is a graceful floor, not full block support. */
-function blockToInline(block) {
-  if (Array.isArray(block.children)) return block.children;
-  if (typeof block.value === 'string') {
-    return [{ type: block.type === 'code' ? 'inlineCode' : 'text', value: block.value }];
-  }
-  return [];
-}
+/** mdast phrasing (inline) node types — the only nodes valid inside the inline
+ * <span class="sidenote">. Everything else is block-level and must be reduced to
+ * these before it can enter the gutter. */
+const PHRASING = new Set([
+  'text',
+  'emphasis',
+  'strong',
+  'delete',
+  'inlineCode',
+  'break',
+  'link',
+  'linkReference',
+  'image',
+  'imageReference',
+  'footnoteReference',
+  'html',
+]);
 
-/** Flatten a definition's block children (usually one paragraph) to inline nodes,
- * joining separate blocks with a space. */
-function inlineFromDefinition(blocks) {
+/** Recursively reduce any definition node to inline phrasing nodes. Phrasing nodes
+ * pass through; `code`/other leaf blocks preserve their `value` inline (code degrades
+ * to inline `code`); block containers (paragraph, list, listItem, blockquote, table…)
+ * recurse into their children — so their text survives without emitting block tags
+ * (<li>, <p>) inside a <span>, which the browser would hoist out of the gutter and
+ * break the note. Block-level siblings join with a space so their text doesn't mash.
+ * Footnotes are short prose by convention: this is a graceful floor, not full block
+ * rendering. */
+function toInline(node) {
+  if (PHRASING.has(node.type)) return [node];
+  if (node.type === 'code') return [{ type: 'inlineCode', value: node.value }];
+  if (typeof node.value === 'string') return [{ type: 'text', value: node.value }];
+  if (!Array.isArray(node.children)) return [];
   const out = [];
-  for (const block of blocks) {
-    const inline = blockToInline(block);
-    if (out.length && inline.length) out.push({ type: 'text', value: ' ' });
+  for (const child of node.children) {
+    const inline = toInline(child);
+    if (!inline.length) continue;
+    if (out.length && !PHRASING.has(child.type)) out.push({ type: 'text', value: ' ' });
     out.push(...inline);
   }
   return out;
+}
+
+/** Flatten a definition's blocks (usually one paragraph) to inline nodes for the
+ * sidenote span, joining separate blocks with a space. */
+function inlineFromDefinition(blocks) {
+  return toInline({ type: 'root', children: blocks });
 }
 
 function supNode(n) {

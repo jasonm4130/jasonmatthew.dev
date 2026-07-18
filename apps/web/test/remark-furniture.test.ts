@@ -101,6 +101,33 @@ describe('remark-sidenotes', () => {
     expect(code[0].value).toBe('const removed = true;');
   });
 
+  it('flattens a block container (list) in a footnote definition to inline text, emitting no block tags', () => {
+    const listItem = (value: string) => ({
+      type: 'listItem',
+      children: [paragraph([text(value)])],
+    });
+    const tree = {
+      type: 'root',
+      children: [
+        paragraph([text('ref'), { type: 'footnoteReference', identifier: 'l' }]),
+        {
+          type: 'footnoteDefinition',
+          identifier: 'l',
+          label: 'l',
+          children: [{ type: 'list', ordered: false, children: [listItem('one'), listItem('two')] }],
+        },
+      ],
+    };
+    remarkSidenotes()(tree as any);
+    const note = collect(tree, byHName('span')).find((n) => hasClass(n, 'sidenote'));
+    // No block-level list nodes leak into the inline <span> (that HTML is invalid and
+    // the browser would hoist it out of the gutter).
+    expect(collect(note, (n) => n.type === 'list' || n.type === 'listItem' || n.type === 'paragraph')).toHaveLength(0);
+    // Both items' text survives inline.
+    expect(collect(note, (n) => n.type === 'text' && n.value === 'one')).toHaveLength(1);
+    expect(collect(note, (n) => n.type === 'text' && n.value === 'two')).toHaveLength(1);
+  });
+
   it('renders the reference even when its definition is missing (no empty gutter box)', () => {
     const tree = {
       type: 'root',
