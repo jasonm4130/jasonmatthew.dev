@@ -1,0 +1,60 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props extends HTMLAttributes<'nav'> {
+  items: Crumb[];
+}
+
+const { items, class: className, ...rest } = Astro.props;
+const last = items.length - 1;
+---
+
+<nav class:list={['crumb', className]} aria-label="Breadcrumb" {...rest}>
+  {
+    items.map((item, i) => (
+      <>
+        {i > 0 && <span class="sep">/</span>}
+        {item.href && i !== last ? (
+          <a href={item.href}>{item.label}</a>
+        ) : (
+          <span aria-current={i === last ? 'page' : undefined}>{item.label}</span>
+        )}
+      </>
+    ))
+  }
+</nav>
+
+<style>
+  .crumb {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+    letter-spacing: 0.03em;
+  }
+
+  .crumb a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.18s ease;
+  }
+
+  .crumb a:hover {
+    color: var(--ink);
+  }
+
+  .sep {
+    color: var(--faint);
+    margin: 0 8px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumb a {
+      transition: none;
+    }
+  }
+</style>

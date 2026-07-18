@@ -8,6 +8,7 @@
     "build": "pnpm -w run check-contrast && astro check && astro build",
     "deploy": "pnpm -w run check-contrast && astro check && astro build && wrangler deploy",
     "preview": "astro preview",
+    "test": "vitest run && node --test src/utils/article-publish.test.mjs",
     "typecheck": "astro check",
     "lint": "eslint .",
     "astro": "astro"
@@ -19,6 +20,7 @@
     "@astrojs/sitemap": "^3.0.0",
     "@panzoom/panzoom": "^4.6.2",
     "astro": "^5.0.0",
+    "gray-matter": "^4.0.3",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-slug": "^6.0.0"
   },
@@ -30,6 +32,7 @@
     "eslint-plugin-astro": "^1.6.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.10"
   }
 }

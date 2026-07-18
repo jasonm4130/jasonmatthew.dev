@@ -8,6 +8,9 @@ tags:
   - evals
   - cloudflare
 draft: true
+kind: buildlog
+threads:
+  - applied-ai
 ---
 
 Ask my board-game RAG system "how do I get out of prison" and, for a while, it would confidently hand the model the wrong rule. The correct Jail passage scored 0.555 on cosine similarity. An unrelated rule about collecting rent scored 0.583. Pure embedding distance ranked the wrong chunk higher, and everything downstream (the reranker gate, the answer, the citation) inherited that mistake.

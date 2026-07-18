@@ -1,0 +1,53 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'div'> {
+  /** Coral mono label, e.g. "Building" / "Shipped". */
+  label: string;
+}
+
+const { label, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={['nrow', className]} {...rest}>
+  <span class="nl">{label}</span>
+  <span class="nt"><slot /></span>
+</div>
+
+<style>
+  .nrow {
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 20px;
+    align-items: baseline;
+    padding: 12px 0;
+    border-top: 1px solid var(--hair);
+  }
+
+  .nrow:first-child {
+    border-top: 0;
+  }
+
+  .nl {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: var(--coral);
+    font-weight: 500;
+  }
+
+  .nt {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 760px) {
+    .nrow {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+  }
+</style>

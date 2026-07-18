@@ -1,0 +1,73 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'div'> {
+  /** Mono uppercase eyebrow above the title, e.g. "The notebook". */
+  kicker?: string;
+  title: string;
+  /** Serif standfirst under the title. */
+  description?: string;
+  /** Optional trailing meta line, e.g. "Updated 6 Apr 2026". */
+  updated?: string;
+}
+
+const { kicker, title, description, updated, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={['pg-head', className]} {...rest}>
+  {kicker && <div class="pg-kicker">{kicker}</div>}
+  <h1 class="pg-title">{title}</h1>
+  {description && <p class="pg-desc">{description}</p>}
+  <slot />
+  {
+    updated && (
+      <div class="updated">
+        <span class="stamp">{updated}</span>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .pg-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+
+  .pg-title {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: clamp(2rem, 4.4vw, 2.7rem);
+    letter-spacing: -0.024em;
+    line-height: 1.04;
+    margin: 15px 0 0;
+  }
+
+  .pg-desc {
+    font-family: var(--font-serif);
+    font-size: 1.04rem;
+    color: var(--body2);
+    line-height: 1.6;
+    margin: 18px 0 0;
+    max-width: 52ch;
+  }
+
+  .updated {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 20px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--faint);
+  }
+
+  .updated .stamp {
+    color: var(--muted);
+  }
+</style>

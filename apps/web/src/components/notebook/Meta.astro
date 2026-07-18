@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+// A mono metadata line, e.g. "15 pieces · 2024–2026 · 4 threads". Wrap a leading
+// count in <span class="sd"> to give it the muted emphasis from the specimen.
+type Props = HTMLAttributes<'div'>;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={['smeta', className]} {...rest}><slot /></div>
+
+<style>
+  .smeta {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+    letter-spacing: 0.03em;
+  }
+
+  /* .sd is author-supplied via the slot, so it must be reachable past scoping. */
+  .smeta :global(.sd) {
+    color: var(--muted);
+  }
+</style>

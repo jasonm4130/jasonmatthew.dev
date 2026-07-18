@@ -13,9 +13,21 @@
       ]
     },
     "build": {
-      "dependsOn": ["^build", "generate:og"],
+      "dependsOn": ["^build", "generate:og", "test"],
       "inputs": ["src/**", "public/**", "astro.config.*", "tsconfig.json", "package.json"],
       "outputs": ["dist/**", ".astro/**"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "test/**",
+        "vitest.config.ts",
+        "astro.config.*",
+        "tsconfig.json",
+        "package.json",
+        "../../packages/content/**"
+      ]
     },
     "dev": {
       "cache": false,

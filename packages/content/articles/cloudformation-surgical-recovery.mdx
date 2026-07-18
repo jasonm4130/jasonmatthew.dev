@@ -8,6 +8,9 @@ tags:
   - incident-response
   - infrastructure
 draft: false
+kind: incident
+threads:
+  - systems
 ---
 
 A developer ran a stack delete in our dev environment, Friday around midday. It wasn't supposed to happen. Two or three ephemeral child stacks (functions and claim-check S3 buckets) deleted outright. The parent stack and two of its children landed in DELETE_FAILED. The rest of the nested children carried `DeletionPolicy: Retain` on their stack constructs, so they survived the cascade as standalone orphans, with the DynamoDB tables and S3 buckets we cared about still inside them. About 200 resources across the whole thing.

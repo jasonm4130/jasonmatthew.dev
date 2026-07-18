@@ -1,0 +1,81 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'a'> {
+  href: string;
+  /** Rail-style index, e.g. "/01". */
+  num?: string;
+  title: string;
+  description: string;
+  /** Mono footer line, e.g. "9 pieces · 3 shipped · newest first". */
+  meta?: string;
+}
+
+const { href, num, title, description, meta, class: className, ...rest } = Astro.props;
+---
+
+<a class:list={['tx', className]} href={href} {...rest}>
+  <span class="tx-top">
+    {num && <span class="tx-num">{num}</span>}
+    <span class="tx-title">{title}</span>
+  </span>
+  <p class="tx-desc">{description}</p>
+  {meta && <div class="tx-meta">{meta}</div>}
+</a>
+
+<style>
+  .tx {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .tx-top {
+    display: flex;
+    align-items: baseline;
+    gap: 11px;
+  }
+
+  .tx-num {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--coral);
+    letter-spacing: 0.04em;
+  }
+
+  .tx-title {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.18rem;
+    letter-spacing: -0.018em;
+    color: var(--ink);
+    transition: color 0.18s ease;
+  }
+
+  .tx:hover .tx-title {
+    color: var(--coral);
+  }
+
+  .tx-desc {
+    font-family: var(--font-serif);
+    font-size: 0.96rem;
+    color: var(--body2);
+    line-height: 1.6;
+    margin: 9px 0 0;
+    max-width: 58ch;
+  }
+
+  .tx-meta {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+    letter-spacing: 0.04em;
+    margin-top: 12px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tx-title {
+      transition: none;
+    }
+  }
+</style>

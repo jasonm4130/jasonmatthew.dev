@@ -6,12 +6,23 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import { fileURLToPath } from 'node:url';
 import remarkRewriteDraftLinks from './src/plugins/remark-rewrite-draft-links.mjs';
+import remarkReadingTime from './src/plugins/remark-reading-time.mjs';
 import { futureDatedSlugs, blogSlugFromUrl } from './src/utils/article-publish.mjs';
+import { readContentGraph } from './src/utils/content-graph-fs.mjs';
+import { validateContentGraph } from './src/utils/content-graph.ts';
+import { THREAD_SLUGS } from './src/data/threads.ts';
 
 // Scheduled posts (draft:false but future-dated) keep a live /blog/<slug>/ page
 // for OG-image generation + in-situ review, but must stay out of the sitemap.
 const articlesDir = fileURLToPath(new URL('../../packages/content/articles', import.meta.url));
+const projectsDir = fileURLToPath(new URL('../../packages/content/projects', import.meta.url));
 const scheduledSlugs = futureDatedSlugs(articlesDir);
+
+// Fail-closed content-graph gate. Runs on every build path (astro check + astro
+// build both load this config), so a broken thread slug, gapped series or dead
+// related cross-link fails the build here rather than shipping an empty surface —
+// the guard against Astro 5's silently-undefined reference() regression.
+validateContentGraph(readContentGraph(articlesDir, projectsDir), THREAD_SLUGS);
 
 export default defineConfig({
   site: 'https://jasonmatthew.dev',
@@ -68,7 +79,7 @@ export default defineConfig({
     ],
   },
   markdown: {
-    remarkPlugins: [remarkRewriteDraftLinks],
+    remarkPlugins: [remarkRewriteDraftLinks, remarkReadingTime],
     rehypePlugins: [
       rehypeSlug,
       [

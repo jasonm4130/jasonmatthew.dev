@@ -1,0 +1,21 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Runs the notebook content-graph gate (via astro.config) + the component
+      # and publish-state suites, so a broken thread/series/related ref or a
+      # component regression fails the PR before it can merge to main.
+      - run: pnpm turbo test --filter=@jasonmatthew/web

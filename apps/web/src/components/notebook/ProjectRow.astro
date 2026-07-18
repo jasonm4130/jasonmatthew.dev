@@ -1,0 +1,87 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'div'> {
+  title: string;
+  href?: string;
+  /** Tech stack — a string, or an array joined with " · ". */
+  tech?: string | string[];
+  /** Coral status word, e.g. "shipped". */
+  status?: string;
+}
+
+const { title, href, tech, status, class: className, ...rest } = Astro.props;
+const techLine = Array.isArray(tech) ? tech.join(' · ') : tech;
+---
+
+<div class:list={['prow', className]} {...rest}>
+  <span class="pinfo">
+    {
+      href ? (
+        <a class="pt" href={href}>
+          {title}
+        </a>
+      ) : (
+        <span class="pt">{title}</span>
+      )
+    }
+    {techLine && <span class="ptech">{techLine}</span>}
+  </span>
+  {status && <span class="pst">{status}</span>}
+</div>
+
+<style>
+  .prow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 13px 0;
+    border-top: 1px solid var(--hair);
+  }
+
+  .prow:first-child {
+    border-top: 0;
+  }
+
+  .pinfo {
+    display: block;
+  }
+
+  .pt {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.18s ease;
+  }
+
+  a.pt:hover {
+    color: var(--coral);
+  }
+
+  .ptech {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.63rem;
+    color: var(--faint);
+    letter-spacing: 0.02em;
+    margin-top: 4px;
+  }
+
+  .pst {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--coral);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pt {
+      transition: none;
+    }
+  }
+</style>
