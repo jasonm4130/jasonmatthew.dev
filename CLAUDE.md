@@ -49,7 +49,8 @@ the `data-theme` attribute, not a `.dark` class.
 - Back-compat aliases `--color-bg/-fg/-accent/-muted/-border/-surface` map onto the
   notebook vars, so components need no changes when the palette shifts
 - Single coral accent per theme (links, highlights, interactive) on a monochrome base;
-  `scripts/check-contrast.mjs` fails the build if either coral drops below WCAG AA 4.5:1
+  `scripts/check-contrast.mjs` fails the build if any text token (coral/muted/faint)
+  drops below WCAG AA 4.5:1 on paper **or** surface, in either theme
 - Motion tokens (theme-independent, on `:root`): `--dur-1/-2/-3` (120/180/300ms) +
   `--ease-out`/`--ease-standard`. One shared vocabulary for the travelling title
   (shared `view-transition-name`) and crafted link underline; every path has a

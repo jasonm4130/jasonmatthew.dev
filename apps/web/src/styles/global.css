@@ -42,7 +42,10 @@
   --coral: #b83c1c;
   --body2: #332e25;
   --muted: #635e54;
-  --faint: #8f8779;
+  /* --faint is tuned to clear WCAG AA 4.5:1 on both paper and surface, in both
+     themes (dark twin below) — enforced by scripts/check-contrast.mjs. Don't
+     lower the contrast without re-checking the gate. */
+  --faint: #6d6557;
   --hair: rgba(198, 187, 166, 0.55);
   --border: #e4ded0;
   --surface: #ece5d6;
@@ -76,7 +79,7 @@
   --coral: #ee6547;
   --body2: #d7d0c1;
   --muted: #a89f8d;
-  --faint: #7d7565;
+  --faint: #8d8575;
   --hair: rgba(125, 115, 95, 0.32);
   --border: #332e23;
   --surface: #211d17;
@@ -93,7 +96,7 @@
     --coral: #ee6547;
     --body2: #d7d0c1;
     --muted: #a89f8d;
-    --faint: #7d7565;
+    --faint: #8d8575;
     --hair: rgba(125, 115, 95, 0.32);
     --border: #332e23;
     --surface: #211d17;

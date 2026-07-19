@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// WCAG contrast gate for the single coral accent.
+// WCAG contrast gate for the notebook text tokens.
 //
-// Coral carries body-link text, nav labels, numeric markers, and section labels,
-// so it must clear WCAG AA (4.5:1) for normal text against paper in BOTH themes —
-// not merely the 3:1 non-text threshold. This script parses the coral + paper
-// tokens straight out of global.css (the single source of truth) and fails the
-// build if either pairing regresses, so a token edit can't silently ship an
-// inaccessible accent.
+// The secondary-text tokens (the coral accent, muted, faint) all carry real body
+// text — links, nav/section labels, numeric markers, dates, meta, descriptions,
+// footer — so each must clear WCAG AA (4.5:1) for normal text against every surface
+// it sits on (paper AND the card/callout surface), in BOTH themes — not merely the
+// 3:1 non-text threshold. This script parses those tokens straight out of global.css
+// (the single source of truth) and fails the build if any pairing regresses, so a
+// token edit can't silently ship inaccessible text.
 //
 // Dependency-free (no runner needed). Wired into apps/web's `build` and `deploy`
 // scripts via `node ../../scripts/check-contrast.mjs &&`, and resolves the CSS
@@ -66,30 +67,39 @@ const css = readFileSync(CSS_PATH, 'utf8');
 const lightBody = ruleBody(css, /:root\s*\{/);
 const darkBody = ruleBody(css, /:root\[data-theme=['"]dark['"]\]\s*\{/);
 
-const pairs = [
-  { theme: 'light', coral: readToken(lightBody, 'coral'), paper: readToken(lightBody, 'paper') },
-  { theme: 'dark', coral: readToken(darkBody, 'coral'), paper: readToken(darkBody, 'paper') },
+const themes = [
+  { theme: 'light', body: lightBody },
+  { theme: 'dark', body: darkBody },
 ];
+// Foreground text tokens that must stay legible, and the backgrounds they render on.
+const TEXT_TOKENS = ['coral', 'muted', 'faint'];
+const BG_TOKENS = ['paper', 'surface'];
 
 let failed = false;
-for (const { theme, coral, paper } of pairs) {
-  if (!coral || !paper) {
-    console.error(`✗ contrast: could not read --coral/--paper for ${theme} from ${CSS_PATH}`);
-    failed = true;
-    continue;
-  }
-  const ratio = contrastRatio(coral, paper);
-  const ok = ratio >= THRESHOLD;
-  const line = `${ok ? '✓' : '✗'} contrast ${theme}: coral ${coral} on paper ${paper} = ${ratio.toFixed(2)}:1 (need ≥ ${THRESHOLD}:1)`;
-  if (ok) console.log(line);
-  else {
-    console.error(line);
-    failed = true;
+for (const { theme, body } of themes) {
+  for (const fg of TEXT_TOKENS) {
+    const fgVal = readToken(body, fg);
+    for (const bg of BG_TOKENS) {
+      const bgVal = readToken(body, bg);
+      if (!fgVal || !bgVal) {
+        console.error(`✗ contrast: could not read --${fg}/--${bg} for ${theme} from ${CSS_PATH}`);
+        failed = true;
+        continue;
+      }
+      const ratio = contrastRatio(fgVal, bgVal);
+      const ok = ratio >= THRESHOLD;
+      const line = `${ok ? '✓' : '✗'} contrast ${theme}: ${fg} ${fgVal} on ${bg} ${bgVal} = ${ratio.toFixed(2)}:1 (need ≥ ${THRESHOLD}:1)`;
+      if (ok) console.log(line);
+      else {
+        console.error(line);
+        failed = true;
+      }
+    }
   }
 }
 
 if (failed) {
-  console.error('\nContrast gate failed — coral must clear WCAG AA on paper in both themes.');
+  console.error('\nContrast gate failed — coral/muted/faint must clear WCAG AA on paper and surface in both themes.');
   process.exit(1);
 }
 console.log('Contrast gate passed.');
