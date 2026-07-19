@@ -141,7 +141,7 @@ Motion is rationed and shares one vocabulary. Durations and easings live as toke
 | `--ease-out`      | `cubic-bezier(0.33, 1, 0.68, 1)` | enters / draws-in (decelerate)         |
 | `--ease-standard` | `cubic-bezier(0.4, 0, 0.2, 1)`   | symmetric state changes                |
 
-Two named interactions build on them:
+Four named interactions build on them:
 
 - **Travelling title** — a writing-list row title and the article `<h1>` it links to
   share a `view-transition-name` (`title-<slug>`, from the row's href / `post.id`), so
@@ -152,7 +152,19 @@ Two named interactions build on them:
   (`background-size: 100% 1px`) plus a coral layer that draws in left-to-right on hover
   (`0% → 100% 1.5px`) over `--dur-2 --ease-out`, text turning coral. Replaces a static
   `border-bottom`.
+- **Theme toggle** (`ThemeToggle.astro` + `global.css`) — the header icon morphs
+  sun/moon on a flip (rays retract + fade over `--dur-3`, a mask slides across the disc
+  to carve the crescent), driven off the token tri-state (explicit `data-theme`, else
+  system) so it always matches the palette. The palette change itself cross-dissolves
+  through a **scoped** view transition: `theme-toggle.js` flags `<html>` with `.theme-vt`
+  for the duration and `:root.theme-vt::view-transition-old/new(root)` runs a plain fade,
+  so a theme flip is a calm full-page crossfade rather than the page-nav slide.
+- **Ruled mobile menu** (`Nav.astro` + `global.css`) — the toggle is three right-aligned
+  marks that go coral and level to 20px on open; each menu row is a ruled line that draws
+  left-to-right (`scaleX 0` to `1`, staggered per-row `--d`) with the link settling onto
+  it (`opacity` + `translateY`) just after its rule is drawn.
 
 Every motion path has a `@media (prefers-reduced-motion: reduce)` guard: transitions
-drop to `none` (colour still changes), hover indents don't translate, and the
-`ClientRouter` skips the view-transition animation.
+drop to `none` (colour still changes), hover indents don't translate, the `ClientRouter`
+skips the view-transition animation, a theme flip snaps instantly (no crossfade), and the
+ruled menu rows appear already drawn.
