@@ -2,6 +2,9 @@
 import { Font } from 'astro:assets';
 import siteConfig from '@data/site-config';
 import '@/styles/global.css';
+// Inlined (not <script src>) so the pre-paint theme script costs no render-blocking
+// round-trip — it runs straight from the HTML, which also tightens the no-flash guard.
+import themeToggleSource from '../scripts/theme-toggle.js?raw';
 
 interface Props {
   title?: string;
@@ -84,7 +87,7 @@ const resolvedImage = resolveOgImage(Astro.url.pathname, image);
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<script is:inline src="/theme-toggle.js"></script>
+<script is:inline set:html={themeToggleSource} />
 <!-- Skopia analytics (self-hosted, cookieless) — app.skopia.dev -->
 <script
   is:inline
