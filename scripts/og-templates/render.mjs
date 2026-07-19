@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 
 const soraRegular = readFileSync(new URL('./fonts/Sora-Regular.ttf', import.meta.url));
 const soraBold = readFileSync(new URL('./fonts/Sora-Bold.ttf', import.meta.url));
+const libreRegular = readFileSync(new URL('./fonts/LibreBaskerville-Regular.ttf', import.meta.url));
+const libreBold = readFileSync(new URL('./fonts/LibreBaskerville-Bold.ttf', import.meta.url));
+const neonRegular = readFileSync(new URL('./fonts/MonaspaceNeon-Regular.ttf', import.meta.url));
 
 /**
  * Render a satori-html VNode to a PNG buffer.
@@ -19,6 +22,9 @@ export async function renderToPng(markup, { width = 1200, height = 630 } = {}) {
     fonts: [
       { name: 'Sora', data: soraRegular, weight: 400, style: 'normal' },
       { name: 'Sora', data: soraBold, weight: 700, style: 'normal' },
+      { name: 'Libre Baskerville', data: libreRegular, weight: 400, style: 'normal' },
+      { name: 'Libre Baskerville', data: libreBold, weight: 700, style: 'normal' },
+      { name: 'Monaspace Neon', data: neonRegular, weight: 400, style: 'normal' },
     ],
   });
   const resvg = new Resvg(svg, {

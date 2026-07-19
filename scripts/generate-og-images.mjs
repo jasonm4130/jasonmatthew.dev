@@ -63,7 +63,7 @@ async function generateOgImages() {
     const markup = blogTemplate({
       title: data.title,
       date: formatDate(data.publishDate),
-      tags: data.tags || [],
+      kind: data.kind,
     });
     const png = await renderToPng(markup);
     writePng(`og/blog/${slug}.png`, png);

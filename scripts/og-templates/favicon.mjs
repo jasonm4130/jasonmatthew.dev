@@ -1,51 +1,46 @@
 // scripts/og-templates/favicon.mjs
 import { html } from 'satori-html';
-import { readFileSync } from 'node:fs';
+import { PALETTE } from './notebook.mjs';
 
-const lettermarkSvg = readFileSync(new URL('../../apps/web/public/jm-lettermark.svg', import.meta.url), 'utf-8');
-const lettermarkDataUri = `data:image/svg+xml;base64,${Buffer.from(lettermarkSvg).toString('base64')}`;
+// "JM." monogram — the "Jason Matthew." wordmark distilled: ink on paper with the
+// coral dot. Sora Bold (the brand's sans wordmark face), legible down to 16px.
 
 /**
- * Favicon template — renders JM lettermark on dark background.
- * Used for favicon-512.png and apple-touch-icon.png (different sizes).
+ * Raster favicon (favicon-512.png, apple-touch-icon.png). Rendered via Satori.
  */
 export function faviconTemplate() {
+  const { paper, ink, coral } = PALETTE;
   return html`
     <div
-      style="display:flex;width:100%;height:100%;background:#121212;align-items:center;justify-content:center;border-radius:20%;"
+      style="display:flex;width:100%;height:100%;background:${paper};align-items:center;justify-content:center;border-radius:22%;font-family:'Sora';"
     >
-      <img src="${lettermarkDataUri}" width="70%" height="70%" />
+      <span style="display:flex;color:${ink};font-size:250px;font-weight:700;letter-spacing:-8px;"
+        >JM<span style="color:${coral};">.</span></span
+      >
     </div>
   `;
 }
 
 /**
- * Generate favicon.svg with prefers-color-scheme support.
- * Returns raw SVG string (not rendered via Satori — needs media query).
+ * Adaptive favicon.svg — same "JM." mark, colours flip with prefers-color-scheme.
+ * Hand-written (not Satori) so the media query survives; text uses a system sans
+ * fallback since favicon SVGs don't load @font-face faces.
  */
 export function faviconSvgContent() {
-  // Extract just the SVG content (paths) from the lettermark
-  // Wrap in an SVG with background rect that responds to color scheme
+  const { paper, ink, coral } = PALETTE;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <style>
-    rect { fill: #121212; }
-    .mark { fill: #f0f0f0; }
-    @media (prefers-color-scheme: light) {
-      rect { fill: #faf8f5; }
-      .mark { fill: #111111; }
+    .bg { fill: ${paper}; }
+    .fg { fill: ${ink}; }
+    .dot { fill: ${coral}; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: ${ink}; }
+      .fg { fill: ${paper}; }
     }
   </style>
-  <rect width="512" height="512" rx="102" ry="102"/>
-  <g class="mark" transform="translate(76, 76) scale(0.7)">
-    ${extractPaths(lettermarkSvg)}
-  </g>
+  <rect class="bg" width="512" height="512" rx="110" ry="110"/>
+  <text class="fg" x="248" y="256" text-anchor="middle" dominant-baseline="central"
+        font-family="'Sora', 'Helvetica Neue', Arial, sans-serif" font-weight="700"
+        font-size="250" letter-spacing="-8">JM<tspan class="dot">.</tspan></text>
 </svg>`;
-}
-
-/**
- * Extract <path> and <g> elements from an SVG string.
- */
-function extractPaths(svgString) {
-  const match = svgString.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
-  return match ? match[1].replace(/fill="[^"]*"/g, '') : '';
 }
