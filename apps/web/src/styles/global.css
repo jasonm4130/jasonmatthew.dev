@@ -920,39 +920,75 @@
   translate: 0 0;
 }
 
-/* ─── Lightbulb Toggle ─────────────────────────────────────── */
+/* ─── Theme Toggle (sun ↔ moon) ────────────────────────────── */
 
-/* Lit (coral-filled) bulb in light; hollow in dark — mirrors the token
-   tri-state so the icon matches the effective theme, system-dark included. */
-.bulb-fill {
-  fill: var(--coral);
-  transition: fill 0.4s ease;
+/* Sun in light, moon in dark — mirrors the token tri-state (explicit
+   data-theme, else system) so the icon matches the effective theme. On a
+   flip the rays retract + fade and a mask slides across the disc to carve
+   the crescent; the page palette cross-dissolves via the .theme-vt view
+   transition below. */
+.icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  overflow: visible;
 }
 
-:root[data-theme='dark'] .bulb-fill {
-  fill: transparent;
+.icon .rays {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  transition:
+    transform var(--dur-3) var(--ease-out),
+    opacity var(--dur-2) var(--ease-standard);
+}
+
+.icon .rays line {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.icon .core {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(1);
+  transition: transform var(--dur-3) var(--ease-out);
+}
+
+.icon .moon-cut {
+  transform: translateX(9px);
+  transition: transform var(--dur-3) var(--ease-out);
+}
+
+/* dark = moon: rays gone, crescent carved, disc a touch larger */
+:root[data-theme='dark'] .icon .rays {
+  opacity: 0;
+  transform: scale(0.35) rotate(-45deg);
+}
+
+:root[data-theme='dark'] .icon .moon-cut {
+  transform: translateX(0);
+}
+
+:root[data-theme='dark'] .icon .core {
+  transform: scale(1.05);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .bulb-fill {
-    fill: transparent;
+  :root:not([data-theme='light']) .icon .rays {
+    opacity: 0;
+    transform: scale(0.35) rotate(-45deg);
   }
-}
 
-@keyframes glowPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgb(from var(--coral) r g b / 0.4);
+  :root:not([data-theme='light']) .icon .moon-cut {
+    transform: translateX(0);
   }
-  50% {
-    box-shadow: 0 0 12px 4px rgb(from var(--coral) r g b / 0.2);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgb(from var(--coral) r g b / 0);
-  }
-}
 
-.theme-toggle.glow {
-  animation: glowPulse 0.6s ease-out;
+  :root:not([data-theme='light']) .icon .core {
+    transform: scale(1.05);
+  }
 }
 
 /* ─── Hero Entrance ────────────────────────────────────────── */
@@ -1001,6 +1037,29 @@
   animation: slideInUp 0.25s ease-out both;
 }
 
+/* Theme toggle uses its own view transition: a calm full-page cross-dissolve,
+   not the page-nav slide. The toggle handler flags <html> with `.theme-vt` for
+   the duration; the higher specificity here wins over the slide above. */
+@keyframes themeFadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes themeFadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+:root.theme-vt::view-transition-old(root) {
+  animation: themeFadeOut var(--dur-3) var(--ease-standard) both;
+}
+
+:root.theme-vt::view-transition-new(root) {
+  animation: themeFadeIn var(--dur-3) var(--ease-standard) both;
+}
+
 /* ─── Nav Link Animated Underline ──────────────────────────── */
 
 .nav-link-underline {
@@ -1029,49 +1088,87 @@
 }
 
 .mobile-menu.is-open {
-  max-height: 20rem;
+  max-height: 24rem;
   opacity: 1;
 }
 
-/* ─── Mobile Menu Nav Link Overrides ─────────────────────── */
+/* ─── Mobile Menu Ruled Rows ─────────────────────────────── */
 
-.mobile-menu .nav-link-underline {
-  font-size: 1rem;
-  letter-spacing: 0.025em;
+/* Each item is a ruled line that draws left→right, staggered like ruling a
+   page, with the link settling onto it just after its rule is drawn. */
+.rrow {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  height: 46px;
+  padding-bottom: 10px;
+  text-decoration: none;
 }
 
-/* ─── Hamburger → X Animation ────────────────────────────── */
-
-.hamburger-bar {
-  position: absolute;
-  display: block;
-  width: 18px;
-  height: 2px;
-  background: currentColor;
-  border-radius: 1px;
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.hamburger-bar:nth-child(1) {
-  transform: translateY(-6px);
-}
-
-.hamburger-bar:nth-child(3) {
-  transform: translateY(6px);
-}
-
-[aria-expanded='true'] .hamburger-bar:nth-child(1) {
-  transform: rotate(45deg);
-}
-
-[aria-expanded='true'] .hamburger-bar:nth-child(2) {
+.rrow .lk {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--body2);
   opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    transform var(--dur-3) var(--ease-out);
 }
 
-[aria-expanded='true'] .hamburger-bar:nth-child(3) {
-  transform: rotate(-45deg);
+.rrow.rss .lk {
+  color: var(--coral);
+}
+
+.rrow .rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: var(--border);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.46s var(--ease-out);
+}
+
+.rrow.active .rule,
+.rrow.rss .rule {
+  background: var(--coral);
+}
+
+/* On open, the rule draws then the link settles; --d staggers each row. */
+.mobile-menu.is-open .rrow .rule {
+  transform: scaleX(1);
+  transition-delay: var(--d, 0ms);
+}
+
+.mobile-menu.is-open .rrow .lk {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(var(--d, 0ms) + 150ms);
+}
+
+.mobile-menu-inner .rrow:nth-child(1) {
+  --d: 40ms;
+}
+
+.mobile-menu-inner .rrow:nth-child(2) {
+  --d: 110ms;
+}
+
+.mobile-menu-inner .rrow:nth-child(3) {
+  --d: 180ms;
+}
+
+.mobile-menu-inner .rrow:nth-child(4) {
+  --d: 250ms;
+}
+
+.mobile-menu-inner .rrow:nth-child(5) {
+  --d: 320ms;
 }
 
 /* ─── Reduced Motion ───────────────────────────────────────── */
@@ -1093,8 +1190,11 @@
     transition: none;
   }
 
-  .theme-toggle.glow {
-    animation: none;
+  /* Toggle icon: hold whichever state (sun/moon) is active, no morph. */
+  .icon .rays,
+  .icon .core,
+  .icon .moon-cut {
+    transition: none;
   }
 
   .nav-link-underline {
@@ -1115,7 +1215,15 @@
     transition: none;
   }
 
-  .hamburger-bar {
+  /* Ruled rows resolve instantly — no draw, no settle. */
+  .rrow .rule {
+    transform: scaleX(1);
+    transition: none;
+  }
+
+  .rrow .lk {
+    opacity: 1;
+    transform: none;
     transition: none;
   }
 }

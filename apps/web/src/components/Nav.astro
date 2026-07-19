@@ -24,14 +24,14 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
       <button
         id="mobile-menu-toggle"
         type="button"
-        class="hamburger"
+        class="rule-menu"
         aria-label="Toggle menu"
         aria-expanded="false"
         aria-controls="mobile-menu"
       >
-        <span class="hamburger-bar" aria-hidden="true"></span>
-        <span class="hamburger-bar" aria-hidden="true"></span>
-        <span class="hamburger-bar" aria-hidden="true"></span>
+        <span class="mk" aria-hidden="true"></span>
+        <span class="mk" aria-hidden="true"></span>
+        <span class="mk" aria-hidden="true"></span>
       </button>
     </div>
   </div>
@@ -39,12 +39,16 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
     <div class="shell mobile-menu-inner">
       {
         siteConfig.headerNavLinks.map((link) => (
-          <a href={link.href} class:list={['nl', { active: isActive(link.href) }]}>
-            {link.text}
+          <a href={link.href} class:list={['rrow', { active: isActive(link.href) }]}>
+            <span class="lk">{link.text}</span>
+            <span class="rule" aria-hidden="true" />
           </a>
         ))
       }
-      <a href="/rss.xml" class="nl rss">RSS</a>
+      <a href="/rss.xml" class="rrow rss">
+        <span class="lk">RSS</span>
+        <span class="rule" aria-hidden="true"></span>
+      </a>
     </div>
   </div>
 </nav>
@@ -105,23 +109,61 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
     color: var(--coral);
   }
 
-  .hamburger {
+  /* Three right-aligned ruled marks; on open they go coral and level to 20px. */
+  .rule-menu {
     position: relative;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-end;
     justify-content: center;
+    gap: 4px;
     height: 2.25rem;
     width: 2.25rem;
+    padding: 0 3px;
     color: var(--muted);
     background: none;
     border: 0;
     cursor: pointer;
   }
 
+  .rule-menu:hover {
+    color: var(--ink);
+  }
+
+  .rule-menu .mk {
+    height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+    transition:
+      width var(--dur-3) var(--ease-out),
+      background var(--dur-2) ease;
+  }
+
+  .rule-menu .mk:nth-child(1) {
+    width: 20px;
+  }
+
+  .rule-menu .mk:nth-child(2) {
+    width: 14px;
+  }
+
+  .rule-menu .mk:nth-child(3) {
+    width: 17px;
+  }
+
+  .rule-menu[aria-expanded='true'] {
+    color: var(--coral);
+  }
+
+  .rule-menu[aria-expanded='true'] .mk {
+    width: 20px;
+    background: var(--coral);
+  }
+
   /* Scoped `display: flex` above outweighs Tailwind's `sm:hidden` utility, so the
      desktop hide must live here too (mirrors `.nav-links`' `hidden sm:flex`). */
   @media (min-width: 640px) {
-    .hamburger {
+    .rule-menu {
       display: none;
     }
   }
@@ -129,13 +171,16 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
   .mobile-menu-inner {
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    padding-top: 20px;
-    padding-bottom: 24px;
+    padding-top: 12px;
+    padding-bottom: 20px;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .nl {
+      transition: none;
+    }
+
+    .rule-menu .mk {
       transition: none;
     }
   }
