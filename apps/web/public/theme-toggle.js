@@ -1,6 +1,7 @@
 (function () {
   var STORAGE_KEY = 'theme';
   var darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  var reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function getStoredTheme() {
     return typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
@@ -37,20 +38,35 @@
     }
   }
 
+  // Commit an explicit choice: persist it, reflect it on the attribute + button.
+  function applyChoice(next) {
+    localStorage.setItem(STORAGE_KEY, next);
+    document.documentElement.setAttribute('data-theme', next);
+    reflectPressed();
+  }
+
   function setupThemeToggle() {
     var toggle = document.getElementById('theme-toggle');
     if (!toggle) return;
     reflectPressed();
     toggle.addEventListener('click', function () {
       var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
-      localStorage.setItem(STORAGE_KEY, next);
-      document.documentElement.setAttribute('data-theme', next);
-      reflectPressed();
-      if (next === 'light') {
-        toggle.classList.remove('glow');
-        void toggle.offsetWidth;
-        toggle.classList.add('glow');
+      var root = document.documentElement;
+      // Calm full-page cross-dissolve via a scoped view transition (see the
+      // .theme-vt rules in global.css); the sun/moon icon morphs live over the
+      // top. Snap instantly where view transitions are unavailable or the
+      // visitor prefers reduced motion.
+      if (!document.startViewTransition || reduceQuery.matches) {
+        applyChoice(next);
+        return;
       }
+      root.classList.add('theme-vt');
+      var transition = document.startViewTransition(function () {
+        applyChoice(next);
+      });
+      transition.finished.finally(function () {
+        root.classList.remove('theme-vt');
+      });
     });
   }
 
