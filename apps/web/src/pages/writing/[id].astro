@@ -207,7 +207,16 @@ function host(url: string): string {
   // Scroll-spy for the TOC (the reading-progress bar is pure CSS). Recomputes the
   // active section from heading positions on each observer trigger — cheap and
   // reliable. Re-armed on astro:page-load so it survives View Transitions.
+  let tocObserver: IntersectionObserver | null = null;
+
   function setupArticleToc() {
+    // The client router fires astro:page-load on every navigation and the module runs
+    // once, so this persists: disconnect the previous page's observer before making a
+    // new one, or a long article→article session leaks observers (and the detached
+    // headings they retain).
+    tocObserver?.disconnect();
+    tocObserver = null;
+
     const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.toc-link'));
     const heads = Array.from(document.querySelectorAll<HTMLElement>('.art-prose h2[id]'));
     if (!links.length || !heads.length) return;
@@ -227,6 +236,7 @@ function host(url: string): string {
       { rootMargin: '-140px 0px 0px 0px', threshold: [0, 1] },
     );
     heads.forEach((h) => observer.observe(h));
+    tocObserver = observer;
   }
 
   document.addEventListener('astro:page-load', setupArticleToc);
