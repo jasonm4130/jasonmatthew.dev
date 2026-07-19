@@ -17,6 +17,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo test --filter=@jasonmatthew/web
       - run: pnpm turbo build --filter=@jasonmatthew/web
       - run: pnpm --filter @jasonmatthew/web exec wrangler deploy
         env:

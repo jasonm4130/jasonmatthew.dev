@@ -59,17 +59,10 @@ const dialogId = `diagram-dialog-${name}`;
 <style>
   /* ── Inline preview ───────────────────────────── */
 
+  /* Inherits --color-bg/-fg/-accent/-muted from the global tokens, which flip
+     for explicit and system dark alike — no local theme override needed. */
   .diagram {
     margin: 2rem 0;
-    --color-bg: #faf8f5;
-    --color-fg: #111111;
-    --color-accent: #e8553d;
-    --color-muted: #6b6b6b;
-  }
-  :global(.dark) .diagram {
-    --color-bg: #121212;
-    --color-fg: #f0f0f0;
-    --color-muted: #9a9a9a;
   }
 
   @media (min-width: 1024px) {
@@ -134,16 +127,7 @@ const dialogId = `diagram-dialog-${name}`;
     border: 0;
     background: var(--color-bg);
     color: var(--color-fg);
-    --color-bg: #faf8f5;
-    --color-fg: #111111;
-    --color-accent: #e8553d;
-    --color-muted: #6b6b6b;
     flex-direction: column;
-  }
-  :global(.dark) .diagram-dialog {
-    --color-bg: #121212;
-    --color-fg: #f0f0f0;
-    --color-muted: #9a9a9a;
   }
   .diagram-dialog::backdrop {
     background: rgba(0, 0, 0, 0.85);

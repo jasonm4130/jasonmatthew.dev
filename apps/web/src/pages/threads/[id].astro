@@ -1,0 +1,244 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Breadcrumb from '@components/notebook/Breadcrumb.astro';
+import RailNote from '@components/notebook/RailNote.astro';
+import ThreadPieceRow from '@components/notebook/ThreadPieceRow.astro';
+import ProjectRow from '@components/notebook/ProjectRow.astro';
+import { getContentGraph, THREADS } from '@utils/content-graph-astro';
+
+export const getStaticPaths = (() => {
+  return THREADS.map((thread) => ({ params: { id: thread.slug }, props: { thread } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { thread } = Astro.props as Props;
+
+const graph = await getContentGraph();
+const members = graph.threadMembers(thread.slug); // published, newest first, mixed
+const pieces = members.filter((m) => m.collection === 'blog');
+const shipped = graph.projects.filter((p) => p.threads.includes(thread.slug)); // sortOrder order
+
+const shortDate = (d: Date) => d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short' });
+
+function dateRange(entries: { publishDate: Date }[]): string {
+  if (!entries.length) return '';
+  const times = entries.map((e) => e.publishDate.getTime());
+  const min = new Date(Math.min(...times));
+  const max = new Date(Math.max(...times));
+  const mo = (d: Date) => d.toLocaleDateString('en-AU', { month: 'short' });
+  if (min.getFullYear() !== max.getFullYear()) return `${min.getFullYear()}–${max.getFullYear()}`;
+  return min.getMonth() === max.getMonth()
+    ? `${mo(max)} ${max.getFullYear()}`
+    : `${mo(min)}–${mo(max)} ${max.getFullYear()}`;
+}
+
+const memberThreadSlugs = new Set(members.flatMap((m) => m.threads));
+const adjacent = THREADS.filter((t) => t.slug !== thread.slug && memberThreadSlugs.has(t.slug));
+const crossCount = members.filter((m) => m.threads.length > 1).length;
+const adjacentNote =
+  adjacent.length > 0
+    ? `${crossCount} ${crossCount === 1 ? 'piece' : 'pieces'} here also live in ${adjacent.map((t) => t.title).join(' and ')}.`
+    : '';
+---
+
+<BaseLayout title={thread.title} description={thread.description} width="wide">
+  <div class="shell">
+    <Breadcrumb class="crumb-gap" items={[{ label: 'Threads', href: '/threads' }, { label: thread.title }]} />
+    <div class="nb-grid">
+      <div class="nb-rail">
+        <RailNote marker="Thread" annotation={thread.blurb} />
+      </div>
+      <div class="nb-body">
+        <div class="th-kicker">Thread</div>
+        <h1 class="th-title">{thread.title}</h1>
+        <p class="th-desc">{thread.description}</p>
+        <div class="th-meta">
+          <span><span class="hot">{pieces.length}</span> {pieces.length === 1 ? 'piece' : 'pieces'}</span>
+          {
+            shipped.length > 0 && (
+              <span>
+                <span class="hot">{shipped.length}</span> shipped
+              </span>
+            )
+          }
+          <span>{dateRange(members)}</span>
+          <span>newest first</span>
+        </div>
+      </div>
+
+      <div class="nb-rail">
+        <RailNote num="/01" label="Pieces" annotation={`${pieces.length} so far.`} />
+      </div>
+      <div class="nb-body">
+        {
+          pieces.map((piece) => {
+            const also = graph.crossThreads(piece, thread.slug)[0];
+            return (
+              <ThreadPieceRow
+                href={piece.href}
+                date={shortDate(piece.publishDate)}
+                title={piece.title}
+                cross={also ? `also ${also.title}` : undefined}
+              />
+            );
+          })
+        }
+      </div>
+
+      {
+        shipped.length > 0 && (
+          <>
+            <div class="nb-rail">
+              <RailNote num="/02" label="Shipped here" annotation="What the write-ups run on." />
+            </div>
+            <div class="nb-body">
+              {shipped.map((project) => (
+                <ProjectRow
+                  title={project.title}
+                  href={project.href}
+                  tech={project.technologies}
+                  status={project.liveUrl ? 'live' : 'shipped'}
+                />
+              ))}
+            </div>
+          </>
+        )
+      }
+
+      {
+        adjacent.length > 0 && (
+          <>
+            <div class="nb-rail">
+              <RailNote num={shipped.length > 0 ? '/03' : '/02'} label="Adjacent" annotation="Where threads overlap." />
+            </div>
+            <div class="nb-body">
+              <p class="adj-note">{adjacentNote}</p>
+              {adjacent.map((t) => (
+                <a href={`/threads/${t.slug}`} class="adj-row">
+                  <span class="adj-l">
+                    <span class="tiname">{t.title} &rarr;</span>
+                    <span class="tidesc">{t.blurb}</span>
+                  </span>
+                  <span class="tin">{graph.threadCount(t.slug)}</span>
+                </a>
+              ))}
+            </div>
+          </>
+        )
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .crumb-gap {
+    display: block;
+    padding: 20px 0 0;
+  }
+
+  .th-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+
+  .th-title {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: clamp(1.85rem, 4vw, 2.5rem);
+    letter-spacing: -0.022em;
+    line-height: 1.08;
+    margin: 15px 0 0;
+    color: var(--ink);
+  }
+
+  .th-desc {
+    font-family: var(--font-serif);
+    font-size: 1.04rem;
+    color: var(--body2);
+    line-height: 1.6;
+    margin: 18px 0 0;
+    max-width: 54ch;
+  }
+
+  .th-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 18px;
+    margin: 22px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--faint);
+  }
+
+  .th-meta .hot {
+    color: var(--coral);
+  }
+
+  .adj-note {
+    font-family: var(--font-serif);
+    font-size: 0.93rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin: 0 0 14px;
+    max-width: 56ch;
+  }
+
+  .adj-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--ink);
+    max-width: 440px;
+    text-decoration: none;
+    transition: padding-left 0.18s ease;
+  }
+
+  .adj-row:hover {
+    padding-left: 6px;
+  }
+
+  .adj-l {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .adj-row .tiname {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    transition: color 0.18s ease;
+  }
+
+  .adj-row:hover .tiname {
+    color: var(--coral);
+  }
+
+  .adj-row .tidesc {
+    font-family: var(--font-serif);
+    font-size: 0.79rem;
+    color: var(--faint);
+    line-height: 1.4;
+  }
+
+  .adj-row .tin {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--faint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .adj-row,
+    .adj-row .tiname {
+      transition: none;
+    }
+  }
+</style>

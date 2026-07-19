@@ -1,0 +1,23 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Full pre-merge gate: `turbo build` depends on `test`, so this runs the
+      # component + publish-state suites AND the content-graph gate, the contrast
+      # gate, `astro check`, and a production build. A broken thread/series/related
+      # ref, a typecheck error, or a build failure fails the PR here rather than
+      # surfacing only in the scheduled deployment.
+      - run: pnpm turbo build --filter=@jasonmatthew/web

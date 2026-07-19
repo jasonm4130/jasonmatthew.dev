@@ -1,38 +1,127 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* `dark:` utilities resolve only on an explicit dark choice. System-dark for a
+   visitor with no saved choice is handled by the token media query below (which
+   repaints the palette), not by `dark:` utilities — the site is token-driven,
+   so no markup uses `dark:` anyway. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/* ─── Design Tokens ─────────────────────────────────────────── */
+/* ─── Design Tokens (annotated-notebook palette) ────────────── */
+/* Two-layer pattern: raw palette on :root / [data-theme='dark'] (plus a system
+   tri-state twin so a visitor with no saved choice tracks OS light/dark live),
+   then re-exported to Tailwind via `@theme inline` so utilities AND hand-authored
+   `var(--…)` CSS read the same variables. Light coral is AA-safe (#b83c1c on
+   paper = 4.95:1; dark #ee6547 on #191611 = 5.66:1); scripts/check-contrast.mjs
+   guards both at build. The two dark blocks MUST stay in sync. */
 
 :root {
-  --color-bg: #faf8f5;
-  --color-fg: #111111;
-  --color-accent: #e8553d;
-  --color-muted: #6b6b6b;
-  --color-border: #e0ddd8;
-  --color-surface: #f0ede8;
+  color-scheme: light dark;
+
+  /* fonts — resolve to the Astro Fonts API stacks (self-hosted, with
+     metric-matched fallbacks baked in by the fonts pipeline) */
+  --font-sans: var(--font-sora);
+  --font-serif: var(--font-libre);
+  --font-mono: var(--font-mono-neon);
+  /* code face — Monaspace Krypton, the "mechanical" family member, used only by
+     article code frames (Expressive Code) + inline `code`; Neon stays UI mono */
+  --font-mono-code: var(--font-mono-krypton);
+
+  /* motion — one scale, theme-independent. Enters/reveals use --ease-out; in-place
+     state changes use --ease-standard. Capped at 300ms (the Kowalski/Apple/Material
+     "alive but not slow" band) so nothing lags the reading. */
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 300ms;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* notebook palette — light */
+  --paper: #f4efe4;
+  --ink: #100d06;
+  --coral: #b83c1c;
+  --body2: #332e25;
+  --muted: #635e54;
+  --faint: #8f8779;
+  --hair: rgba(198, 187, 166, 0.55);
+  --border: #e4ded0;
+  --surface: #ece5d6;
+  /* code surface — inline `code`, callouts; EC bakes its own syntax palette
+     (the warm "Krypton" theme) in src/lib/krypton-theme.ts, its single source */
+  --code-bg: #ece6d9;
+  --code-fg: #2a251c;
+
+  /* back-compat aliases — existing components read these; they follow the
+     notebook vars, so a single token edit repaints the whole site */
+  --color-bg: var(--paper);
+  --color-fg: var(--ink);
+  --color-accent: var(--coral);
+  --color-body2: var(--body2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-hair: var(--hair);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
 }
 
-.dark {
-  --color-bg: #121212;
-  --color-fg: #f0f0f0;
-  --color-accent: #e8553d;
-  --color-muted: #9a9a9a;
-  --color-border: #2a2a2a;
-  --color-surface: #1c1c1c;
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* notebook palette — dark (explicit choice) */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #191611;
+  --ink: #ece6d9;
+  --coral: #ee6547;
+  --body2: #d7d0c1;
+  --muted: #a89f8d;
+  --faint: #7d7565;
+  --hair: rgba(125, 115, 95, 0.32);
+  --border: #332e23;
+  --surface: #211d17;
+  --code-bg: #12100b;
+  --code-fg: #d7d0c1;
+}
+
+/* notebook palette — dark (system preference, no explicit choice).
+   Values MUST match the [data-theme='dark'] block above. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #191611;
+    --ink: #ece6d9;
+    --coral: #ee6547;
+    --body2: #d7d0c1;
+    --muted: #a89f8d;
+    --faint: #7d7565;
+    --hair: rgba(125, 115, 95, 0.32);
+    --border: #332e23;
+    --surface: #211d17;
+    --code-bg: #12100b;
+    --code-fg: #d7d0c1;
+  }
 }
 
 @theme inline {
-  --font-sans: 'Sora', system-ui, sans-serif;
-  --font-serif: 'Libre Baskerville', 'Georgia', serif;
-  --font-mono: 'Monaspace Neon', 'Fira Code', monospace;
-  --color-bg: var(--color-bg);
-  --color-fg: var(--color-fg);
-  --color-accent: var(--color-accent);
-  --color-muted: var(--color-muted);
-  --color-border: var(--color-border);
-  --color-surface: var(--color-surface);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  /* notebook semantic colours (utilities: bg-paper, text-ink, text-coral, …) */
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-coral: var(--coral);
+  --color-body2: var(--body2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-hair: var(--hair);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
+
+  /* back-compat colour utilities */
+  --color-bg: var(--paper);
+  --color-fg: var(--ink);
+  --color-accent: var(--coral);
 }
 
 /* ─── Responsive Images (Astro layout, TW4 compat) ─────────── */
@@ -50,6 +139,56 @@
 [data-astro-image='full-width'] {
   width: 100%;
   height: auto;
+}
+
+/* ─── Notebook Layout Scaffolding ──────────────────────────── */
+/* The 1060px shell + 158px-rail/1fr-body grid the page specimens repeat inline.
+   The Stage-B primitives (RailNote, PageHead, rows) supply the cell *content*;
+   these classes are the shell + two-column scaffold the notebook pages compose
+   inside a BaseLayout rendered with width="wide". Collapses to one column at the
+   760px breakpoint the specimens use. */
+
+.shell {
+  max-width: 1060px;
+  margin-inline: auto;
+  padding-inline: 40px;
+}
+
+.nb-grid {
+  display: grid;
+  grid-template-columns: 158px 1fr;
+}
+
+.nb-rail {
+  text-align: right;
+  padding: 40px 30px 40px 0;
+}
+
+.nb-body {
+  border-left: 1px solid var(--border);
+  padding: 40px 0 42px 34px;
+  /* keep long, unbreakable content (code, URLs) from blowing out the grid track */
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .shell {
+    padding-inline: 22px;
+  }
+
+  .nb-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nb-rail {
+    text-align: left;
+    padding: 26px 0 0 0;
+  }
+
+  .nb-body {
+    border-left: 0;
+    padding: 12px 0 30px 0;
+  }
 }
 
 /* ─── Base Styles ───────────────────────────────────────────── */
@@ -167,31 +306,587 @@
   opacity: 1;
 }
 
-/* ─── Shiki Syntax Highlighting ────────────────────────────── */
+/* Code highlighting is owned by Expressive Code (the warm "Krypton" theme, wired in
+   astro.config.mjs) — its styles ship in a generated stylesheet, so there is no
+   `.shiki` CSS here. */
 
-pre.shiki {
-  background-color: var(--shiki-light-bg, var(--color-surface)) !important;
+/* ─── Article Template ─────────────────────────────────────── */
+/* The three-zone reading layout from the article specimen: a sticky TOC rail, the
+   serif reading column, and a Tufte sidenote gutter (the 236px right pad the
+   sidenotes float into). The prose treatment is scoped to `.art-prose` so the
+   project/static/tag `.prose` surfaces keep the Tailwind-typography base untouched. */
+
+/* Reading-progress bar — pure CSS scroll-timeline, no JS. Invisible where
+   unsupported (stays scaleX(0)); hidden entirely under reduced motion. */
+.progbar {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 60;
+  height: 2px;
+  width: 100%;
+  background: var(--coral);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+@supports (animation-timeline: scroll()) {
+  .progbar {
+    animation: article-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+@keyframes article-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
-.shiki span {
-  color: var(--shiki-light);
-  background-color: transparent;
+.art {
+  max-width: 1080px;
+  margin-inline: auto;
+  padding-inline: 40px;
 }
 
-.dark pre.shiki {
-  background-color: var(--shiki-dark-bg, var(--color-surface)) !important;
+.art-grid {
+  display: grid;
+  grid-template-columns: 176px 1fr;
 }
 
-.dark .shiki span {
-  color: var(--shiki-dark);
-  background-color: transparent;
+.art-toc {
+  position: sticky;
+  top: 82px;
+  align-self: start;
+  text-align: right;
+  padding: 54px 30px 0 0;
+}
+
+.toc-meta {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  line-height: 1.95;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.toc-meta .kd {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--coral);
+}
+
+.toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.toc-link {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--faint);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.toc-link:hover {
+  color: var(--muted);
+}
+
+.toc-link.active {
+  color: var(--ink);
+}
+
+.toc-link .tn {
+  margin-left: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--coral);
+}
+
+.art-body {
+  min-width: 0;
+  padding: 54px 0 0 40px;
+  border-left: 1px solid var(--border);
+}
+
+/* One shared right-inset for the sidenote gutter; a-nav lives inside a-foot and
+   inherits it, so it must NOT double the pad. */
+.art-head,
+.art-prose,
+.a-foot {
+  padding-right: 236px;
+}
+
+/* No footnotes → no gutter to reserve. Drop the right inset and narrow `.art` by the
+   gutter width so the reading column (TOC + prose) stays a centred, balanced unit
+   rather than leaving an empty right margin. The gutter returns automatically the
+   moment an article uses `[^n]` (remark-sidenotes sets `has-notes`). */
+.art:not(.has-notes) {
+  max-width: 844px;
+}
+
+.art:not(.has-notes) :is(.art-head, .art-prose, .a-foot) {
+  padding-right: 0;
+}
+
+.a-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+.a-kicker .kind {
+  color: var(--coral);
+}
+
+.a-title {
+  margin: 18px 0 0;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: clamp(1.95rem, 3.6vw, 2.65rem);
+  line-height: 1.18;
+  letter-spacing: -0.016em;
+}
+
+.a-stand {
+  margin: 22px 0 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.07rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.a-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 13px;
+  margin: 24px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--faint);
+}
+
+.a-meta .sep {
+  color: var(--border);
+}
+
+/* Article prose — scoped so it never reaches project/static/tag .prose. Element
+   rules use :where() so they sit at .prose's specificity and win by source order. */
+.art-prose {
+  margin-top: 38px;
+  counter-reset: h2c;
+}
+
+.art-prose :where(p) {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  line-height: 1.78;
+  color: var(--ink);
+}
+
+/* Crafted underline: a persistent faint coral rule keeps links discoverable at rest
+   (they share the body ink colour), while a full-strength coral underline draws in
+   from the left on hover. Two stacked background gradients, animated via background-size
+   (matches .nav-link-underline and follows line-wraps) — no reflow, no layout cost. */
+.art-prose :where(a) {
+  color: var(--ink);
+  text-decoration: none;
+  background-image:
+    linear-gradient(var(--coral), var(--coral)),
+    linear-gradient(
+      color-mix(in srgb, var(--coral) 42%, var(--paper)),
+      color-mix(in srgb, var(--coral) 42%, var(--paper))
+    );
+  background-repeat: no-repeat;
+  background-position:
+    0 100%,
+    0 100%;
+  background-size:
+    0% 1.5px,
+    100% 1px;
+  padding-bottom: 1px;
+  transition:
+    color var(--dur-2) var(--ease-standard),
+    background-size var(--dur-2) var(--ease-out);
+}
+
+.art-prose :where(a):hover {
+  color: var(--coral);
+  background-size:
+    100% 1.5px,
+    100% 1px;
+}
+
+.art-prose :where(h2) {
+  position: relative;
+  margin: 50px 0 0;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  letter-spacing: -0.016em;
+  scroll-margin-top: 90px;
+  counter-increment: h2c;
+}
+
+.art-prose :where(h2)::before {
+  content: '/0' counter(h2c);
+  position: absolute;
+  top: 2px;
+  left: -40px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--coral);
+}
+
+/* Inline code only — Expressive Code owns block code, so exclude its subtree. */
+.art-prose :where(code):not(:where(pre *, .expressive-code *, [class~='not-prose'] *)) {
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--code-bg);
+  font-family: var(--font-mono-code);
+  font-size: 0.86em;
+}
+
+.art-prose :where(blockquote) {
+  margin: 32px 0 0;
+  padding-left: 24px;
+  border-left: 2px solid var(--coral);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.16rem;
+  line-height: 1.58;
+  color: var(--body2);
+}
+
+.art-prose :where(blockquote cite) {
+  display: block;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-style: normal;
+  color: var(--faint);
+}
+
+/* Callouts (::: directives → mono + coral aside) */
+.art-prose .callout {
+  margin: 32px 0 0;
+  padding: 18px 22px;
+  border-left: 2px solid var(--coral);
+  background: color-mix(in srgb, var(--coral) 6%, transparent);
+}
+
+.art-prose .callout .co-label {
+  margin-bottom: 9px;
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--coral);
+}
+
+.art-prose .callout :where(p) {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: var(--body2);
+}
+
+/* Tufte sidenotes (footnotes → gutter margin notes; inline on mobile) */
+.art-prose .sn-ref {
+  margin-left: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.62em;
+  vertical-align: super;
+  color: var(--coral);
+}
+
+.art-prose .sidenote {
+  float: right;
+  clear: right;
+  width: 200px;
+  margin: 7px -236px 9px 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.8rem;
+  line-height: 1.52;
+  color: var(--faint);
+}
+
+.art-prose .sidenote .sn-num {
+  margin-right: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-style: normal;
+  color: var(--coral);
+}
+
+/* Footer — series nav, related work, prev/next */
+.a-foot {
+  margin-top: 58px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+
+.thread-tag {
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.thread-tag a {
+  color: var(--coral);
+  text-decoration: none;
+}
+
+.thread-tag a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.series-nav {
+  margin-top: 24px;
+  padding: 18px 22px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.series-h {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+}
+
+.series-chapters {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: chap;
+}
+
+.series-chapters li {
+  counter-increment: chap;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.series-chapters li::before {
+  content: counter(chap, decimal-leading-zero) '  ';
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--coral);
+}
+
+.series-chapters li.current {
+  color: var(--ink);
+}
+
+.series-chapters a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.series-chapters a:hover {
+  color: var(--coral);
+}
+
+.series-prevnext {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 14px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+}
+
+.series-prevnext a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.series-prevnext a:hover {
+  color: var(--coral);
+}
+
+/* Scoped under .a-foot so this article "related work" card never collides with the
+   project page's own .related footer (a different, component-scoped element). */
+.a-foot .related {
+  display: block;
+  margin-top: 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  text-decoration: none;
+  transition: border-color 0.18s ease;
+}
+
+.a-foot .related:hover {
+  border-color: var(--coral);
+}
+
+.rel-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--faint);
+}
+
+.rel-name {
+  margin-top: 9px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.06rem;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+
+.rel-name .live::before {
+  content: '●';
+  position: relative;
+  top: -0.32em;
+  margin-right: 7px;
+  font-size: 0.5em;
+  color: var(--coral);
+}
+
+.rel-desc {
+  margin-top: 7px;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.rel-links {
+  display: flex;
+  gap: 18px;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.71rem;
+  color: var(--coral);
+}
+
+.a-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 30px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.a-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.a-nav a:hover {
+  color: var(--coral);
+}
+
+/* Case-study prose (project pages) reuses the article reading voice — serif body,
+   coral-underline links, blockquote, inline Krypton code, callouts — but renders in
+   the narrow column, so `.case-narrow` drops the article-only sidenote gutter and
+   section numbering. Placed after the .art-prose rules so it wins at equal specificity. */
+.case-narrow.art-prose {
+  margin-top: 0;
+  padding-right: 0;
+}
+
+.case-narrow :where(h2) {
+  counter-increment: none;
+}
+
+.case-narrow :where(h2)::before {
+  content: none;
+}
+
+@media (max-width: 900px) {
+  .art {
+    padding-inline: 22px;
+  }
+
+  .art-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .art-toc {
+    display: none;
+  }
+
+  .art-body {
+    padding: 34px 0 0 0;
+    border-left: 0;
+  }
+
+  .art-head,
+  .art-prose,
+  .a-foot {
+    padding-right: 0;
+  }
+
+  .art-prose :where(h2) {
+    margin-top: 44px;
+  }
+
+  .art-prose :where(h2)::before {
+    position: static;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .art-prose .sidenote {
+    float: none;
+    clear: none;
+    display: block;
+    width: auto;
+    margin: 16px 0;
+    padding-left: 14px;
+    border-left: 2px solid var(--coral);
+    font-style: normal;
+    color: var(--muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progbar {
+    display: none;
+  }
+
+  /* Underline still resolves, just instantly (no left-to-right draw). */
+  .art-prose :where(a) {
+    transition: none;
+  }
 }
 
 /* ─── Selection ─────────────────────────────────────────────── */
 
 ::selection {
   background-color: var(--color-accent);
-  color: #fff;
+  /* paper-on-coral = the gated coral/paper ratio (AA in both themes), so
+     selected text stays legible — white on the bright dark coral was 3.19:1. */
+  color: var(--paper);
 }
 
 /* ─── Animation Keyframes ──────────────────────────────────── */
@@ -224,24 +919,32 @@ pre.shiki {
 
 /* ─── Lightbulb Toggle ─────────────────────────────────────── */
 
+/* Lit (coral-filled) bulb in light; hollow in dark — mirrors the token
+   tri-state so the icon matches the effective theme, system-dark included. */
 .bulb-fill {
-  fill: transparent;
+  fill: var(--coral);
   transition: fill 0.4s ease;
 }
 
-:root:not(.dark) .bulb-fill {
-  fill: var(--color-accent);
+:root[data-theme='dark'] .bulb-fill {
+  fill: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .bulb-fill {
+    fill: transparent;
+  }
 }
 
 @keyframes glowPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(232, 85, 61, 0.4);
+    box-shadow: 0 0 0 0 rgb(from var(--coral) r g b / 0.4);
   }
   50% {
-    box-shadow: 0 0 12px 4px rgba(232, 85, 61, 0.2);
+    box-shadow: 0 0 12px 4px rgb(from var(--coral) r g b / 0.2);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(232, 85, 61, 0);
+    box-shadow: 0 0 0 0 rgb(from var(--coral) r g b / 0);
   }
 }
 

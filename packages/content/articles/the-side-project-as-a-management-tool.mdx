@@ -8,6 +8,8 @@ tags:
   - side-projects
 featured: true
 draft: false
+threads:
+  - leadership
 ---
 
 I want to start with a caveat, because this topic gets toxic fast.
@@ -28,7 +30,7 @@ Without those instincts, you start making decisions based on what _sounds_ reaso
 
 ## What Actually Transfers
 
-The value isn't theoretical. This weekend I built [FormRecap](https://formrecap.com) on Cloudflare Workers, managed the infrastructure with Terraform, and set up a [zero-secrets workflow](/blog/zero-secrets-in-git) using 1Password CLI's `op://` references so no credentials ever touch disk.
+The value isn't theoretical. This weekend I built [FormRecap](https://formrecap.com) on Cloudflare Workers, managed the infrastructure with Terraform, and set up a [zero-secrets workflow](/writing/zero-secrets-in-git) using 1Password CLI's `op://` references so no credentials ever touch disk.
 
 On Monday, I'm bringing pieces of all of that back to work. We already use Durable Objects and Queues in production, but every new workload teaches you something different about the patterns. The Terraform setup is going straight to our cloud engineering team — not for domain management, but for managing AI Gateway and other resources that don't live in Wrangler. And thanks to the axios breach, I spent a day last week rotating keys across our projects. You better believe those are getting moved into 1Password `op://` references and shared with the team tomorrow.
 

@@ -1,4 +1,5 @@
 ---
+import { Font } from 'astro:assets';
 import siteConfig from '@data/site-config';
 import '@/styles/global.css';
 
@@ -17,11 +18,13 @@ function resolveOgImage(pathname: string, image?: { src: string }) {
 
   let ogPath = '/og/default.png';
   const cleanPath = pathname.replace(/\/$/, '');
-  // Only individual posts/projects have a per-slug OG image. Pagination pages
-  // (/blog/2/, /projects/2/) have numeric slugs with no such image — fall back to
-  // the default instead of advertising a broken social card.
-  if (cleanPath.startsWith('/blog/')) {
-    const slug = cleanPath.slice('/blog/'.length);
+  // Only individual posts/projects have a per-slug OG image. Pagination/index
+  // pages have no such image — fall back to the default instead of advertising a
+  // broken social card. Articles route at /writing/ (Stage C rename), but their
+  // pre-generated OG assets stay under /og/blog/<slug>.png — an internal asset
+  // convention keyed by the unchanged slug, deliberately not renamed with the route.
+  if (cleanPath.startsWith('/writing/')) {
+    const slug = cleanPath.slice('/writing/'.length);
     if (slug && !/^\d+$/.test(slug)) ogPath = `/og/blog/${slug}.png`;
   } else if (cleanPath.startsWith('/projects/')) {
     const slug = cleanPath.slice('/projects/'.length);
@@ -36,6 +39,14 @@ const resolvedImage = resolveOgImage(Astro.url.pathname, image);
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="generator" content={Astro.generator} />
+
+<!-- Self-hosted brand faces (Astro Fonts API). Emits @font-face + preload.
+     Preload only the above-the-fold faces: body serif (400) and heading sans
+     (700); mono is below the fold, so it loads without a preload. -->
+<Font cssVariable="--font-libre" preload={[{ weight: 400, style: 'normal' }]} />
+<Font cssVariable="--font-sora" preload={[{ weight: 700, style: 'normal' }]} />
+<Font cssVariable="--font-mono-neon" />
+<Font cssVariable="--font-mono-krypton" />
 <link rel="canonical" href={canonicalURL} />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link rel="alternate" type="application/rss+xml" title={siteConfig.title} href="/rss.xml" />

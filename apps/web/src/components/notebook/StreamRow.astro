@@ -1,0 +1,75 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import { kindLabel } from '@data/kinds';
+
+interface Props extends HTMLAttributes<'a'> {
+  href: string;
+  /** Pre-formatted short date, e.g. "02 Jun". */
+  date: string;
+  title: string;
+  /** Article kind slug; rendered as its label in the trailing column. */
+  kind?: string;
+}
+
+const { href, date, title, kind, class: className, ...rest } = Astro.props;
+
+// Shared-element View Transition: name the title from its slug so it morphs into the
+// article's <h1> (same name) on navigation. Unique per row → unique per page.
+const slug = href.split(/[?#]/)[0].replace(/\/$/, '').split('/').pop();
+const titleTransition = slug ? `title-${slug}` : undefined;
+---
+
+<a class:list={['wrow', className]} href={href} {...rest}>
+  <span class="wd">{date}</span>
+  <span class="wt" transition:name={titleTransition}>{title}</span>
+  {kind && <span class="wk">{kindLabel(kind)}</span>}
+</a>
+
+<style>
+  .wrow {
+    display: grid;
+    grid-template-columns: 62px 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 12px 0;
+    border-top: 1px solid var(--hair);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .wrow:first-child {
+    border-top: 0;
+  }
+
+  .wd {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+  }
+
+  .wt {
+    font-family: var(--font-serif);
+    font-size: 1.02rem;
+    color: var(--ink);
+    line-height: 1.45;
+    transition: color var(--dur-2) var(--ease-standard);
+  }
+
+  .wrow:hover .wt {
+    color: var(--coral);
+  }
+
+  .wk {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--faint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wt {
+      transition: none;
+    }
+  }
+</style>

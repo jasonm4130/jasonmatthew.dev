@@ -29,14 +29,17 @@ const siteConfig: SiteConfig = {
     'Engineer from Brisbane, Australia. I build AI systems and cloud infrastructure at scale, ship side projects, and write about what I learn along the way.',
   author: 'Jason Matthew',
   headerNavLinks: [
-    { text: 'Home', href: '/' },
-    { text: 'Projects', href: '/projects' },
-    { text: 'Blog', href: '/blog' },
+    { text: 'Writing', href: '/writing' },
+    { text: 'Threads', href: '/threads' },
+    { text: 'Work', href: '/projects' },
     { text: 'About', href: '/about' },
   ],
   footerNavLinks: [
+    { text: 'Writing', href: '/writing' },
+    { text: 'Threads', href: '/threads' },
+    { text: 'Work', href: '/projects' },
+    { text: 'Now', href: '/now' },
     { text: 'About', href: '/about' },
-    { text: 'Contact', href: '/contact' },
   ],
   socialLinks: [
     { platform: 'github', href: 'https://github.com/jasonm4130' },

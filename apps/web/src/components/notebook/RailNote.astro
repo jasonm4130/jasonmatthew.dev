@@ -1,0 +1,82 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+// The left-rail vocabulary: the annotation column that runs down the notebook
+// layout. Any combination of a landing marker, a section number, a label, a year
+// and an italic annotation. Composed by the page templates against the body column.
+interface Props extends HTMLAttributes<'div'> {
+  /** Text after the coral dot, e.g. "Now" — the landing marker (.rmark). */
+  marker?: string;
+  /** Section index, e.g. "/02" (.rnum). */
+  num?: string;
+  /** Bold section label, e.g. "Systems" (.rlbl). */
+  label?: string;
+  /** Display year, e.g. "2026" (.ryr). */
+  year?: string;
+  /** Italic serif aside (.rann). */
+  annotation?: string;
+}
+
+const { marker, num, label, year, annotation, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={['rail-note', className]} {...rest}>
+  {
+    marker && (
+      <div class="rmark">
+        <span class="dt">●</span> {marker}
+      </div>
+    )
+  }
+  {num && <div class="rnum">{num}</div>}
+  {label && <div class="rlbl">{label}</div>}
+  {year && <div class="ryr">{year}</div>}
+  {annotation && <div class="rann">{annotation}</div>}
+  <slot />
+</div>
+
+<style>
+  .rmark {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+    letter-spacing: 0.03em;
+  }
+
+  .rmark .dt {
+    color: var(--coral);
+  }
+
+  .rnum {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--coral);
+    letter-spacing: 0.04em;
+  }
+
+  .rlbl {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--ink);
+    margin-top: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .ryr {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+
+  .rann {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 0.81rem;
+    color: var(--faint);
+    line-height: 1.45;
+    margin-top: 9px;
+  }
+</style>

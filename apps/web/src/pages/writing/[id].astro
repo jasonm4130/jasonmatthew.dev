@@ -1,0 +1,243 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import FormattedDate from '@components/FormattedDate.astro';
+import { kindLabel } from '@data/kinds';
+import { isNotDraft } from '@utils/data-utils';
+import { parseInternalHref, type RelatedLink } from '@utils/content-graph';
+import { getContentGraph, getThread, type ResolvedEntry } from '@utils/content-graph-astro';
+
+export const getStaticPaths = (async () => {
+  // Intentional: individual post pages use isNotDraft (not isPublished), so a
+  // draft:false post with a future publishDate gets a live /writing/<slug>/ URL for
+  // OG-image generation and in-situ review before launch. Listings, RSS, tags and
+  // the homepage all gate on the date via isPublished, and astro.config.mjs keeps
+  // these pre-publish pages out of the sitemap. See src/utils/data-utils.ts.
+  const posts = await getCollection('blog', isNotDraft);
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { post } = Astro.props as Props;
+const { Content, headings, remarkPluginFrontmatter } = await render(post);
+const minutesRead: number | undefined = remarkPluginFrontmatter?.minutesRead;
+// Reserve the Tufte sidenote gutter only when the article actually has footnotes —
+// remark-sidenotes flags this at build time. Without it the column narrows and centres
+// as a balanced unit instead of leaving an empty right margin.
+const hasSidenotes: boolean = remarkPluginFrontmatter?.hasSidenotes === true;
+const tocHeadings = headings.filter((h) => h.depth === 2);
+
+const graph = await getContentGraph();
+const lookup = new Map(graph.all.map((e) => [`${e.collection}:${e.id}`, e]));
+const publishedKeys = new Set(graph.all.filter((e) => e.published).map((e) => `${e.collection}:${e.id}`));
+
+const kind = kindLabel(post.data.kind);
+const primaryThread = post.data.threads.map(getThread).find((t) => t != null) ?? null;
+
+// Related cross-links: an internal, published target resolves to a rich card (title +
+// live dot + description + live/repo hints); an external link stays a plain card; a
+// link to a missing/unpublished entry is omitted. The build gate already fails closed
+// on those (D4), so this render-time filter is defence in depth.
+type RelatedItem = { link: RelatedLink; entry: ResolvedEntry | null };
+const related = (post.data.related ?? [])
+  .map((link): RelatedItem | null => {
+    const target = parseInternalHref(link.href);
+    if (!target) return { link, entry: null }; // external — pass through
+    const key = `${target.collection}:${target.id}`;
+    if (!publishedKeys.has(key)) return null; // unpublished internal — omit
+    return { link, entry: lookup.get(key) ?? null };
+  })
+  .filter((r): r is RelatedItem => r != null);
+
+// Series furniture — dormant until an article sets series/seriesOrder.
+const self = lookup.get(`blog:${post.id}`) ?? null;
+const seriesChapters = post.data.series ? graph.seriesChapters(post.data.series) : [];
+const seriesAdj = self ? graph.adjacentInSeries(self) : {};
+
+function host(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.excerpt}
+  image={post.data.image}
+  pageType="article"
+  width="wide"
+>
+  <div class="progbar" aria-hidden="true"></div>
+  <div class:list={['art', hasSidenotes && 'has-notes']}>
+    <div class="art-grid">
+      <aside class="art-toc">
+        <div class="toc-meta">
+          <span class="kd">{kind}</span>
+          <FormattedDate date={post.data.publishDate} />
+          {
+            minutesRead && (
+              <Fragment>
+                <br />
+                {minutesRead} min read
+              </Fragment>
+            )
+          }
+        </div>
+        {
+          tocHeadings.length > 0 && (
+            <nav class="toc-list" aria-label="On this page">
+              {tocHeadings.map((h, i) => (
+                <a href={`#${h.slug}`} class="toc-link" data-sec={h.slug}>
+                  {/* Strip the autolink anchor's trailing "#", which Astro folds into
+                      the collected heading text. */}
+                  {h.text.replace(/#\s*$/, '')}
+                  <span class="tn">{String(i + 1).padStart(2, '0')}</span>
+                </a>
+              ))}
+            </nav>
+          )
+        }
+      </aside>
+
+      <article class="art-body">
+        <header class="art-head">
+          <div class="a-kicker">
+            {primaryThread && <Fragment>{primaryThread.title} · </Fragment>}
+            <span class="kind">{kind}</span>
+          </div>
+          <h1 class="a-title" transition:name={`title-${post.id}`}>{post.data.title}</h1>
+          <p class="a-stand">{post.data.excerpt}</p>
+          <div class="a-meta">
+            <span><FormattedDate date={post.data.publishDate} /></span>
+            {
+              minutesRead && (
+                <Fragment>
+                  <span class="sep">·</span>
+                  <span>{minutesRead} min read</span>
+                </Fragment>
+              )
+            }
+            {
+              post.data.updatedDate && (
+                <Fragment>
+                  <span class="sep">·</span>
+                  <span>
+                    Updated <FormattedDate date={post.data.updatedDate} />
+                  </span>
+                </Fragment>
+              )
+            }
+          </div>
+        </header>
+
+        <div class="prose art-prose">
+          <Content />
+        </div>
+
+        <footer class="a-foot">
+          {
+            post.data.series && seriesChapters.length > 0 && (
+              <nav class="series-nav" aria-label="Series navigation">
+                <div class="series-h">Part of the series</div>
+                <ol class="series-chapters">
+                  {seriesChapters.map((ch) => {
+                    const isCurrent = ch.collection === 'blog' && ch.id === post.id;
+                    return (
+                      <li class:list={[isCurrent && 'current']}>
+                        {isCurrent ? ch.title : <a href={ch.href}>{ch.title}</a>}
+                      </li>
+                    );
+                  })}
+                </ol>
+                {(seriesAdj.prev || seriesAdj.next) && (
+                  <div class="series-prevnext">
+                    <span>{seriesAdj.prev && <a href={seriesAdj.prev.href}>← {seriesAdj.prev.title}</a>}</span>
+                    <span>{seriesAdj.next && <a href={seriesAdj.next.href}>{seriesAdj.next.title} →</a>}</span>
+                  </div>
+                )}
+              </nav>
+            )
+          }
+
+          {
+            primaryThread && (
+              <div class="thread-tag">
+                Part of the thread — <a href={`/threads/${primaryThread.slug}`}>{primaryThread.title} →</a>
+              </div>
+            )
+          }
+
+          {
+            related.map(({ link, entry }) => (
+              <a
+                class="related"
+                href={entry ? entry.href : link.href}
+                {...(entry ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+              >
+                <div class="rel-label">Related work</div>
+                <div class="rel-name">
+                  {entry?.liveUrl ? <span class="live">{entry.title}</span> : (entry?.title ?? link.label)}
+                </div>
+                {entry && <div class="rel-desc">{entry.summary}</div>}
+                {entry && (entry.liveUrl || entry.githubUrl) && (
+                  <div class="rel-links">
+                    {entry.liveUrl && <span>{host(entry.liveUrl)} →</span>}
+                    {entry.githubUrl && <span>Source →</span>}
+                  </div>
+                )}
+              </a>
+            ))
+          }
+
+          <nav class="a-nav" aria-label="Article navigation">
+            <a href="/writing">← All writing</a>
+            {primaryThread && <a href={`/threads/${primaryThread.slug}`}>More in {primaryThread.title} →</a>}
+          </nav>
+        </footer>
+      </article>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // Scroll-spy for the TOC (the reading-progress bar is pure CSS). Recomputes the
+  // active section from heading positions on each observer trigger — cheap and
+  // reliable. Re-armed on astro:page-load so it survives View Transitions.
+  let tocObserver: IntersectionObserver | null = null;
+
+  function setupArticleToc() {
+    // The client router fires astro:page-load on every navigation and the module runs
+    // once, so this persists: disconnect the previous page's observer before making a
+    // new one, or a long article→article session leaks observers (and the detached
+    // headings they retain).
+    tocObserver?.disconnect();
+    tocObserver = null;
+
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.toc-link'));
+    const heads = Array.from(document.querySelectorAll<HTMLElement>('.art-prose h2[id]'));
+    if (!links.length || !heads.length) return;
+
+    let current: string | null = null;
+    const activate = (id: string | null) => {
+      if (id === current) return;
+      current = id;
+      links.forEach((l) => l.classList.toggle('active', l.dataset.sec === id));
+    };
+
+    const observer = new IntersectionObserver(
+      () => {
+        const passed = heads.filter((h) => h.getBoundingClientRect().top <= 140).pop();
+        activate(passed ? passed.id : heads[0].id);
+      },
+      { rootMargin: '-140px 0px 0px 0px', threshold: [0, 1] },
+    );
+    heads.forEach((h) => observer.observe(h));
+    tocObserver = observer;
+  }
+
+  document.addEventListener('astro:page-load', setupArticleToc);
+</script>

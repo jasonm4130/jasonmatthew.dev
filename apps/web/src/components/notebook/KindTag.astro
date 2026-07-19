@@ -1,0 +1,26 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import { kindLabel } from '@data/kinds';
+
+interface Props extends HTMLAttributes<'span'> {
+  kind: string;
+}
+
+const { kind, class: className, ...rest } = Astro.props;
+---
+
+<span class:list={['k', className]} {...rest}>{kindLabel(kind)}</span>
+
+<style>
+  .k {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--faint);
+    border: 1px solid var(--hair);
+    border-radius: 3px;
+    padding: 2px 6px;
+  }
+</style>

@@ -8,6 +8,9 @@ tags:
   - architecture
   - lambda
 draft: false
+kind: buildlog
+threads:
+  - systems
 ---
 
 We adopted AWS Lambda Durable Execution shortly after it went GA at re:Invent 2025. We were running batch AI inference workloads that needed to checkpoint, wait for downstream processing, and resume. Exactly what Durable Lambda was built for. No more Step Functions orchestration for what was fundamentally a single logical workflow.

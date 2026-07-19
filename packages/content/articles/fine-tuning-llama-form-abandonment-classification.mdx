@@ -8,6 +8,12 @@ tags:
   - machine-learning
   - cloudflare
 draft: false
+kind: buildlog
+threads:
+  - applied-ai
+related:
+  - label: 'The FormRecap LoRA classifier'
+    href: /projects/formrecap-lora-classifier
 ---
 
 I trained 7 LoRA adapters across 4 model families over a weekend. The best hit 0.96 F1 on a 6-class classification task where every baseline scored 0.06. That part was interesting. The part that changed how I think about deploying fine-tuned models was everything after: calibration, deployment constraints, and the gap between accurate and trustworthy.

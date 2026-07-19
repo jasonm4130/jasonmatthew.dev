@@ -1,0 +1,294 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHead from '@components/notebook/PageHead.astro';
+import RailNote from '@components/notebook/RailNote.astro';
+import SectionBand from '@components/notebook/SectionBand.astro';
+import CrossTag from '@components/notebook/CrossTag.astro';
+import { getContentGraph, THREADS, type ResolvedEntry } from '@utils/content-graph-astro';
+
+const graph = await getContentGraph();
+
+const shortDate = (d: Date) => d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short' });
+
+function dateRange(entries: ResolvedEntry[]): string {
+  if (!entries.length) return '';
+  const times = entries.map((e) => e.publishDate.getTime());
+  const min = new Date(Math.min(...times));
+  const max = new Date(Math.max(...times));
+  const mo = (d: Date) => d.toLocaleDateString('en-AU', { month: 'short' });
+  if (min.getFullYear() !== max.getFullYear()) return `${min.getFullYear()}–${max.getFullYear()}`;
+  return min.getMonth() === max.getMonth()
+    ? `${mo(max)} ${max.getFullYear()}`
+    : `${mo(min)}–${mo(max)} ${max.getFullYear()}`;
+}
+
+const stats = (slug: string) => {
+  const members = graph.threadMembers(slug);
+  return {
+    members,
+    pieces: members.filter((m) => m.collection === 'blog').length,
+    shipped: members.filter((m) => m.collection === 'projects').length,
+    latest: members.slice(0, 3),
+    range: dateRange(members),
+  };
+};
+
+const primary = THREADS.filter((t) => t.slug !== 'leadership');
+const leadership = THREADS.find((t) => t.slug === 'leadership');
+const leadStat = leadership ? stats(leadership.slug) : null;
+---
+
+<BaseLayout
+  title="Threads"
+  description="Four threads run through the work: the AI I build, the systems under it, the things I make for fun, and how I think about the people doing the work."
+  width="wide"
+>
+  <div class="shell">
+    <div class="nb-grid">
+      <div class="nb-rail">
+        <RailNote marker="Index" annotation="Four threads. Two lead." />
+      </div>
+      <div class="nb-body">
+        <PageHead
+          kicker="The notebook"
+          title="Threads"
+          description="Four threads run through the work. Two lead: the AI I build, and the systems under it. Two sit behind them, the things I make for fun and how I think about the people doing the work."
+        />
+      </div>
+
+      {
+        primary.map((thread) => {
+          const s = stats(thread.slug);
+          return (
+            <>
+              <div class="nb-rail">
+                <RailNote num={`/0${thread.order}`} label="Thread" annotation={thread.blurb} />
+              </div>
+              <div class="nb-body">
+                <a href={`/threads/${thread.slug}`} class="tx-head">
+                  <span class="tx-title">
+                    {thread.title}
+                    <span class="arw">&rarr;</span>
+                  </span>
+                </a>
+                <p class="tx-desc">{thread.description}</p>
+                <div class="tx-meta">
+                  <span>
+                    <span class="hot">{s.pieces}</span> {s.pieces === 1 ? 'piece' : 'pieces'}
+                  </span>
+                  {s.shipped > 0 && (
+                    <span>
+                      <span class="hot">{s.shipped}</span> shipped
+                    </span>
+                  )}
+                  <span>{s.range}</span>
+                  {thread.foreground && (
+                    <span>
+                      <span class="hot">&bull;</span> active
+                    </span>
+                  )}
+                </div>
+                {s.latest.length > 0 && (
+                  <div class="tx-prev">
+                    <div class="tx-prev-h">Latest</div>
+                    {s.latest.map((m) => {
+                      const also = graph.crossThreads(m, thread.slug)[0];
+                      return (
+                        <a href={m.href} class="txrow">
+                          <span class="d">{shortDate(m.publishDate)}</span>
+                          <span class="t">
+                            {m.title}
+                            {also && <CrossTag class="xtag-inline">also {also.title}</CrossTag>}
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          );
+        })
+      }
+    </div>
+
+    {
+      leadership && leadStat && (
+        <>
+          <SectionBand class="sec-band-gap">Secondary</SectionBand>
+          <div class="nb-grid">
+            <div class="nb-rail">
+              <div class="rail-muted">
+                <RailNote num="/04" label="Thread" annotation={leadership.blurb} />
+              </div>
+            </div>
+            <div class="nb-body demoted">
+              <a href={`/threads/${leadership.slug}`} class="tx-head">
+                <span class="tx-title">
+                  {leadership.title}
+                  <span class="arw">&rarr;</span>
+                </span>
+              </a>
+              <p class="tx-desc">{leadership.description}</p>
+              <div class="tx-meta">
+                <span>
+                  <span class="hot">{leadStat.pieces}</span> {leadStat.pieces === 1 ? 'piece' : 'pieces'}
+                </span>
+                <span>{leadStat.range}</span>
+              </div>
+            </div>
+          </div>
+        </>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .tx-head {
+    display: inline-block;
+    text-decoration: none;
+  }
+
+  .tx-title {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: clamp(1.4rem, 2.6vw, 1.7rem);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+    transition: color 0.18s ease;
+  }
+
+  .tx-head:hover .tx-title {
+    color: var(--coral);
+  }
+
+  .tx-title .arw {
+    color: var(--coral);
+    font-weight: 500;
+    margin-left: 8px;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease;
+    display: inline-block;
+  }
+
+  .tx-head:hover .tx-title .arw {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .tx-desc {
+    font-family: var(--font-serif);
+    font-size: 0.97rem;
+    color: var(--body2);
+    line-height: 1.58;
+    margin: 13px 0 0;
+    max-width: 54ch;
+  }
+
+  .tx-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 15px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--faint);
+  }
+
+  .tx-meta .hot {
+    color: var(--coral);
+  }
+
+  .tx-prev {
+    margin: 20px 0 0;
+  }
+
+  .tx-prev-h {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--faint);
+    margin-bottom: 2px;
+  }
+
+  .txrow {
+    display: grid;
+    grid-template-columns: 58px 1fr;
+    gap: 14px;
+    align-items: baseline;
+    padding: 8px 0;
+    border-top: 1px solid var(--hair);
+    text-decoration: none;
+    transition: padding-left 0.18s ease;
+  }
+
+  .txrow:hover {
+    padding-left: 6px;
+  }
+
+  .txrow .d {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .txrow .t {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 0.9rem;
+    letter-spacing: -0.008em;
+    line-height: 1.4;
+    color: var(--muted);
+    transition: color 0.18s ease;
+  }
+
+  .txrow:hover .t {
+    color: var(--coral);
+  }
+
+  .txrow :global(.xtag-inline) {
+    margin-left: 8px;
+    vertical-align: middle;
+    opacity: 0.68;
+  }
+
+  .sec-band-gap {
+    margin-top: 8px;
+  }
+
+  .nb-body.demoted {
+    padding-top: 26px;
+    padding-bottom: 34px;
+  }
+
+  .nb-body.demoted .tx-title {
+    font-size: 1.18rem;
+    color: var(--muted);
+  }
+
+  .nb-body.demoted .tx-desc {
+    font-size: 0.9rem;
+    color: var(--muted);
+    max-width: 52ch;
+  }
+
+  .rail-muted :global(.rnum) {
+    color: var(--faint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tx-title,
+    .tx-title .arw,
+    .txrow,
+    .txrow .t {
+      transition: none;
+    }
+  }
+</style>

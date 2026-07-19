@@ -1,0 +1,63 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import CrossTag from './CrossTag.astro';
+
+interface Props extends HTMLAttributes<'a'> {
+  href: string;
+  /** Pre-formatted short date, e.g. "02 Jun". */
+  date: string;
+  title: string;
+  /** Cross-listing note for a piece that also lives in another thread, e.g.
+   * "also Applied AI". Rendered as a coral chip in the trailing column. */
+  cross?: string;
+}
+
+const { href, date, title, cross, class: className, ...rest } = Astro.props;
+---
+
+<a class:list={['srow', className]} href={href} {...rest}>
+  <span class="sd">{date}</span>
+  <span class="stt">{title}</span>
+  <span class="sx">{cross && <CrossTag>{cross}</CrossTag>}</span>
+</a>
+
+<style>
+  .srow {
+    display: grid;
+    grid-template-columns: 78px 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 12px 0;
+    border-top: 1px solid var(--hair);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .srow:first-child {
+    border-top: 0;
+  }
+
+  .sd {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+  }
+
+  .stt {
+    font-family: var(--font-serif);
+    font-size: 1.02rem;
+    color: var(--ink);
+    line-height: 1.45;
+    transition: color 0.18s ease;
+  }
+
+  .srow:hover .stt {
+    color: var(--coral);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stt {
+      transition: none;
+    }
+  }
+</style>

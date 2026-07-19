@@ -1,0 +1,23 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+// A hairline-topped mono label that separates a secondary section, e.g. the
+// demoted "Engineering leadership" band on the threads index.
+type Props = HTMLAttributes<'div'>;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={['sec-band', className]} {...rest}><slot /></div>
+
+<style>
+  .sec-band {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--faint);
+    border-top: 1px solid var(--border);
+    padding-top: 13px;
+  }
+</style>
