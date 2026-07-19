@@ -108,6 +108,9 @@ Astro renders this at build time.[^1]
 - Notes are **renumbered 1..n by order of appearance**, regardless of the source labels
   (`[^longhand]` and `[^1]` both get sequential numbers).
 - A reference with no matching definition keeps its marker and adds no empty gutter box.
+- A cyclic reference — a footnote that references itself, or a mutual `a → b → a` chain —
+  breaks the cycle: the back-reference renders as a bare marker rather than recursing, so a
+  malformed footnote never crashes the build.
 
 ## Series navigation — dormant
 

@@ -165,6 +165,52 @@ describe('remark-sidenotes', () => {
     expect(collect(tree, (n) => n.type === 'text' && n.value === 'Child.')).toHaveLength(1);
   });
 
+  it('breaks a self-referential footnote cycle instead of overflowing the stack', () => {
+    const tree = {
+      type: 'root',
+      children: [
+        paragraph([text('See'), { type: 'footnoteReference', identifier: 'loop' }]),
+        {
+          type: 'footnoteDefinition',
+          identifier: 'loop',
+          label: 'loop',
+          children: [paragraph([text('See also'), { type: 'footnoteReference', identifier: 'loop' }])],
+        },
+      ],
+    };
+    // Must not recurse forever (RangeError: Maximum call stack size exceeded → build crash).
+    expect(() => runSidenotes(tree)).not.toThrow();
+    // The definition inlines exactly once; the reference back into the in-progress note
+    // degrades to a bare marker (like a dangling ref), so there is a single gutter box.
+    expect(collect(tree, byHName('span')).filter((n) => hasClass(n, 'sidenote'))).toHaveLength(1);
+    expect(collect(tree, (n) => n.type === 'footnoteReference')).toHaveLength(0);
+  });
+
+  it('breaks a mutual footnote cycle (a→b→a) instead of overflowing the stack', () => {
+    const tree = {
+      type: 'root',
+      children: [
+        paragraph([text('Start'), { type: 'footnoteReference', identifier: 'a' }]),
+        {
+          type: 'footnoteDefinition',
+          identifier: 'a',
+          label: 'a',
+          children: [paragraph([text('A then'), { type: 'footnoteReference', identifier: 'b' }])],
+        },
+        {
+          type: 'footnoteDefinition',
+          identifier: 'b',
+          label: 'b',
+          children: [paragraph([text('B then'), { type: 'footnoteReference', identifier: 'a' }])],
+        },
+      ],
+    };
+    expect(() => runSidenotes(tree)).not.toThrow();
+    // `a` inlines once, `b` inlines once inside it; the b→a back-reference is a bare marker.
+    expect(collect(tree, byHName('span')).filter((n) => hasClass(n, 'sidenote'))).toHaveLength(2);
+    expect(collect(tree, (n) => n.type === 'footnoteReference')).toHaveLength(0);
+  });
+
   it('renders the reference even when its definition is missing (no empty gutter box)', () => {
     const tree = {
       type: 'root',

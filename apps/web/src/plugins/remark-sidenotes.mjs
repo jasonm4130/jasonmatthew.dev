@@ -95,7 +95,11 @@ function sidenoteNode(n, inline) {
   };
 }
 
-function replaceReferences(node, defs, order) {
+// `expanding` is the set of definition ids currently being inlined (the recursion
+// stack). A reference back into one of them is a cycle (self- or mutual-reference) and
+// must not be re-inlined, or the walk recurses forever and crashes the build with a
+// RangeError. Such a reference degrades to a bare marker, exactly like a dangling one.
+function replaceReferences(node, defs, order, expanding) {
   if (!Array.isArray(node.children)) return;
   for (let i = 0; i < node.children.length; i++) {
     const child = node.children[i];
@@ -106,23 +110,27 @@ function replaceReferences(node, defs, order) {
         n = order.size + 1;
         order.set(id, n);
       }
-      if (defs.has(id)) {
+      if (defs.has(id) && !expanding.has(id)) {
         const inline = inlineFromDefinition(defs.get(id));
         const note = sidenoteNode(n, inline);
         node.children.splice(i, 1, supNode(n), note);
         // A definition can itself reference another footnote; resolve those inside the
         // just-inlined note (its definitions were already collected). Without this the
         // nested reference survives as a dangling #user-content-fn-* link, since the
-        // outer loop steps past the inserted subtree.
-        replaceReferences(note, defs, order);
+        // outer loop steps past the inserted subtree. Mark `id` as in-progress so a
+        // reference back into it (a cycle) breaks instead of recursing forever.
+        expanding.add(id);
+        replaceReferences(note, defs, order, expanding);
+        expanding.delete(id);
         i += 1; // step past the inserted sidenote
       } else {
-        // Dangling reference (no definition): keep the marker, add no empty gutter box.
+        // No definition, or a cycle back into an in-progress note: keep the marker,
+        // add no gutter box.
         node.children.splice(i, 1, supNode(n));
       }
       continue;
     }
-    replaceReferences(child, defs, order);
+    replaceReferences(child, defs, order, expanding);
   }
 }
 
@@ -131,7 +139,7 @@ export default function remarkSidenotes() {
     const defs = new Map();
     collectDefinitions(tree, defs);
     const order = new Map();
-    replaceReferences(tree, defs, order);
+    replaceReferences(tree, defs, order, new Set());
     // A sidenote box is emitted only for a reference that has a matching definition;
     // expose whether any were, so the article template reserves the Tufte gutter only
     // when it's actually used (an empty gutter reads as dead space, not a feature).
