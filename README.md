@@ -3,7 +3,7 @@
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fjasonmatthew.dev&style=flat-square)](https://jasonmatthew.dev)
 [![Built with Astro](https://img.shields.io/badge/Astro-5-bc52ee?style=flat-square&logo=astro&logoColor=white)](https://astro.build)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06b6d4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Deployed on Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-deployed-f38020?style=flat-square&logo=cloudflare&logoColor=white)](https://pages.cloudflare.com)
+[![Deployed on Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-deployed-f38020?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
 [![Scheduled Rebuild](https://img.shields.io/github/actions/workflow/status/jasonm4130/jasonmatthew.dev/scheduled-rebuild.yml?style=flat-square&label=scheduled%20rebuild)](https://github.com/jasonm4130/jasonmatthew.dev/actions/workflows/scheduled-rebuild.yml)
 
 Personal portfolio and blog for [Jason Matthew](https://jasonmatthew.dev). Brisbane-based engineer building production AI systems, edge infrastructure, and ML platforms at scale.
@@ -24,7 +24,7 @@ OG images are generated at build time via Satori. No CMS. Content lives in MDX f
 | Highlight | [Expressive Code](https://expressive-code.com) with a self-hosted Krypton theme             |
 | Fonts     | Sora (headings) + Libre Baskerville (body) + Monaspace Neon (UI) + Monaspace Krypton (code) |
 | OG Images | [Satori](https://github.com/vercel/satori) + resvg-js (build-time generation)               |
-| Deploy    | [Cloudflare Pages](https://pages.cloudflare.com) (static output)                            |
+| Deploy    | [Cloudflare Workers](https://workers.cloudflare.com) with static assets (`wrangler deploy`) |
 | Monorepo  | [Turborepo](https://turbo.build) + pnpm workspaces                                          |
 | Quality   | ESLint, Prettier, Husky + lint-staged                                                       |
 
