@@ -1,0 +1,102 @@
+---
+title: 'What a Second Model Family Actually Catches'
+excerpt: 'I have had GPT review every plan and diff Claude writes for me since July. I finally measured whether it earns its quota. Two blind Claude reviewers agree with each other 69% of the time and with GPT about 25%, and the pairing finds far more than either alone.'
+publishDate: 2026-09-29
+tags:
+  - claude-code
+  - ai-engineering
+  - agents
+  - evals
+draft: false
+kind: buildlog
+threads:
+  - applied-ai
+---
+
+Since July, every plan and every branch diff Claude Code writes for me goes to a second model before it ships. A small skill hands the file to OpenAI's Codex CLI, gets back tagged findings and a verdict, and Claude folds the fixes in. Up to three rounds, then one fresh-session audit. Around 250 review chains so far.
+
+It costs real quota, and it slows everything down. And the models keep getting better. So this week I asked the obvious question: is a cross-family reviewer still worth it, or would a better verification loop on the Claude side catch the same things?
+
+I had a log, and a suspicion that the log would say "yes, obviously". Logs like that always do. So I ran the comparison blind instead.
+
+## The flattering version
+
+First I pulled every Codex finding I could still recover. The review log only keeps counts and hashes, so the text came from Codex's own session files and from Claude transcripts that quoted it. That gave me 408 P1/P2 findings across 72 review chains. 93% were valid and 385 were fixed. Codex was not making things up.
+
+Then I had Claude classify each one by how it could have been caught:
+
+| How it could have been caught               | Share |
+| ------------------------------------------- | ----- |
+| A test, lint or type check                  | 2%    |
+| Running the code                            | 12%   |
+| A careful re-read by the same model         | 54%   |
+| Only a different angle or outside knowledge | 29%   |
+| Not realistically                           | 3%    |
+
+Read that table at face value and the answer writes itself. Two thirds of what Codex found, Claude could have found with better self-review and a habit of running things. Tighten the loop, drop the second vendor, save the quota.
+
+I didn't trust it. That 54% is Claude looking at a bug someone else already found and saying "I would have seen that". Everyone is a genius in hindsight, models included.
+
+## The blind replay
+
+So I rebuilt the review. I took 19 artifacts (15 diffs, 4 plans) where I could recover the exact prompt Codex received and the exact code it saw. Plans were reconstructed from file history by content hash, and the repository was only readable at the commit from just before the review, so nobody could peek at the fix.
+
+Then I gave each one to a fresh Opus 5.5 reviewer with the verbatim Codex prompt, told it that it was part of a blind comparison, and kept it away from any earlier review.
+
+The first result looked damning for the "just self-review harder" idea. Blind Opus fully matched 17 of Codex's 47 findings. 36%.
+
+But it also found 36 P1/P2 issues Codex hadn't raised, including 10 P1s. I checked the one that looked easiest to get wrong myself: a plan said a slug function would turn `"Ünïcode ok"` into `ncode-ok`, and told the implementer to "fix the function" if the test failed. The real function returns `n-code-ok`. Following the plan literally would have renamed every session directory with an accent in its title. Codex missed it.
+
+That made me distrust my own conclusion in the other direction. Maybe two reviews of the same code just overlap badly, whatever the model. Maybe I was measuring noise.
+
+## The control
+
+So I ran the whole thing again: a second blind Opus reviewer on the same 19 artifacts, same prompt, same isolation. Then I deduped everything the three reviewers raised into 93 distinct P1/P2 defects and measured overlap.
+
+| Pair                     | Overlap (Jaccard) |
+| ------------------------ | ----------------- |
+| Opus run 1 vs Opus run 2 | 69%               |
+| Codex vs Opus run 1      | 25%               |
+| Codex vs Opus run 2      | 24%               |
+
+That is not noise. Two Claude reviewers mostly agree with each other, and the second one reproduces the first one's disagreement with Codex almost exactly. The families look at different things.
+
+The coverage numbers are the part I will act on:
+
+| Reviewers                    | Share of all 93 defects found |
+| ---------------------------- | ----------------------------- |
+| Codex alone                  | 52%                           |
+| One Opus reviewer            | 61–66%                        |
+| Two Opus reviewers           | 75%                           |
+| Codex plus one Opus reviewer | 91–94%                        |
+
+A second Claude reviewer added 9 points. Codex added 28.
+
+## "Claude would have caught it" didn't survive
+
+Back to the flattering table. Of the Codex findings labelled "a careful re-read by the same model would catch this", two blind Opus runs together found 11 of 27. 41%. The hindsight label was wrong more often than it was right.
+
+Even the "running the code would catch it" bucket leaked. Both Opus runs missed 3 of the 7, because a reviewer reads code; it doesn't usually run it.
+
+The misses weren't random either. Codex was better at narrow boundary bugs: an empty input that panics on `samples[0]`, a subtraction that underflows on an empty file, two timestamps in the same second compared with a strict less-than. It also caught a guard hook that happily let an agent delete the freeze switch a human had set.
+
+Claude was better at whole-system and tool-behaviour bugs. Both runs caught a `gh pr create --json` call (that flag doesn't exist, so no pull request would ever open), a `claude -p` child quietly eating the rest of a `while read` loop's stdin, and bash 5.2 rewriting `&` in a template substitution. That split is my reading of the lists, not a measured category, but it matched my gut before I looked.
+
+## What I'm changing
+
+Codex stays. The part I'm changing is how it pairs with Claude.
+
+- **Round 1 gets both, in parallel, blind to each other.** Codex plus one Claude reviewer found 91–94% of everything any of them found. Neither alone cleared 66%.
+- **A second Claude pass is not a substitute.** It is a third of the value for similar effort.
+- **Tests and execution still move left.** 14% of what Codex historically found was catchable by running something. That belongs in the implementer's own verification, not in someone's review.
+
+## What this doesn't tell you
+
+The honest limits, because they are real:
+
+- Codex ran at high reasoning effort and Claude at my session default (medium). Some of the "family" effect could be an effort effect. I haven't separated them yet.
+- 19 artifacts is small, and only 4 were plans. I had one Codex sample per artifact, so I don't know how much two Codex runs would disagree with each other.
+- Every classification and every "same defect or not" call was made by a Claude model. If it is lenient to its own family's phrasing, the Claude–Claude overlap is flattered. The gap survived dropping low-severity findings, but I can't rule it out.
+- This is round 1 only. It says nothing about whether rounds 2 and 3 are worth it. My earlier numbers suggest they mostly aren't, but that's a different post.
+
+I went in half expecting to delete a dependency. I'm keeping it, and adding a reviewer next to it.
